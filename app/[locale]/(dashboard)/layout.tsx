@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getTranslations } from 'next-intl/server';
+import { Toaster } from 'sonner';
 
 import { requireSession } from '@/lib/auth';
 import { resolveRoleLabel } from '@/lib/utils';
@@ -42,7 +43,12 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
-      <DashboardSidebar role={sessionUser.role} navLabel={l10n('DASHBOARD_NAV_LABEL')} overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')} />
+      <DashboardSidebar
+        role={sessionUser.role}
+        navLabel={l10n('DASHBOARD_NAV_LABEL')}
+        overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
+        usersLabel={l10n('DASHBOARD_NAV_USERS')}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopbar
@@ -51,6 +57,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           welcome={l10n('DASHBOARD_WELCOME', { name: sessionUser.name })}
           navLabel={l10n('DASHBOARD_NAV_LABEL')}
           overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
+          usersLabel={l10n('DASHBOARD_NAV_USERS')}
           languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
           signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
           locale={locale}
@@ -58,6 +65,12 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
         <main className="flex-1 p-4 lg:p-8">{children}</main>
       </div>
+
+      {/*
+        Mounted once for the whole dashboard rather than per screen, so an action can
+        confirm itself from anywhere underneath without each page wiring up its own.
+      */}
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }

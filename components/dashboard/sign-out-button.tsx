@@ -23,7 +23,7 @@ export function SignOutButton({ label, locale }: SignOutButtonProps) {
     <form action={signOutAction}>
       <input type="hidden" name={SESSION.LOCALE_FIELD} value={locale} />
 
-      <Button type="submit" variant="appGhost" size="sm">
+      <Button type="submit" variant="outline" size="sm">
         <LogOut className="size-4" />
         {label}
       </Button>
