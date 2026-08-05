@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
+import createNextIntlPlugin from 'next-intl/plugin';
+
 import '@/env/client';
 import '@/env/server';
 
@@ -37,4 +39,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin({
+  requestConfig: './l10n/request.config.ts',
+  experimental: {
+    // types the message keys, so `l10n('TYPO')` is a compile error
+    createMessagesDeclaration: ['./l10n/en-US.json'],
+  },
+});
+
+export default withNextIntl(nextConfig);

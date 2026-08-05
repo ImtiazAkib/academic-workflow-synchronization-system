@@ -1,21 +1,23 @@
-import { FeatureItem } from '@/types';
+import { FeatureVisual } from '@/types';
 
 import { cn } from '@/lib/utils';
 
 type FeatureCardProps = {
-  item: FeatureItem;
+  visual: FeatureVisual;
+  title: string;
+  description: string;
 };
 
-export function FeatureCard({ item }: FeatureCardProps) {
-  const Icon = item.icon;
+export function FeatureCard({ visual, title, description }: FeatureCardProps) {
+  const Icon = visual.icon;
 
   return (
     <article className="surface-card flex flex-col gap-3 p-6">
-      <Icon className={cn('size-6', item.accentClassName)} />
+      <Icon className={cn('size-6', visual.accentClassName)} />
 
-      <h3 className="text-lg md:text-xl">{item.title}</h3>
+      <h3 className="text-lg md:text-xl">{title}</h3>
 
-      <p className="text-muted-foreground text-sm">{item.description}</p>
+      <p className="text-muted-foreground text-sm">{description}</p>
     </article>
   );
 }

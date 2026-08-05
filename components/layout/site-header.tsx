@@ -1,10 +1,15 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
-import { APP_DATA, NAV_ITEMS, ROUTES } from '@/constants';
+import { APP_DATA, ROUTES, SECTION_IDS } from '@/constants';
+import { Link } from '@/l10n/navigation';
 
-import { AppLogo, Container } from '@/components/shared';
+import { AppLogo, Container, LanguageSelector } from '@/components/shared';
 
-export function SiteHeader() {
+const NAV_LINK_CLASS = 'text-muted-foreground hover:text-foreground text-sm font-medium transition-colors';
+
+export async function SiteHeader() {
+  const l10n = await getTranslations();
+
   return (
     <header className="bg-background/80 border-border sticky top-0 z-50 border-b backdrop-blur-md">
       <Container className="flex h-16 items-center justify-between gap-4">
@@ -13,13 +18,27 @@ export function SiteHeader() {
           <span className="font-heading text-regular-bold tracking-tight">{APP_DATA.SHORT_NAME}</span>
         </Link>
 
-        <nav aria-label="Sections" className="hidden items-center gap-6 md:flex">
-          {NAV_ITEMS.map(item => (
-            <a key={item.href} href={item.href} className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
-              {item.label}
+        <div className="flex items-center gap-4">
+          <nav className="hidden items-center gap-6 md:flex">
+            <a href={`#${SECTION_IDS.ROLES}`} className={NAV_LINK_CLASS}>
+              {l10n('NAV_ROLES')}
             </a>
-          ))}
-        </nav>
+
+            <a href={`#${SECTION_IDS.FEATURES}`} className={NAV_LINK_CLASS}>
+              {l10n('NAV_FEATURES')}
+            </a>
+
+            <a href={`#${SECTION_IDS.STACK}`} className={NAV_LINK_CLASS}>
+              {l10n('NAV_STACK')}
+            </a>
+
+            <a href={`#${SECTION_IDS.ROADMAP}`} className={NAV_LINK_CLASS}>
+              {l10n('NAV_ROADMAP')}
+            </a>
+          </nav>
+
+          <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
+        </div>
       </Container>
     </header>
   );

@@ -1,9 +1,14 @@
+import { getTranslations } from 'next-intl/server';
+
 import { APP_DATA } from '@/constants';
 
 import { AppLogo, Container } from '@/components/shared';
 
-export function SiteFooter() {
-  const year = new Date().getFullYear();
+export async function SiteFooter() {
+  const l10n = await getTranslations();
+
+  // Passed as a string on purpose: an ICU `{year, number}` would be grouped as 2,026.
+  const year = String(new Date().getFullYear());
 
   return (
     <footer className="border-border border-t">
@@ -13,11 +18,11 @@ export function SiteFooter() {
 
           <div className="flex flex-col">
             <span className="font-heading text-regular-bold tracking-tight">{APP_DATA.SHORT_NAME}</span>
-            <span className="text-muted-foreground text-sm">{APP_DATA.NAME}</span>
+            <span className="text-muted-foreground text-sm">{l10n('APP_METADATA_TITLE')}</span>
           </div>
         </div>
 
-        <p className="text-muted-foreground text-sm">© {year} — departmental project, built with Next.js and MongoDB.</p>
+        <p className="text-muted-foreground text-sm">{l10n('FOOTER_COPYRIGHT', { year })}</p>
       </Container>
     </footer>
   );
