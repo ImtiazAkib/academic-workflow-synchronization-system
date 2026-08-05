@@ -88,7 +88,7 @@ export function SignInForm({ labels }: SignInFormProps) {
         {errors.password && <p className="text-destructive text-sm">{labels.passwordRequired}</p>}
       </div>
 
-      <Button type="submit" variant="appPrimary" size="lg" disabled={isSubmitting} className="mt-1 w-full">
+      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

@@ -29,7 +29,12 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
         </Container>
       </header>
 
-      <main className="flex flex-1 items-center">{children}</main>
+      {/*
+        `flex-col` matters: as a row, the section inside is a flex item that shrinks to
+        its content and settles against the left edge. Stacking makes it fill the width,
+        so the card its own `justify-center` centres actually has a full row to centre in.
+      */}
+      <main className="flex flex-1 flex-col justify-center">{children}</main>
     </div>
   );
 }

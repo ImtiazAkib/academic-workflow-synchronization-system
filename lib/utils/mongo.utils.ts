@@ -14,3 +14,20 @@ import type { Types } from 'mongoose';
 export function toId(value: Types.ObjectId | { _id: Types.ObjectId }): string {
   return typeof value === 'object' && value !== null && '_id' in value ? String(value._id) : String(value);
 }
+
+const REGEXP_METACHARACTERS = /[.*+?^${}()|[\]\\]/g;
+
+/**
+ * Escape user-supplied text for use inside a `RegExp`.
+ *
+ * The users search box feeds its value straight into a Mongo `$regex`. Unescaped, a
+ * stray `(` is a syntax error and `.*` quietly matches every row — the search would
+ * answer a question nobody asked.
+ *
+ * @param value - Raw text as typed.
+ *
+ * @returns The text with every regular-expression metacharacter escaped.
+ */
+export function escapeRegExp(value: string): string {
+  return value.replace(REGEXP_METACHARACTERS, '\\$&');
+}

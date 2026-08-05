@@ -5,6 +5,7 @@ export * from './datetime.const';
 export * from './i18n.const';
 export * from './routes.const';
 export * from './roles.const';
+export * from './users.const';
 export * from './schedule.const';
 export * from './notice.const';
 export * from './seo.const';

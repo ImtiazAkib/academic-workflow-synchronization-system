@@ -24,7 +24,8 @@ export function LanguageSelector({ label }: LanguageSelectorProps) {
   };
 
   return (
-    <div role="group" aria-label={label} className="border-border flex items-center gap-0.5 rounded-full border p-0.5">
+    // h-9 so it matches the sign-out button it always sits beside.
+    <div role="group" aria-label={label} className="border-border flex h-9 items-center gap-0.5 rounded-full border p-0.5">
       {I18N.LOCALES.map(x => (
         <button
           key={x.locale}
@@ -33,7 +34,7 @@ export function LanguageSelector({ label }: LanguageSelectorProps) {
           aria-pressed={x.locale === activeLocale}
           onClick={() => handleLocaleClick(x.locale)}
           className={cn(
-            'cursor-pointer rounded-full px-2.5 py-1 text-sm font-medium transition-colors',
+            'flex h-full cursor-pointer items-center rounded-full px-2.5 text-sm font-medium transition-colors',
             x.locale === activeLocale ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
           )}>
           {x.nativeName}

@@ -14,4 +14,5 @@ export * from './llms.utils';
 export * from './mongo.utils';
 export * from './role.utils';
 export * from './url.utils';
+export * from './user.utils';
 export * from './zod.utils';
