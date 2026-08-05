@@ -12,6 +12,11 @@ export const SESSION = {
   ISSUER: 'academic-workflow',
   AUDIENCE: 'academic-workflow',
   /**
+   * Hidden form field carrying the current locale into the sign-out action, which
+   * cannot read the root param itself.
+   */
+  LOCALE_FIELD: 'locale',
+  /**
    * The only algorithm accepted on verification. Naming it explicitly is what blocks
    * an algorithm-confusion attack, where a token arrives claiming `alg: none`.
    */

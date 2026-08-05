@@ -1,4 +1,5 @@
-import { Types } from 'mongoose';
+// Type-only: mongoose must never reach a client bundle through the utils barrel.
+import type { Types } from 'mongoose';
 
 /**
  * Render a reference as a plain string id.

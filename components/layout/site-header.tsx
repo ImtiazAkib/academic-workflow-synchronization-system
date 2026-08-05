@@ -6,8 +6,6 @@ import { Link } from '@/l10n/navigation';
 import { AppLogo, Container, LanguageSelector } from '@/components/shared';
 import { Button } from '@/components/ui';
 
-const NAV_LINK_CLASS = 'text-muted-foreground hover:text-foreground text-sm font-medium transition-colors';
-
 export async function SiteHeader() {
   const l10n = await getTranslations();
 
@@ -21,19 +19,19 @@ export async function SiteHeader() {
 
         <div className="flex items-center gap-4">
           <nav className="hidden items-center gap-6 md:flex">
-            <a href={`#${SECTION_IDS.ROLES}`} className={NAV_LINK_CLASS}>
+            <a href={`#${SECTION_IDS.ROLES}`} className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
               {l10n('NAV_ROLES')}
             </a>
 
-            <a href={`#${SECTION_IDS.FEATURES}`} className={NAV_LINK_CLASS}>
+            <a href={`#${SECTION_IDS.FEATURES}`} className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
               {l10n('NAV_FEATURES')}
             </a>
 
-            <a href={`#${SECTION_IDS.STACK}`} className={NAV_LINK_CLASS}>
+            <a href={`#${SECTION_IDS.STACK}`} className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
               {l10n('NAV_STACK')}
             </a>
 
-            <a href={`#${SECTION_IDS.ROADMAP}`} className={NAV_LINK_CLASS}>
+            <a href={`#${SECTION_IDS.ROADMAP}`} className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
               {l10n('NAV_ROADMAP')}
             </a>
           </nav>

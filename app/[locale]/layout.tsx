@@ -4,17 +4,14 @@ import { Anek_Bangla, Inter, Noto_Sans_Bengali, Poppins } from 'next/font/google
 import { notFound } from 'next/navigation';
 
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
-import { APP_DATA, buildJsonLdGraph, getMessageLocale, I18N, SEO } from '@/constants';
+import { APP_DATA, getMessageLocale, I18N, SEO } from '@/constants';
 import { env } from '@/env/server';
 import { routing } from '@/l10n/routing';
 import { AppLocale } from '@/types';
 
-import { buildLocaleUrl } from '@/lib/url.utils';
-
-import { SiteFooter, SiteHeader } from '@/components/layout';
-import { JsonLd } from '@/components/shared';
+import { buildLocaleUrl } from '@/lib/utils';
 
 import '../globals.css';
 
@@ -107,22 +104,18 @@ export const viewport: Viewport = {
   colorScheme: 'light',
 };
 
+/*
+  The root layout carries the document and the locale, nothing else. Page chrome
+  belongs to the route groups — `(marketing)` has the site header and footer,
+  `(dashboard)` has the sidebar, `(auth)` has neither — because a dashboard nested
+  inside the marketing header would inherit navigation it has no use for.
+*/
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const { locale } = await params;
 
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
-
-  setRequestLocale(locale);
-
-  const l10n = await getTranslations({ locale });
-
-  const jsonLd = buildJsonLdGraph({
-    baseUrl: env.APP_BASE_URL,
-    description: l10n('APP_METADATA_DESCRIPTION'),
-    language: getMessageLocale(locale),
-  });
 
   return (
     /*
@@ -133,17 +126,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     */
     <html lang={locale} className={`${inter.variable} ${poppins.variable} ${notoSansBengali.variable} ${anekBangla.variable}`}>
       <body className="font-sans antialiased">
-        <JsonLd data={jsonLd} />
-
-        <NextIntlClientProvider>
-          <div className="flex min-h-dvh flex-col">
-            <SiteHeader />
-
-            <main className="flex-1">{children}</main>
-
-            <SiteFooter />
-          </div>
-        </NextIntlClientProvider>
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>
   );

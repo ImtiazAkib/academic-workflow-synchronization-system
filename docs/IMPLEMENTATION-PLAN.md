@@ -25,7 +25,7 @@ in a working state.
 | [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
 | [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
 | [5](#step-5)   | Authentication                 | Phase 2        | ✅ Done        |
-| [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ⬜ Not started |
+| [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
 | [7](#step-7)   | Admin — user management        | Phase 3        | ⬜ Not started |
 | [8](#step-8)   | Scheduling system              | Phase 4        | ⬜ Not started |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ⬜ Not started |
@@ -480,7 +480,7 @@ format and build are green, and the project has no pre-release dependencies.
 
 <a id="step-6"></a>
 
-### Step 6 — Dashboard shell & RBAC
+### Step 6 — Dashboard shell & RBAC ✅ Done
 
 **Goal.** One shell, three role-scoped entrances, with access decided in one place.
 
@@ -511,8 +511,48 @@ constants/routes.const.ts            extended with the real routes
   `Disallow` rules alone are a request, not an enforcement.
 - `typedRoutes` starts working for real here, since the routes now exist.
 
-**Acceptance.** Each role sees only its own navigation; a teacher requesting `/admin` is redirected, not shown
-a blank page; the shell is usable at 360px wide; dashboard routes return `noindex` in their headers.
+**Acceptance.** ✅ Verified in the browser against two temporary accounts, since deleted:
+
+| Attempt                      | Result                                                        |
+| ---------------------------- | ------------------------------------------------------------- |
+| Teacher signs in             | Lands on `/bn/teacher`, sidebar shown, no marketing footer    |
+| Teacher requests `/bn/admin` | `→ /bn/unauthorized`, 403, CTA points at `/bn/teacher`        |
+| Admin signs in               | Lands on `/bn/admin` — the redirect follows the role          |
+| Admin requests `/bn/teacher` | `→ /bn/unauthorized`, CTA points at `/bn/admin`               |
+| Any dashboard page           | `noindex, nofollow` in the metadata                           |
+| Sign out                     | `→ /bn`, and `/bn/admin` then redirects to `/bn/sign-in`      |
+| 360px viewport               | No sideways scroll, sidebar hidden, nav moved into the topbar |
+
+Lint, format and build are green; the language survived every redirect.
+
+**Deviations from the plan, and why.**
+
+- **The layouts were restructured, which the plan did not call for.** A `(dashboard)` group nested under the
+  old root layout would have inherited the marketing header and footer. `app/[locale]/layout.tsx` is now the
+  document and locale only; `(marketing)` owns the site header, footer and JSON-LD; `(auth)` is a quiet shell
+  with just the logo and language selector; `(dashboard)` has the sidebar and topbar. The landing page,
+  catch-all and a `not-found` moved into `(marketing)`.
+- **`requireSession()` and `requireRole()` take no locale argument.** They read it with `getLocale()`
+  themselves, so no caller can pass the wrong one.
+- **The guard's redirect helper is synchronous and ends in an unreachable `throw`.** next-intl does not type
+  `redirect` as returning `never`, and — the part that cost a build cycle — **awaiting a `Promise<never>` does
+  not narrow control flow either**. Only a synchronous `never`-returning call as the last statement in the
+  branch convinces the compiler that a guard hands back a `SessionUser` rather than `SessionUser | null`.
+- **`signInAction` returns `SingleResult<UserRole>`**, not an empty result. The client navigates to
+  `ROLE_HOME[role]`, which is a literal union — so the destination is a route `typedRoutes` already knows and
+  no path is ever built from user input.
+- **`?next=` is still not consumed.** The proxy records it, but every dashboard is one page deep, so the role
+  home _is_ the destination. Consuming it needs an allowlist check against real deep routes — that belongs in
+  step 7, where the first ones appear.
+- **No `constants/navigation.const.ts`.** Nav entries are rendered explicitly so each label stays a literal
+  `l10n('KEY')` call; collecting keys into an array is what the translator rulebook forbids.
+- **`DashboardNav` is a client component** so the active link comes from the real pathname. Hard-coding
+  "overview is current" would start lying the moment step 7 adds a second entry.
+
+**Found while verifying, worth knowing:** the session is a self-contained JWT, so **deleting a user does not
+end their session** — a token minted for an account that no longer exists still verifies until it expires.
+Deactivation takes effect at the next sign-in. Closing that gap needs a token version or a revocation list,
+which is logged in [Backlog](#backlog).
 
 ---
 
@@ -708,12 +748,13 @@ test passes against it.
 
 Real, out of scope for now, and here so they are not lost:
 
-| Item                              | Why it is parked                                              |
-| --------------------------------- | ------------------------------------------------------------- |
-| Per-user unread state for notices | Needs read receipts — a schema change with no feature ask yet |
-| Password reset by email           | Requires SMTP credentials the project does not have           |
-| Attendance tracking               | Not in the proposal scope                                     |
-| Multi-department support          | Proposal is explicit: one department first                    |
-| Bangla OpenGraph card             | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)   |
-| Storybook for the UI package      | Worth it if the component count grows past ~25                |
-| E2E tests (Playwright)            | Smoke tests first; full E2E once the flows settle             |
+| Item                              | Why it is parked                                                                                                                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-user unread state for notices | Needs read receipts — a schema change with no feature ask yet                                                                                                                           |
+| Password reset by email           | Requires SMTP credentials the project does not have                                                                                                                                     |
+| Attendance tracking               | Not in the proposal scope                                                                                                                                                               |
+| Multi-department support          | Proposal is explicit: one department first                                                                                                                                              |
+| Revoking a live session           | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list |
+| Bangla OpenGraph card             | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                             |
+| Storybook for the UI package      | Worth it if the component count grows past ~25                                                                                                                                          |
+| E2E tests (Playwright)            | Smoke tests first; full E2E once the flows settle                                                                                                                                       |
