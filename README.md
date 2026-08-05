@@ -5,9 +5,9 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 3 of 14 complete.** Toolchain, design system, validated environment, the shared
-> result/error layer, English/Bangla localization and the full SEO surface are in place. Schemas and
-> authentication are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> **Current state: step 4 of 14 complete.** Toolchain, design system, validated environment, result/error
+> layer, English/Bangla localization, the SEO surface and the data model are in place. Authentication is next
+> — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -74,7 +74,8 @@ functionality stays focused before any thought of scaling.
 
 ## Getting started
 
-**Prerequisites:** Node.js 20+ and npm. MongoDB is only needed from step 4 onward — locally or on Atlas.
+**Prerequisites:** Node.js 20+, npm, and a MongoDB you can reach — a local `mongod` or a free Atlas cluster.
+The build validates `MONGODB_URI` before it starts, so set up [the environment](#environment) first.
 
 ```bash
 npm install
@@ -92,13 +93,13 @@ Open [http://localhost:3000](http://localhost:3000).
 cp .env.example .env.local
 ```
 
-| Variable         | Required                  | Notes                                                                 |
-| ---------------- | ------------------------- | --------------------------------------------------------------------- |
-| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
-| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it   |
-| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index   |
-| `MONGODB_URI`    | From step 4               | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
-| `AUTH_SECRET`    | From step 5               | At least 32 characters — `openssl rand -base64 32`                    |
+| Variable         | Required                  | Notes                                                                |
+| ---------------- | ------------------------- | -------------------------------------------------------------------- |
+| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`              |
+| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it  |
+| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index  |
+| `MONGODB_URI`    | **Yes**                   | Local or Atlas. The database name is set in code, not read from this |
+| `AUTH_SECRET`    | From step 5               | At least 32 characters — `openssl rand -base64 32`                   |
 
 Every variable is declared in [env/server.ts](env/server.ts) and validated with zod. That module is imported
 by [next.config.ts](next.config.ts), so an invalid value **fails the build** rather than surfacing on some
@@ -114,8 +115,8 @@ Read variables through `env`, never `process.env` — that is what keeps the val
 import { env } from '@/env/server';
 ```
 
-A clean clone runs with no `.env.local` at all: nothing on the landing page touches the database, and the two
-optional variables become required in the step that starts using them.
+`MONGODB_URI` is the only one you must supply — the rest have safe defaults. `AUTH_SECRET` becomes required
+when authentication lands in step 5.
 
 ## Scripts
 
@@ -129,6 +130,7 @@ optional variables become required in the step that starts using them.
 | `npm run format`        | Prettier check                                             |
 | `npm run format:write`  | Prettier write                                             |
 | `npm run i18n:generate` | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
+| `npm run seed:admin`    | Create the first administrator (see below)                 |
 
 ## Project structure
 
@@ -147,9 +149,12 @@ components/
   ui/             shadcn (base-nova) primitives
 constants/        Copy, structural data and the error-code registry
 env/              Zod-validated server and client environment
+models/           Mongoose models — user, course, class-session, material, notice
 lib/
   api/            Route-handler response helpers — withOk, withBadRequest, withForbidden…
   result/         SingleResult · ListResult · EmptyResult and their factories
+  schemas/        Zod schemas, {entity}-{action}.schema.ts
+  mongo.utils.ts  toId() — renders a reference as a string id, populated or not
   error.utils.ts  Display formatting, normalizing unknown caught values
   zod.utils.ts    Zod issues → ErrorDto, with the code encoded in the message
   logger.ts       pino — JSON in production, pretty in development
@@ -169,9 +174,7 @@ Open it in a browser; it has no dependencies.
 Growing into this as the steps land:
 
 ```
-lib/schemas/      Zod schemas, {entity}-{action}.schema.ts
 lib/services/     Business logic, one class per entity
-models/           Mongoose models, one per file
 auth.ts           NextAuth configuration
 ```
 
@@ -397,9 +400,57 @@ export async function GET() {
 }
 ```
 
-Schemas arrive in [step 4](docs/IMPLEMENTATION-PLAN.md#step-4): one model per file in `models/`, each guarded
-with `mongoose.models.X ?? mongoose.model('X', schema)` so hot reload does not redefine it, and each reaching
-the UI only through a DTO mapper so `passwordHash` and `_id` never leak into a component.
+**The database name is set in code**, not read from the connection string. Atlas hands out URIs without a
+path segment, and a missing one silently routes every write to a database called `test` — the app works and
+nothing complains. `connectToDatabase()` passes `dbName: DATABASE_NAME` explicitly, so no environment can get
+it wrong.
+
+### Models
+
+One per file in `models/`, each guarded with `mongoose.models.X ?? mongoose.model('X', schema)` so hot reload
+re-uses the compiled model instead of redefining it.
+
+| Model          | Holds                                                       |
+| -------------- | ----------------------------------------------------------- |
+| `User`         | name, email, password hash, role, approval and active flags |
+| `Course`       | code, title, semester, credits, assigned teacher            |
+| `ClassSession` | course, teacher, room, day, start and end time, semester    |
+| `Material`     | course, uploader, file name, MIME type, size, storage key   |
+| `Notice`       | title, body, audience, publisher, publish date              |
+
+Times are 24-hour `HH:mm` strings. Zero-padded, so `startTime < endTime` is a plain string comparison — and so
+is the overlap test that step 8's conflict detection runs between two sessions.
+
+Passwords are hashed in the model's `pre('save')` hook, so every path that saves a user gets it, including the
+seed script. The field carries `select: false`: it is absent unless a query asks for it with
+`.select('+password')`.
+
+### DTOs
+
+Nothing reaches a component as a Mongoose document. Each entity has a mapper in `types/{entity}.dto.ts` that
+names every field explicitly — so `password`, `_id` and `__v` cannot leak by being forgotten, and a new
+sensitive column stays invisible until someone deliberately adds it.
+
+```ts
+import { userFromEntity } from '@/types';
+
+return singleSuccess(userFromEntity(user));
+```
+
+Mappers take a structural entity type rather than a `HydratedDocument`, so they accept both hydrated documents
+and `.lean()` results. `toId()` renders a reference as a string whether or not the query populated it.
+
+### Seeding the first administrator
+
+Every account is created by an administrator who is already signed in, which leaves the first one with no way
+in. That is what the seed script is for. Pass the credentials in the environment rather than on the command
+line, so the password stays out of shell history:
+
+```bash
+SEED_ADMIN_NAME="Department Head" SEED_ADMIN_EMAIL="head@dept.edu" SEED_ADMIN_PASSWORD="…" npm run seed:admin
+```
+
+Re-running it never resets an existing password — if the email is already registered it reports and stops.
 
 ## Roadmap
 

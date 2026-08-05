@@ -27,8 +27,12 @@ export const env = createEnv({
       .default('false')
       .transform(value => value === 'true'),
 
-    // Database — becomes required in step 4
-    MONGODB_URI: z.string().min(1).optional(),
+    /*
+      Required from step 4 onward. The database name is NOT read from this string —
+      `lib/mongodb.ts` passes it explicitly, so an Atlas URI copied without its path
+      segment cannot silently write to a database called `test`.
+    */
+    MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
 
     // Authentication — becomes required in step 5
     AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters').optional(),
