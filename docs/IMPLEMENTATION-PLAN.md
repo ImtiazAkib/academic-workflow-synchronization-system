@@ -18,7 +18,7 @@ in a working state.
 | [0](#step-0)   | Project scaffold               | Phase 1        | ✅ Done        |
 | [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
 | [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
-| [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ⬜ Not started |
+| [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
 | [4](#step-4)   | Data model                     | Phase 2        | ⬜ Not started |
 | [5](#step-5)   | Authentication                 | Phase 2        | ⬜ Not started |
 | [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ⬜ Not started |
@@ -226,7 +226,7 @@ produces 90 keys per locale from the CSV; build prerenders `/en` and `/bn`; lint
 
 <a id="step-3"></a>
 
-### Step 3 — SEO, structured data and llms.txt
+### Step 3 — SEO, structured data and llms.txt ✅ Done
 
 **Goal.** Make the public surface legible to search engines, social cards and LLM crawlers — and make sure
 the private surface is never indexed.
@@ -280,9 +280,35 @@ env/server.ts               gains ROBOTS_ENABLED
 - Adds `schema-dts`: JSON-LD typed against schema.org, so a malformed node is a compile error rather than
   something the validator finds later. `next/og` ships with Next.
 
-**Acceptance.** `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` and `/opengraph-image` all return
-200 with absolute URLs built from `APP_BASE_URL`; the JSON-LD passes the schema.org validator with no errors;
-view-source shows a canonical link and complete OpenGraph and Twitter tags.
+**Acceptance.** ✅ Verified in the browser. All five routes return 200 with absolute URLs built from
+`APP_BASE_URL` — `/sitemap.xml` carries one entry per locale with `en-US`, `bn-BD` and `x-default`
+alternates; `/llms.txt` and `/llms-full.txt` serve `text/plain` built from the dictionary;
+`/en/opengraph-image` returns `image/png`. The rendered head has `canonical`, three `hreflang` links,
+`og:locale` / `og:locale:alternate`, and a JSON-LD graph typed `Organization` → `WebSite` →
+`SoftwareApplication`. Both branches of the robots gate were checked: default emits `Disallow: /` plus
+`noindex, nofollow`; with `ROBOTS_ENABLED=true` the build emits `Allow: /` with all eight private paths
+(4 segments × 2 locales) disallowed.
+
+**Deviations from the plan, and why.**
+
+- **`schema-dts@2.0.0`, not kfz-profiler's `1.1.5`.** It is a types-only package and the nodes used here are
+  stable vocabulary; an unexplained old pin costs more than the upgrade.
+- **`json-ld.tsx` omits kfz-profiler's `'use server'` directive**, despite the plan saying "verbatim". That
+  directive marks every export in a file as a server _action_; on a component it is at best a no-op and at
+  worst turns the component into a callable reference. It renders as a plain server component without it.
+- **One OG card, Latin-only, shared by both locales.** `next/og` has no Bengali glyphs unless a font file is
+  passed to `ImageResponse`, and adding one means committing a ~300KB binary. The card shows only the product
+  name and tagline, which are Latin in both locales, so the loss is limited to a Bangla-worded card. Logged in
+  [Backlog](#backlog).
+- **`constants/json-ld.const.ts` exports a builder, not a static object.** The base URL is server-only env,
+  and `constants/index.ts` is imported by client components — a static object would drag `env/server` into the
+  client bundle. kfz-profiler avoids this with a `NEXT_PUBLIC_BASE_URL`; a builder avoids a second env
+  variable holding the same value.
+- **`ROBOTS_ENABLED` defaults to `false`,** and the layout's `robots` metadata reads the same flag rather than
+  hard-coding `index: true`. Two independent signals, both off until a deploy opts in.
+- **Helpers landed in `lib/url.utils.ts` and `lib/llms.utils.ts`**, not the planned `lib/json-ld.utils.ts` —
+  the graph builder sits with its data in `constants/`. `types/json-ld.ts` was not created; schema-dts already
+  provides the vocabulary types.
 
 ---
 
@@ -594,5 +620,6 @@ Real, out of scope for now, and here so they are not lost:
 | Password reset by email           | Requires SMTP credentials the project does not have           |
 | Attendance tracking               | Not in the proposal scope                                     |
 | Multi-department support          | Proposal is explicit: one department first                    |
+| Bangla OpenGraph card             | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)   |
 | Storybook for the UI package      | Worth it if the component count grows past ~25                |
 | E2E tests (Playwright)            | Smoke tests first; full E2E once the flows settle             |
