@@ -16,7 +16,7 @@ in a working state.
 | #              | Step                    | Proposal phase | Status         |
 | -------------- | ----------------------- | -------------- | -------------- |
 | [0](#step-0)   | Project scaffold        | Phase 1        | ✅ Done        |
-| [1](#step-1)   | Foundations             | Phase 1        | ⬜ Not started |
+| [1](#step-1)   | Foundations             | Phase 1        | ✅ Done        |
 | [2](#step-2)   | Internationalization    | Phase 1        | ⬜ Not started |
 | [3](#step-3)   | Data model              | Phase 2        | ⬜ Not started |
 | [4](#step-4)   | Authentication          | Phase 2        | ⬜ Not started |
@@ -81,7 +81,7 @@ Data         lib/mongodb.ts — globalThis-cached Mongoose connection
 
 <a id="step-1"></a>
 
-### Step 1 — Foundations
+### Step 1 — Foundations ✅ Done
 
 **Goal.** Put the shared plumbing in place before any feature needs it, so no step has to invent its own
 error shape or read `process.env` directly.
@@ -107,8 +107,23 @@ constants/                app-code.const.ts (error/message codes)
   Business failures return a failure result; only genuinely exceptional things throw.
 - Adds `@t3-oss/env-nextjs`, `zod`, `pino`, `pino-pretty`.
 
-**Acceptance.** A deliberately missing env var fails `npm run build` with a readable message; the Result
-helpers are exported from `@/lib/result` and typed end to end.
+**Acceptance.** ✅ Verified. `APP_BASE_URL=not-a-url npm run build` fails before the build starts, naming the
+variable and the reason; the Result helpers are exported from `@/lib/result` and typed end to end;
+`npm run lint`, `npm run format` and `npm run build` are all green.
+
+**Deviations from the plan, and why.**
+
+- Acceptance was proven with an **invalid** value rather than a missing one. Nothing is required yet —
+  `MONGODB_URI` and `AUTH_SECRET` are optional until steps 3 and 4, and `LOG_LEVEL` / `APP_BASE_URL` have
+  defaults — so a clean clone still runs with no `.env.local`. Validation still catches a malformed value.
+- `env/client.ts` ships with an **empty** `client: {}`. The app has no `NEXT_PUBLIC_*` variable yet; the file
+  exists so the first one gets declared and validated there instead of being read off `process.env`.
+- `lib/logger.ts` exports pino directly, rather than porting aloowing's `createLoggerAdapter`. That adapter
+  exists to preserve an older call signature in that codebase; here it would be indirection with nothing
+  behind it. Call sites use pino's own API: `log.info({ userId }, 'message')`.
+- `constants/codes.const.ts` + `codes-common.const.ts` replace the planned `app-code.const.ts`, matching
+  aloowing's file naming and its layered registry.
+- `lib/mongodb.ts` was updated to read `env.MONGODB_URI` instead of `process.env` directly.
 
 ---
 

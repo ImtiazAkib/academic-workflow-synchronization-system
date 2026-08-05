@@ -12,5 +12,5 @@
     ".vscode",
     ".vscode-insiders"
   ],
-  "words": ["Aloo", "autorestart", "backdrop", "MERN", "mongodb", "mongoose", "nextjs", "oklch", "Poppins", "shadcn", "syncable", "vercel"]
+  "words": ["Aloo", "autorestart", "backdrop", "MERN", "mongodb", "mongoose", "nextjs", "oklch", "pino", "Poppins", "shadcn", "syncable", "vercel"]
 }

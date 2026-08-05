@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { env } from '@/env/server';
+
 /*
   Next.js reloads server modules on every change in development, and every route
   handler runs in its own module scope in production. Without a cache that means a
@@ -23,7 +25,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     return cache.connection;
   }
 
-  const uri = process.env.MONGODB_URI;
+  const uri = env.MONGODB_URI;
 
   if (!uri) {
     throw new Error('MONGODB_URI is not set. Copy .env.example to .env.local and add a connection string.');

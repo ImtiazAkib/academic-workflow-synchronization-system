@@ -5,9 +5,9 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 0 of 13 complete.** The toolchain, design system and database connection are wired up,
-> and the landing page documents the system. Authentication, dashboards and schemas are next —
-> see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> **Current state: step 1 of 13 complete.** The toolchain, design system, validated environment and shared
+> result/error layer are in place, and the landing page documents the system. Internationalization, schemas and
+> authentication are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -90,14 +90,29 @@ Open [http://localhost:3000](http://localhost:3000).
 cp .env.example .env.local
 ```
 
-| Variable      | Needed from | Notes                                                                 |
-| ------------- | ----------- | --------------------------------------------------------------------- |
-| `MONGODB_URI` | Step 3      | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
-| `AUTH_SECRET` | Step 4      | Generate with `openssl rand -base64 32`                               |
+| Variable       | Required                  | Notes                                                                 |
+| -------------- | ------------------------- | --------------------------------------------------------------------- |
+| `LOG_LEVEL`    | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
+| `APP_BASE_URL` | No, defaults to localhost | Absolute origin the app is served from                                |
+| `MONGODB_URI`  | From step 3               | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
+| `AUTH_SECRET`  | From step 4               | At least 32 characters — `openssl rand -base64 32`                    |
 
-Nothing on the landing page touches the database, so `npm run dev` works before either is set. The first call
-to `connectToDatabase()` throws a named error if `MONGODB_URI` is missing. From step 1, environment variables
-are validated with zod at build time, so a missing one fails the build instead of a request.
+Every variable is declared in [env/server.ts](env/server.ts) and validated with zod. That module is imported
+by [next.config.ts](next.config.ts), so an invalid value **fails the build** rather than surfacing on some
+request later:
+
+```
+❌ Invalid environment variables: [ { path: [ 'APP_BASE_URL' ], message: 'Invalid URL' } ]
+```
+
+Read variables through `env`, never `process.env` — that is what keeps the validation honest.
+
+```ts
+import { env } from '@/env/server';
+```
+
+A clean clone runs with no `.env.local` at all: nothing on the landing page touches the database, and the two
+optional variables become required in the step that starts using them.
 
 ## Scripts
 
@@ -120,20 +135,25 @@ components/
   layout/         SiteHeader, SiteFooter
   shared/         Container, AppLogo
   ui/             shadcn (base-nova) primitives
-constants/        Copy and structural data, SCREAMING_SNAKE_CASE `as const` exports
+constants/        Copy, structural data and the error-code registry
+env/              Zod-validated server and client environment
+lib/
+  api/            Route-handler response helpers — withOk, withBadRequest, withForbidden…
+  result/         SingleResult · ListResult · EmptyResult and their factories
+  error.utils.ts  Display formatting, normalizing unknown caught values
+  zod.utils.ts    Zod issues → ErrorDto, with the code encoded in the message
+  logger.ts       pino — JSON in production, pretty in development
+  mongodb.ts      globalThis-cached Mongoose connection
+  utils.ts        cn()
 types/            One type per file, re-exported from types/index.ts
-lib/              cn() helper, MongoDB connection
 docs/             Implementation plan
 ```
 
 Growing into this as the steps land:
 
 ```
-env/              Zod-validated server and client environment
-lib/result/       SingleResult · ListResult · EmptyResult
 lib/schemas/      Zod schemas, {entity}-{action}.schema.ts
 lib/services/     Business logic, one class per entity
-lib/api/          Route-handler response helpers
 models/           Mongoose models, one per file
 l10n/             l10n.csv (source of truth) and generated dictionaries
 auth.ts           NextAuth configuration
@@ -204,6 +224,33 @@ The palette ships **light by default** with a complete `.dark` block already wri
 yet — step 11 adds `next-themes` and puts the class on `<html>`.
 
 ## Data layer
+
+### The Result pattern
+
+Services and server actions never throw for an expected failure — they return a result. Three shapes cover
+everything: `EmptyResult` (nothing to return), `SingleResult<T>` (one item), `ListResult<T>` (many, with
+optional paging info). All three carry `success`, `errors` and `messages`.
+
+```ts
+import { CODES } from '@/constants';
+import { createError, singleFailure, singleSuccess } from '@/lib/result';
+
+if (!course) {
+  const { CODE, MESSAGE } = CODES.VALIDATION.COMMON.RESOURCE_NOT_FOUND;
+  return singleFailure<CourseDto>(createError(CODE, MESSAGE));
+}
+
+return singleSuccess(courseFromEntity(course));
+```
+
+Error codes live in [constants/codes.const.ts](constants/codes.const.ts) as five digits —
+`[layer][feature][sequence]`, so `20002` is a common validation error and `50001` an authorization one. Zod
+messages carry their code inline (`encodeZodMessage`), and `mapZodErrorsToErrorDto()` unpacks the whole
+`ZodError` into field-level `ErrorDto`s a form can render.
+
+Only genuinely exceptional things throw. A refused action is data, not an exception.
+
+### MongoDB
 
 [lib/mongodb.ts](lib/mongodb.ts) exports `connectToDatabase()`. It caches the connection on `globalThis`,
 because Next.js re-evaluates server modules on every change in development and would otherwise open a new

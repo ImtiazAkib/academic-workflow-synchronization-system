@@ -1,6 +1,12 @@
 import type { NextConfig } from 'next';
 
+import '@/env/client';
+import '@/env/server';
+
 const production = process.env.NODE_ENV === 'production';
+
+const packagesForProduction = ['pino'];
+const packagesForDevelopment = ['pino', 'pino-pretty'];
 
 const consoleForProduction = {
   exclude: ['error', 'warn'],
@@ -15,6 +21,9 @@ const nextConfig: NextConfig = {
 
   // type safety
   typedRoutes: true,
+
+  // the pino transport worker breaks when bundled
+  serverExternalPackages: production ? packagesForProduction : packagesForDevelopment,
 
   // compiler optimizations
   compiler: {
