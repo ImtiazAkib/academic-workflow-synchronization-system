@@ -1,3 +1,5 @@
+import { UserRole } from '@/types';
+
 export const ROUTES = {
   // --- Main Pages ---
   HOME: {
@@ -8,7 +10,34 @@ export const ROUTES = {
     LABEL: 'Sign in',
     HREF: '/sign-in',
   },
+  UNAUTHORIZED: {
+    LABEL: 'Not allowed',
+    HREF: '/unauthorized',
+  },
+
+  // --- Role dashboards ---
+  ADMIN: {
+    LABEL: 'Administrator',
+    HREF: '/admin',
+  },
+  TEACHER: {
+    LABEL: 'Teacher',
+    HREF: '/teacher',
+  },
+  STUDENT: {
+    LABEL: 'Student',
+    HREF: '/student',
+  },
 } as const;
+
+/**
+ * Where each role lands after signing in, and the only area it may enter.
+ */
+export const ROLE_HOME = {
+  admin: ROUTES.ADMIN.HREF,
+  teacher: ROUTES.TEACHER.HREF,
+  student: ROUTES.STUDENT.HREF,
+} as const satisfies Record<UserRole, string>;
 
 /*
   Route segments that require a session. One list, used twice: `proxy.ts` guards

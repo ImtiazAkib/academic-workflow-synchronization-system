@@ -5,9 +5,10 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 5 of 14 complete.** Toolchain, design system, validated environment, result/error
-> layer, English/Bangla localization, the SEO surface, the data model and credential sign-in are in place. The
-> dashboard shell is next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> **Current state: step 6 of 14 complete.** Toolchain, design system, validated environment, result/error
+> layer, English/Bangla localization, the SEO surface, the data model, credential sign-in and the role-scoped
+> dashboard shell are in place. Admin user management is next —
+> see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -136,34 +137,35 @@ import { env } from '@/env/server';
 
 ```
 app/
-  [locale]/       Localized routes — layout (the root layout), page, not-found, catch-all
-                  opengraph-image.tsx
+  [locale]/       layout.tsx — the document and locale, no page chrome
+    (marketing)/  Landing page, catch-all, 404 — site header and footer
+    (auth)/       Sign-in — logo and language selector only
+    (dashboard)/  admin · teacher · student — sidebar, topbar, loading, error
+    unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
   globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
 l10n/             l10n.csv (source of truth), generated dictionaries, routing, navigation
 proxy.ts          Locale negotiation, then the route guard (Next 16's middleware file)
 components/
+  auth/           SignInForm and the sign-in / sign-out actions
+  dashboard/      Sidebar, topbar, nav, sign-out button
   home/           Landing sections — hero, roles, features, stack, roadmap
   layout/         SiteHeader, SiteFooter
-  shared/         Container, AppLogo
+  shared/         Container, AppLogo, JsonLd, LanguageSelector, NotFoundContent
   ui/             shadcn (base-nova) primitives
 constants/        Copy, structural data and the error-code registry
 env/              Zod-validated server and client environment
 models/           Mongoose models — user, course, class-session, material, notice
 lib/
   api/            Route-handler response helpers — withOk, withBadRequest, withForbidden…
-  auth/           session (sign/verify) · session-cookie (set/clear) · current-user
+  auth/           session · session-cookie · current-user · guards
   result/         SingleResult · ListResult · EmptyResult and their factories
   schemas/        Zod schemas, {entity}-{action}.schema.ts
   services/       One class per entity — auth.service.ts is the first
-  mongo.utils.ts  toId() — renders a reference as a string id, populated or not
-  error.utils.ts  Display formatting, normalizing unknown caught values
-  zod.utils.ts    Zod issues → ErrorDto, with the code encoded in the message
+  utils/          Every helper, barrelled — `@/lib/utils` resolves here
+                  class-name (cn) · auth · error · llms · mongo · role · url · zod
   logger.ts       pino — JSON in production, pretty in development
-  llms.utils.ts   Builds /llms.txt and /llms-full.txt from the dictionary
   mongodb.ts      globalThis-cached Mongoose connection
-  url.utils.ts    buildLocaleUrl() — absolute, locale-prefixed URLs
-  utils.ts        cn()
 types/            One type per file, re-exported from types/index.ts
 docs/             IMPLEMENTATION-PLAN.md · project-overview.html
 .husky/           pre-commit, commit-msg and pre-push guards
@@ -205,7 +207,18 @@ unchecked casts; use a DTO mapper instead of asserting a database row into a sha
 
 **Styling** — design tokens only, never a raw hex or `oklch()` in a component. Merge classes with `cn()` and
 keep the caller's `className` last so overrides win. Conditional classes go through `cn()`, never a template
-literal.
+literal. **Write classes directly on the element** — no `const NAV_LINK_CLASS = '…'` pulled out above the
+component, even when the same set repeats across siblings. Repetition is easier to read and to edit than a
+name that has to be resolved.
+
+**Helpers** — a function that is not a component and not an event handler belongs in
+`lib/utils/{domain}.utils.ts`, not beside the component that happened to need it first. Components and pages
+hold JSX and the handlers wired to it; everything else is a util with a name and a home. Import through the
+barrel: `import { cn, buildLocaleUrl } from '@/lib/utils'`.
+
+Anything in that barrel must be safe in a client bundle, so utils that reference mongoose or
+`next-intl/server` import them with `import type`. The middleware is stricter and imports
+`@/lib/utils/url.utils` directly rather than the barrel.
 
 **Naming** — files `kebab-case`; `{entity}-{action}.schema.ts`, `{entity}.const.ts`, `{entity}.enum.ts`,
 `{entity}.dto.ts`, `*.form.tsx`, `*.dialog.tsx`. Enums are `{Entity}{Concept}Enum`. Module constants are
@@ -224,7 +237,12 @@ scoped as `SCOPE_COMPONENT_ELEMENT`. `l10n/l10n.csv` is the source of truth; the
 generated and must never be hand-edited. Link with `Link` from `@/l10n/navigation`, never `next/link`, or the
 `/bn` prefix is lost on navigation.
 
-**Spelling** — a new domain word goes in `cspell.config.json`, not behind an inline disable.
+**Spelling** — a new domain word goes in `cspell.config.json`, not behind an inline disable. JSON, CSV and
+Markdown are not checked at all, which covers the translation dictionaries and `l10n/l10n.csv`; the
+generated `l10n/*.d.json.ts` is ignored by name. Bengali is skipped by script range as well, because
+`docs/project-overview.html` mixes both languages and cspell has no Bangla dictionary. That leaves code —
+and of that, `npm run lint` only reaches `.ts`/`.tsx`, so a typo in CSS or HTML shows up in the editor but
+never fails the build.
 
 **Definition of done** — `npm run format:write`, then green `npm run lint`, then a successful `npm run build`.
 
@@ -316,6 +334,20 @@ Three rules that are easy to break:
 - **Client components receive translated strings as props.** Server components do the lookup.
 - **Link with `Link` from [l10n/navigation.ts](l10n/navigation.ts)**, never `next/link`. Only the wrapper
   keeps the `/bn` prefix across a navigation. The same applies to `redirect`, `usePathname` and `useRouter`.
+
+### How the locale reaches a component
+
+From the `[locale]` root param, read natively by Next 16.3's `next/root-params` in
+[l10n/request.config.ts](l10n/request.config.ts). Server components just call `getTranslations()` — there is
+no locale to thread through props, and no `setRequestLocale()` call in any layout or page. Static rendering
+still works: `generateStaticParams()` prerenders both locales.
+
+**Root params are not available in Route Handlers or Server Actions.** Those pass a locale explicitly and the
+request config takes it from the argument instead:
+
+- `app/llms.txt/route.ts` → `getTranslations({ locale: DEFAULT_APP_LOCALE })`
+- `signOutAction` → the locale arrives as a hidden form field, validated before use, because otherwise the
+  redirect after signing out would always land on English
 
 ### Locale model
 
@@ -507,8 +539,29 @@ form renders the translated string for that code.
 the guard and the `Disallow` list in robots.txt. A signed-out request to a protected route is redirected to
 sign-in **in the language it was already reading**, with the intended destination in `?next=`.
 
-Role-based access — a teacher being turned away from `/admin` — arrives with the dashboard shell in step 6.
-Today the guard only checks that a session exists.
+### Role-based access
+
+The proxy answers "is there a session"; the page answers "is it the right one". Two guards, in
+[lib/auth/guards.ts](lib/auth/guards.ts):
+
+```ts
+const sessionUser = await requireSession(); // redirects to sign-in
+const admin = await requireRole(USER_ROLES.ADMIN); // redirects to /unauthorized
+```
+
+Both redirect rather than returning `null`, so no caller can forget the refused case and render a page to
+nobody. They read the locale themselves, so the redirect keeps the language.
+
+**A wrong role is not a missing session.** Sending both to sign-in would tell an already-authenticated teacher
+to sign in again, which reads as a bug rather than a refusal — so the wrong role gets `/unauthorized`, a 403
+with a link to the visitor's _own_ dashboard.
+
+### One thing to know about sessions
+
+The session is a self-contained JWT. **Deleting or deactivating a user does not end a session already in
+progress** — the token keeps verifying until it expires, because nothing checks the database on each request.
+That is the trade for not doing a lookup per page view. Deactivation takes effect at the next sign-in; closing
+the gap entirely needs a token version on the user record, which is in the plan's backlog.
 
 ## Roadmap
 

@@ -3,8 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { DEFAULT_APP_LOCALE } from '@/constants';
 import { env } from '@/env/server';
 
-import { buildLlmsTxt } from '@/lib/llms.utils';
-import { buildLocaleUrl } from '@/lib/url.utils';
+import { buildLlmsTxt, buildLocaleUrl } from '@/lib/utils';
 
 /*
   Served in English only, with a link to the Bangla site in the header. The convention

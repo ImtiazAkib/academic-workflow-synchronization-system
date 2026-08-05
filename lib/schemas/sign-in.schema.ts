@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { CODES } from '@/constants/codes.const';
 
-import { encodeZodMessage } from '@/lib/zod.utils';
+import { encodeZodMessage } from '@/lib/utils';
 
 import { userFields } from './user-fields.schema';
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { encodeZodMessage } from '@/lib/zod.utils';
+import { encodeZodMessage } from '@/lib/utils';
 
 const USERS = CODES.VALIDATION.USERS;
 

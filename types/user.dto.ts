@@ -1,4 +1,4 @@
-import { toId } from '@/lib/mongo.utils';
+import { toId } from '@/lib/utils';
 
 import { UserRole } from './user-role';
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 import { ROUTES } from '@/constants';
 import { redirect } from '@/l10n/navigation';
@@ -27,8 +27,6 @@ export async function generateMetadata({ params }: SignInPageProps): Promise<Met
 
 export default async function SignInPage({ params }: SignInPageProps) {
   const { locale } = await params;
-
-  setRequestLocale(locale);
 
   const sessionUser = await getSessionUser();
 
@@ -58,10 +56,12 @@ export default async function SignInPage({ params }: SignInPageProps) {
               passwordRequired: l10n('SIGN_IN_PASSWORD_REQUIRED'),
               submit: l10n('SIGN_IN_SUBMIT'),
               submitting: l10n('SIGN_IN_SUBMITTING'),
-              errorInvalidCredentials: l10n('SIGN_IN_ERROR_INVALID_CREDENTIALS'),
-              errorNotApproved: l10n('SIGN_IN_ERROR_NOT_APPROVED'),
-              errorDeactivated: l10n('SIGN_IN_ERROR_DEACTIVATED'),
-              errorUnexpected: l10n('SIGN_IN_ERROR_UNEXPECTED'),
+              errors: {
+                invalidCredentials: l10n('SIGN_IN_ERROR_INVALID_CREDENTIALS'),
+                notApproved: l10n('SIGN_IN_ERROR_NOT_APPROVED'),
+                deactivated: l10n('SIGN_IN_ERROR_DEACTIVATED'),
+                unexpected: l10n('SIGN_IN_ERROR_UNEXPECTED'),
+              },
             }}
           />
 

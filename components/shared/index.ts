@@ -2,3 +2,4 @@ export * from './app-logo';
 export * from './container';
 export * from './json-ld';
 export * from './language-selector';
+export * from './not-found-content';

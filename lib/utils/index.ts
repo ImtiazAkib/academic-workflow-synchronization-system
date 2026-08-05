@@ -1,0 +1,17 @@
+/*
+  `@/lib/utils` resolves here, so `import { cn } from '@/lib/utils'` keeps working and
+  the shadcn alias in `components.json` stays correct.
+
+  Everything re-exported here must be safe in a client bundle. That is why the utils
+  that touch server-only or heavy modules — mongoose, `next-intl/server` — import them
+  with `import type`, which the compiler erases. The middleware is stricter still and
+  imports `./url.utils` directly; see the comment in `proxy.ts`.
+*/
+export * from './class-name.utils';
+export * from './auth.utils';
+export * from './error.utils';
+export * from './llms.utils';
+export * from './mongo.utils';
+export * from './role.utils';
+export * from './url.utils';
+export * from './zod.utils';

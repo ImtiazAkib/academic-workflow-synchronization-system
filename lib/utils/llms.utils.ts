@@ -1,6 +1,7 @@
-import { getTranslations } from 'next-intl/server';
+import { APP_DATA } from '@/constants/app-data.const';
 
-import { APP_DATA } from '@/constants';
+// Type-only — see the note in `role.utils.ts`.
+import type { getTranslations } from 'next-intl/server';
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
 
