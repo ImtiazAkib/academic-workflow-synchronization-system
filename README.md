@@ -5,9 +5,9 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 2 of 14 complete.** Toolchain, design system, validated environment, the shared
-> result/error layer and full English/Bangla localization are in place. SEO, schemas and authentication are
-> next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> **Current state: step 3 of 14 complete.** Toolchain, design system, validated environment, the shared
+> result/error layer, English/Bangla localization and the full SEO surface are in place. Schemas and
+> authentication are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -23,10 +23,11 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 8. [Conventions](#conventions)
 9. [Design system](#design-system)
 10. [Internationalization](#internationalization)
-11. [Data layer](#data-layer)
-12. [Roadmap](#roadmap)
-13. [Toolchain notes](#toolchain-notes)
-14. [Deployment](#deployment)
+11. [SEO and structured data](#seo-and-structured-data)
+12. [Data layer](#data-layer)
+13. [Roadmap](#roadmap)
+14. [Toolchain notes](#toolchain-notes)
+15. [Deployment](#deployment)
 
 ---
 
@@ -91,12 +92,13 @@ Open [http://localhost:3000](http://localhost:3000).
 cp .env.example .env.local
 ```
 
-| Variable       | Required                  | Notes                                                                 |
-| -------------- | ------------------------- | --------------------------------------------------------------------- |
-| `LOG_LEVEL`    | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
-| `APP_BASE_URL` | No, defaults to localhost | Absolute origin the app is served from                                |
-| `MONGODB_URI`  | From step 4               | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
-| `AUTH_SECRET`  | From step 5               | At least 32 characters — `openssl rand -base64 32`                    |
+| Variable         | Required                  | Notes                                                                 |
+| ---------------- | ------------------------- | --------------------------------------------------------------------- |
+| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
+| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it   |
+| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index   |
+| `MONGODB_URI`    | From step 4               | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
+| `AUTH_SECRET`    | From step 5               | At least 32 characters — `openssl rand -base64 32`                    |
 
 Every variable is declared in [env/server.ts](env/server.ts) and validated with zod. That module is imported
 by [next.config.ts](next.config.ts), so an invalid value **fails the build** rather than surfacing on some
@@ -133,7 +135,9 @@ optional variables become required in the step that starts using them.
 ```
 app/
   [locale]/       Localized routes — layout (the root layout), page, not-found, catch-all
-  globals.css · global-error.tsx · robots.ts · icon.svg
+                  opengraph-image.tsx
+  llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
+  globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
 l10n/             l10n.csv (source of truth), generated dictionaries, routing, navigation
 proxy.ts          Locale negotiation (Next 16's middleware file)
 components/
@@ -149,7 +153,9 @@ lib/
   error.utils.ts  Display formatting, normalizing unknown caught values
   zod.utils.ts    Zod issues → ErrorDto, with the code encoded in the message
   logger.ts       pino — JSON in production, pretty in development
+  llms.utils.ts   Builds /llms.txt and /llms-full.txt from the dictionary
   mongodb.ts      globalThis-cached Mongoose connection
+  url.utils.ts    buildLocaleUrl() — absolute, locale-prefixed URLs
   utils.ts        cn()
 types/            One type per file, re-exported from types/index.ts
 docs/             Implementation plan
@@ -288,6 +294,39 @@ locale** (`en`, `bn`) appears in routes, and the **message locale** (`en-US`, `b
 
 Dates and numbers are formatted in `Asia/Dhaka` with `numberingSystem: 'latn'`, so Bangla shows `09:30` and
 `401` rather than Bengali numerals, which read badly beside course codes like `CSE-401`.
+
+## SEO and structured data
+
+Everything here is derived from `APP_BASE_URL` and the message dictionary, so nothing has to be kept in sync
+by hand.
+
+| Route              | What it serves                                                              |
+| ------------------ | --------------------------------------------------------------------------- |
+| `/sitemap.xml`     | One entry per locale, each with `en-US`, `bn-BD` and `x-default` alternates |
+| `/robots.txt`      | Gated on `ROBOTS_ENABLED`; disallows the private segments when enabled      |
+| `/llms.txt`        | Short index for LLM crawlers, per the llmstxt.org convention                |
+| `/llms-full.txt`   | The long form — every landing section as markdown                           |
+| `/opengraph-image` | 1200×630 social card, generated by `next/og`                                |
+
+The page head carries `metadataBase`, a canonical link, `hreflang` alternates for both locales plus
+`x-default`, `og:locale` with its alternate, and a JSON-LD `@graph` of `Organization` → `WebSite` →
+`SoftwareApplication`, cross-linked by `@id` fragments.
+
+### Two things to know
+
+**Indexing is off unless a deploy opts in.** `ROBOTS_ENABLED` defaults to `false`, which makes `robots.txt`
+emit `Disallow: /` _and_ the page metadata emit `noindex, nofollow`. Two independent signals, because getting
+a staging site back out of the index is far more work than setting one variable. Production must set
+`ROBOTS_ENABLED=true`.
+
+**Structured data is typed.** [constants/json-ld.const.ts](constants/json-ld.const.ts) builds a `Graph` from
+`schema-dts`, so a node or property that is not in the schema.org vocabulary fails the build instead of
+failing a validator after deploy. [components/shared/json-ld.tsx](components/shared/json-ld.tsx) renders it as
+a `<script type="application/ld+json">` and ships no client JavaScript.
+
+The organization node currently describes the project itself. When the department's real identity is known it
+becomes an `EducationalOrganization` with address and contact details — inventing those now would put false
+data in front of crawlers.
 
 ## Data layer
 

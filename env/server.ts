@@ -18,6 +18,15 @@ export const env = createEnv({
     // App
     APP_BASE_URL: z.url().default('http://localhost:3000'),
 
+    /*
+      Indexing switch. Defaults to off so a staging deploy cannot be indexed by
+      forgetting a variable — production has to turn it on deliberately.
+    */
+    ROBOTS_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform(value => value === 'true'),
+
     // Database — becomes required in step 4
     MONGODB_URI: z.string().min(1).optional(),
 

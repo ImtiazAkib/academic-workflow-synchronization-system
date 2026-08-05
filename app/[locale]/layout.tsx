@@ -6,10 +6,15 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { APP_DATA } from '@/constants';
+import { APP_DATA, buildJsonLdGraph, getMessageLocale, I18N, SEO } from '@/constants';
+import { env } from '@/env/server';
 import { routing } from '@/l10n/routing';
+import { AppLocale } from '@/types';
+
+import { buildLocaleUrl } from '@/lib/url.utils';
 
 import { SiteFooter, SiteHeader } from '@/components/layout';
+import { JsonLd } from '@/components/shared';
 
 import '../globals.css';
 
@@ -50,23 +55,48 @@ export async function generateMetadata({ params }: Omit<LocaleLayoutProps, 'chil
   const { locale } = await params;
   const l10n = await getTranslations({ locale });
 
+  const baseUrl = env.APP_BASE_URL;
+  const appLocale = locale as AppLocale;
+  const title = l10n('APP_METADATA_TITLE');
+  const description = l10n('APP_METADATA_DESCRIPTION');
+
+  /*
+    `languages` lists every locale plus `x-default`, which is what lets both languages
+    be indexed separately instead of competing for the same URL. It is only possible
+    because the locale is in the path.
+  */
+  const languages: Record<string, string> = Object.fromEntries(I18N.LOCALES.map(x => [x.code, buildLocaleUrl(baseUrl, x.locale)]));
+
   return {
-    title: l10n('APP_METADATA_TITLE'),
-    description: l10n('APP_METADATA_DESCRIPTION'),
+    metadataBase: new URL(baseUrl),
+    title,
+    description,
+    keywords: [...SEO.KEYWORDS],
+    alternates: {
+      canonical: buildLocaleUrl(baseUrl, appLocale),
+      languages: {
+        ...languages,
+        'x-default': buildLocaleUrl(baseUrl, routing.defaultLocale),
+      },
+    },
     openGraph: {
       type: 'website',
       siteName: APP_DATA.SHORT_NAME,
-      title: l10n('APP_METADATA_TITLE'),
-      description: l10n('APP_METADATA_DESCRIPTION'),
+      url: buildLocaleUrl(baseUrl, appLocale),
+      locale: getMessageLocale(appLocale).replace('-', '_'),
+      alternateLocale: I18N.LOCALES.filter(x => x.locale !== appLocale).map(x => x.code.replace('-', '_')),
+      title,
+      description,
     },
     twitter: {
       card: 'summary_large_image',
-      title: l10n('APP_METADATA_TITLE'),
-      description: l10n('APP_METADATA_DESCRIPTION'),
+      title,
+      description,
     },
+    // Matches robots.txt: a deployment that has not opted into indexing says so twice.
     robots: {
-      index: true,
-      follow: true,
+      index: env.ROBOTS_ENABLED,
+      follow: env.ROBOTS_ENABLED,
     },
     authors: [{ name: APP_DATA.NAME }],
   };
@@ -86,6 +116,14 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   setRequestLocale(locale);
 
+  const l10n = await getTranslations({ locale });
+
+  const jsonLd = buildJsonLdGraph({
+    baseUrl: env.APP_BASE_URL,
+    description: l10n('APP_METADATA_DESCRIPTION'),
+    language: getMessageLocale(locale),
+  });
+
   return (
     /*
       The font variables sit on <html>, not <body>. `--font-body` is declared on <html>
@@ -95,6 +133,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     */
     <html lang={locale} className={`${inter.variable} ${poppins.variable} ${notoSansBengali.variable} ${anekBangla.variable}`}>
       <body className="font-sans antialiased">
+        <JsonLd data={jsonLd} />
+
         <NextIntlClientProvider>
           <div className="flex min-h-dvh flex-col">
             <SiteHeader />
