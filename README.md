@@ -5,7 +5,7 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 1 of 13 complete.** The toolchain, design system, validated environment and shared
+> **Current state: step 1 of 14 complete.** The toolchain, design system, validated environment and shared
 > result/error layer are in place, and the landing page documents the system. Internationalization, schemas and
 > authentication are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
@@ -60,19 +60,19 @@ functionality stays focused before any thought of scaling.
 
 ## Tech stack
 
-| Layer      | Choice                          | Why                                                        |
-| ---------- | ------------------------------- | ---------------------------------------------------------- |
-| Framework  | Next.js 16 (App Router)         | Server rendering and the API layer in one codebase         |
-| UI         | React 19 + Tailwind CSS v4      | Design tokens, responsive by default                       |
-| Primitives | shadcn (`base-nova`) on Base UI | Accessible components that match the token system          |
-| Language   | TypeScript (strict)             | No `any`, no unchecked casts                               |
-| Database   | MongoDB + Mongoose              | Document-shaped data: profiles, courses, nested structures |
-| Auth       | NextAuth v5 (from step 4)       | Credentials provider with role on the session              |
-| i18n       | next-intl (from step 2)         | `l10n('KEY')` with a CSV-driven dictionary                 |
+| Layer      | Choice                          | Why                                                            |
+| ---------- | ------------------------------- | -------------------------------------------------------------- |
+| Framework  | Next.js 16 (App Router)         | Server rendering and the API layer in one codebase             |
+| UI         | React 19 + Tailwind CSS v4      | Design tokens, responsive by default                           |
+| Primitives | shadcn (`base-nova`) on Base UI | Accessible components that match the token system              |
+| Language   | TypeScript (strict)             | No `any`, no unchecked casts                                   |
+| Database   | MongoDB + Mongoose              | Document-shaped data: profiles, courses, nested structures     |
+| Auth       | NextAuth v5 (from step 5)       | Credentials provider with role on the session                  |
+| i18n       | next-intl (from step 2)         | English and Bangla, `l10n('KEY')` from a CSV-driven dictionary |
 
 ## Getting started
 
-**Prerequisites:** Node.js 20+ and npm. MongoDB is only needed from step 3 onward — locally or on Atlas.
+**Prerequisites:** Node.js 20+ and npm. MongoDB is only needed from step 4 onward — locally or on Atlas.
 
 ```bash
 npm install
@@ -94,8 +94,8 @@ cp .env.example .env.local
 | -------------- | ------------------------- | --------------------------------------------------------------------- |
 | `LOG_LEVEL`    | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
 | `APP_BASE_URL` | No, defaults to localhost | Absolute origin the app is served from                                |
-| `MONGODB_URI`  | From step 3               | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
-| `AUTH_SECRET`  | From step 4               | At least 32 characters — `openssl rand -base64 32`                    |
+| `MONGODB_URI`  | From step 4               | `mongodb://127.0.0.1:27017/academic-workflow`, or an Atlas SRV string |
+| `AUTH_SECRET`  | From step 5               | At least 32 characters — `openssl rand -base64 32`                    |
 
 Every variable is declared in [env/server.ts](env/server.ts) and validated with zod. That module is imported
 by [next.config.ts](next.config.ts), so an invalid value **fails the build** rather than surfacing on some
@@ -152,12 +152,13 @@ docs/             Implementation plan
 Growing into this as the steps land:
 
 ```
+app/[locale]/     Public routes under the locale segment — `/` and `/bn`
 lib/schemas/      Zod schemas, {entity}-{action}.schema.ts
 lib/services/     Business logic, one class per entity
 models/           Mongoose models, one per file
-l10n/             l10n.csv (source of truth) and generated dictionaries
+l10n/             l10n.csv (source of truth), generated dictionaries, routing and navigation
 auth.ts           NextAuth configuration
-proxy.ts          Route protection (Next 16's middleware file)
+proxy.ts          Locale negotiation, then route protection (Next 16's middleware file)
 ```
 
 Every folder exposes a barrel `index.ts`, and components import through it (`@/components/home`,
@@ -199,6 +200,12 @@ in DTO mappers. Components render what they are given.
 input with zod inside the action, calls a service, and returns a Result. Expected failures come back as a
 failure result; they are not thrown.
 
+**Language** — the app ships in **English and Bangla**. English is the default and lives at `/`; Bangla is at
+`/bn`. Every user-facing string is an `l10n('KEY')` lookup, never a literal — keys are flat and ALL CAPS,
+scoped as `SCOPE_COMPONENT_ELEMENT`. `l10n/l10n.csv` is the source of truth; the JSON dictionaries are
+generated and must never be hand-edited. Link with `Link` from `@/l10n/navigation`, never `next/link`, or the
+`/bn` prefix is lost on navigation.
+
 **Spelling** — a new domain word goes in `cspell.config.json`, not behind an inline disable.
 
 **Definition of done** — `npm run format:write`, then green `npm run lint`, then a successful `npm run build`.
@@ -221,7 +228,13 @@ Typography helpers (`.tagline`, `.text-medium-normal`, `.text-regular-semibold`)
 (`.section-py`, `.section-px`) and `.surface-card` are defined alongside the tokens.
 
 The palette ships **light by default** with a complete `.dark` block already written. There is no theme toggle
-yet — step 11 adds `next-themes` and puts the class on `<html>`.
+yet — step 12 adds `next-themes` and puts the class on `<html>`.
+
+### Type
+
+Inter (body) and Poppins (headings) cover the Latin text. Neither has Bengali glyphs, so from step 2 the
+Bangla locale swaps in **Noto Sans Bengali** and **Anek Bangla** under `html[lang='bn']`, along with a larger
+`line-height` — Bengali conjuncts clip at the leading that suits Latin.
 
 ## Data layer
 
@@ -265,7 +278,7 @@ export async function GET() {
 }
 ```
 
-Schemas arrive in [step 3](docs/IMPLEMENTATION-PLAN.md#step-3): one model per file in `models/`, each guarded
+Schemas arrive in [step 4](docs/IMPLEMENTATION-PLAN.md#step-4): one model per file in `models/`, each guarded
 with `mongoose.models.X ?? mongoose.model('X', schema)` so hot reload does not redefine it, and each reaching
 the UI only through a DTO mapper so `passwordHash` and `_id` never leak into a component.
 
@@ -276,12 +289,12 @@ Straight from the project proposal, mapped onto the
 
 | Phase | Activity                                        | Estimate | Steps |
 | ----- | ----------------------------------------------- | -------- | ----- |
-| 1     | Requirement analysis and UI/UX design           | Week 1   | 0–2   |
-| 2     | Database schema design and authentication setup | Week 2   | 3–4   |
-| 3     | Admin dashboard and user management             | Week 3-4 | 5–6   |
-| 4     | Scheduling system and teacher dashboard         | Week 5-6 | 7–8   |
-| 5     | Student dashboard and material management       | Week 7   | 9–10  |
-| 6     | Testing, bug fixing and final deployment        | Week 8   | 11–12 |
+| 1     | Requirement analysis and UI/UX design           | Week 1   | 0–3   |
+| 2     | Database schema design and authentication setup | Week 2   | 4–5   |
+| 3     | Admin dashboard and user management             | Week 3-4 | 6–7   |
+| 4     | Scheduling system and teacher dashboard         | Week 5-6 | 8–9   |
+| 5     | Student dashboard and material management       | Week 7   | 10–11 |
+| 6     | Testing, bug fixing and final deployment        | Week 8   | 12–13 |
 
 `typedRoutes` is on, so a `<Link>` to a route that does not exist yet is a build error. That is why the
 landing page uses in-page anchors and `ROUTES` currently holds only `HOME`.
