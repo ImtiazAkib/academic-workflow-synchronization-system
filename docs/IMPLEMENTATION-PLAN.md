@@ -23,7 +23,7 @@ in a working state.
 | [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
 | [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
 | [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
-| [4](#step-4)   | Data model                     | Phase 2        | ⬜ Not started |
+| [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
 | [5](#step-5)   | Authentication                 | Phase 2        | ⬜ Not started |
 | [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ⬜ Not started |
 | [7](#step-7)   | Admin — user management        | Phase 3        | ⬜ Not started |
@@ -318,7 +318,7 @@ alternates; `/llms.txt` and `/llms-full.txt` serve `text/plain` built from the d
 
 <a id="step-4"></a>
 
-### Step 4 — Data model
+### Step 4 — Data model ✅ Done
 
 **Goal.** The schemas the whole application reads and writes, with validation and DTO mapping around them.
 
@@ -347,8 +347,46 @@ scripts/seed-admin.mjs      creates the first administrator
 - DTOs never leak `passwordHash`, `_id` or `__v`; `userFromEntity()` is the only way a user reaches the UI.
 - Adds `mongoose` (installed), `bcryptjs`, `zod` (from step 1).
 
-**Acceptance.** The seed script creates an administrator against a real `MONGODB_URI`; each model round-trips
-through its DTO mapper with correct types.
+**Acceptance.** ✅ Verified against the real Atlas cluster, with one temporary record created and removed:
+password hashed by the hook (`$2` prefix, never the plaintext), `comparePassword` true for the right password
+and false for the wrong one, `select: false` keeping the hash out of an ordinary query, `isApproved` false and
+`isActive` true by default, email lowercased, the unique `email_1` index created, and `userFromEntity()`
+emitting exactly eleven keys with no `password` and no `_id`. Both of the seed script's validation failure
+paths report the offending variable by name. Lint, format and build are green.
+
+**Not verified by me:** the seed script's _create_ path. Running it mints a real administrator whose password
+only I would know, so it is one command for you to run:
+
+```bash
+SEED_ADMIN_NAME="Department Head" SEED_ADMIN_EMAIL="head@dept.edu" SEED_ADMIN_PASSWORD="…" npm run seed:admin
+```
+
+**Deviations from the plan, and why.**
+
+- **`lib/mongodb.ts` now passes `dbName` explicitly** — not in the plan, added because the connection string
+  in `.env.local` had no path segment and every write was going to a database called `test`. The app worked;
+  the data was in the wrong place and nothing complained. The database name is now owned by
+  `constants/database.const.ts`, so no environment can get it wrong.
+- **The field is `password`, not `passwordHash`.** The pre-save hook is handed a plaintext and replaces it, so
+  a field named `passwordHash` would be a lie at the moment of assignment. It carries `select: false` instead,
+  which is the protection the name was reaching for.
+- **`scripts/seed-admin.ts`, not `.mjs`** — it imports the models and the `@/` aliases, which a plain `.mjs`
+  cannot resolve. Adds `tsx` as a dev dependency and runs with `--env-file-if-exists=.env.local`.
+- **Models import the specific constant module, never the `@/constants` barrel.** The barrel re-exports
+  `home.const.ts` and drags `lucide-react` with it — harmless in a React tree, wasteful in a seed script, fatal
+  in the middleware bundle, as step 2 already found out. Same rule applied to `lib/mongodb.ts`.
+- **Extra files the plan did not itemize:** `lib/mongo.utils.ts` (`toId()`, so a mapper behaves the same
+  whether or not a reference was populated), `constants/{database,schedule,notice,codes-users}.const.ts`, and
+  `types/{day-of-week,notice-audience}.ts`. `schedule.const.ts` was scheduled for step 8, but the class-session
+  model needs the day list, time pattern and semester bounds now.
+- **Error codes exist for users only.** The user schemas are consumed first, by authentication in step 5; the
+  other entities get their codes with the services that raise them, rather than inventing a taxonomy for
+  features that do not exist. Uncoded messages decode to code `0` and still render.
+- **`storageKey` is absent from `MaterialDto`.** It describes where bytes sit on the server; the download route
+  resolves it after checking access.
+- **Eight schema files rather than seven** — `object-id.schema.ts` was extracted because three schemas validate
+  an id, and the planned `class-session-fields.schema.ts` was folded into its create schema until step 8 needs
+  an update schema to share it.
 
 ---
 
