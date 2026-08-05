@@ -5,9 +5,9 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 1 of 14 complete.** The toolchain, design system, validated environment and shared
-> result/error layer are in place, and the landing page documents the system. Internationalization, schemas and
-> authentication are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> **Current state: step 2 of 14 complete.** Toolchain, design system, validated environment, the shared
+> result/error layer and full English/Bangla localization are in place. SEO, schemas and authentication are
+> next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -22,10 +22,11 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 7. [Project structure](#project-structure)
 8. [Conventions](#conventions)
 9. [Design system](#design-system)
-10. [Data layer](#data-layer)
-11. [Roadmap](#roadmap)
-12. [Toolchain notes](#toolchain-notes)
-13. [Deployment](#deployment)
+10. [Internationalization](#internationalization)
+11. [Data layer](#data-layer)
+12. [Roadmap](#roadmap)
+13. [Toolchain notes](#toolchain-notes)
+14. [Deployment](#deployment)
 
 ---
 
@@ -116,20 +117,25 @@ optional variables become required in the step that starts using them.
 
 ## Scripts
 
-| Script                 | Description                                                |
-| ---------------------- | ---------------------------------------------------------- |
-| `npm run dev`          | Start the dev server                                       |
-| `npm run build`        | Production build (`output: 'standalone'`)                  |
-| `npm run start`        | Serve the production build                                 |
-| `npm run lint`         | ESLint — import order, cspell, canonical classes, Prettier |
-| `npm run lint:fix`     | ESLint with `--fix`                                        |
-| `npm run format`       | Prettier check                                             |
-| `npm run format:write` | Prettier write                                             |
+| Script                  | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `npm run dev`           | Start the dev server                                       |
+| `npm run build`         | Production build (`output: 'standalone'`)                  |
+| `npm run start`         | Serve the production build                                 |
+| `npm run lint`          | ESLint — import order, cspell, canonical classes, Prettier |
+| `npm run lint:fix`      | ESLint with `--fix`                                        |
+| `npm run format`        | Prettier check                                             |
+| `npm run format:write`  | Prettier write                                             |
+| `npm run i18n:generate` | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
 
 ## Project structure
 
 ```
-app/              Route segments, globals.css, metadata routes (robots, icon)
+app/
+  [locale]/       Localized routes — layout (the root layout), page, not-found, catch-all
+  globals.css · global-error.tsx · robots.ts · icon.svg
+l10n/             l10n.csv (source of truth), generated dictionaries, routing, navigation
+proxy.ts          Locale negotiation (Next 16's middleware file)
 components/
   home/           Landing sections — hero, roles, features, stack, roadmap
   layout/         SiteHeader, SiteFooter
@@ -152,13 +158,10 @@ docs/             Implementation plan
 Growing into this as the steps land:
 
 ```
-app/[locale]/     Public routes under the locale segment — `/` and `/bn`
 lib/schemas/      Zod schemas, {entity}-{action}.schema.ts
 lib/services/     Business logic, one class per entity
 models/           Mongoose models, one per file
-l10n/             l10n.csv (source of truth), generated dictionaries, routing and navigation
 auth.ts           NextAuth configuration
-proxy.ts          Locale negotiation, then route protection (Next 16's middleware file)
 ```
 
 Every folder exposes a barrel `index.ts`, and components import through it (`@/components/home`,
@@ -235,6 +238,56 @@ yet — step 12 adds `next-themes` and puts the class on `<html>`.
 Inter (body) and Poppins (headings) cover the Latin text. Neither has Bengali glyphs, so from step 2 the
 Bangla locale swaps in **Noto Sans Bengali** and **Anek Bangla** under `html[lang='bn']`, along with a larger
 `line-height` — Bengali conjuncts clip at the leading that suits Latin.
+
+## Internationalization
+
+The app ships in **English** (`/`) and **Bangla** (`/bn`), via next-intl with
+`localePrefix: 'as-needed'`. Two URLs rather than one cookie-switched URL, so both languages can be indexed.
+
+### Adding or changing a string
+
+1. Edit [l10n/l10n.csv](l10n/l10n.csv) — columns are `key`, `en-US`, `bn-BD`.
+2. Run the generator. **Never hand-edit the JSON dictionaries**; they are build output.
+
+```bash
+npm run i18n:generate
+```
+
+A blank `bn-BD` cell is allowed: the generator falls back to the English text and prints the list of keys that
+fell back, so an untranslated string never becomes a missing-key error in the UI.
+
+### Using a string
+
+Keys are flat and ALL CAPS, scoped `SCOPE_COMPONENT_ELEMENT` (`HOME_HERO_TITLE_LEAD`). The translation
+function is **always** named `l10n` — the i18n-ally editor integration matches on that name.
+
+```tsx
+import { getTranslations } from 'next-intl/server';
+
+export async function SectionRoles() {
+  const l10n = await getTranslations();
+
+  return <h2>{l10n('HOME_ROLES_TITLE')}</h2>;
+}
+```
+
+Three rules that are easy to break:
+
+- **Keys are written as literals at the call site.** Do not collect them into an array and map over it — the
+  editor integration only detects the literal call form. That is why `constants/home.const.ts` holds icons and
+  accent classes but no text, and each card is rendered explicitly.
+- **Client components receive translated strings as props.** Server components do the lookup.
+- **Link with `Link` from [l10n/navigation.ts](l10n/navigation.ts)**, never `next/link`. Only the wrapper
+  keeps the `/bn` prefix across a navigation. The same applies to `redirect`, `usePathname` and `useRouter`.
+
+### Locale model
+
+Two tiers, resolved in exactly one place ([constants/i18n.const.ts](constants/i18n.const.ts)): the **URL
+locale** (`en`, `bn`) appears in routes, and the **message locale** (`en-US`, `bn-BD`) names the dictionary.
+`getMessageLocale()` maps between them — nothing else should mention `en-US` or `bn-BD`.
+
+Dates and numbers are formatted in `Asia/Dhaka` with `numberingSystem: 'latn'`, so Bangla shows `09:30` and
+`401` rather than Bengali numerals, which read badly beside course codes like `CSE-401`.
 
 ## Data layer
 

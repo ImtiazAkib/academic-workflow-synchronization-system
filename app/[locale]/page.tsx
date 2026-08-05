@@ -1,6 +1,16 @@
+import { setRequestLocale } from 'next-intl/server';
+
 import { SectionFeatures, SectionHero, SectionRoadmap, SectionRoles, SectionStack } from '@/components/home';
 
-export default function Page() {
+type PageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function Page({ params }: PageProps) {
+  const { locale } = await params;
+
+  setRequestLocale(locale);
+
   return (
     <>
       <SectionHero />
