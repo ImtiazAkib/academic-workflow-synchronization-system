@@ -6,6 +6,10 @@ in a working state.
 ## How this works
 
 - **You start each step.** Say _"start step 4"_ and only step 4 gets built. Nothing runs ahead of your command.
+- **The checks are enforced, not remembered.** Husky runs lint and format on every commit, commitlint on the
+  message, and the build on every push. See the README's Git hooks section.
+- **[project-overview.html](project-overview.html)** is the visual companion to this document — the same
+  system as diagrams rather than deliverables.
 - **One step at a time.** If a step turns out to be bigger than it looks, it gets split rather than stretched.
 - **Every step ends green** — see [Definition of done](#definition-of-done).
 - **The plan is not frozen.** Anything discovered mid-step that belongs elsewhere goes to

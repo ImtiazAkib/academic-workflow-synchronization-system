@@ -158,8 +158,13 @@ lib/
   url.utils.ts    buildLocaleUrl() — absolute, locale-prefixed URLs
   utils.ts        cn()
 types/            One type per file, re-exported from types/index.ts
-docs/             Implementation plan
+docs/             IMPLEMENTATION-PLAN.md · project-overview.html
+.husky/           pre-commit, commit-msg and pre-push guards
 ```
+
+**[docs/project-overview.html](docs/project-overview.html)** is a standalone visual walkthrough — request
+lifecycle, the i18n pipeline, how a write travels through the layers, the data model, and build progress.
+Open it in a browser; it has no dependencies.
 
 Growing into this as the steps land:
 
@@ -218,6 +223,28 @@ generated and must never be hand-edited. Link with `Link` from `@/l10n/navigatio
 **Spelling** — a new domain word goes in `cspell.config.json`, not behind an inline disable.
 
 **Definition of done** — `npm run format:write`, then green `npm run lint`, then a successful `npm run build`.
+
+### Git hooks
+
+Husky enforces the definition of done rather than trusting anyone to remember it. A failing check aborts the
+operation; the hooks install themselves through the `prepare` script on `npm install`.
+
+| Hook         | Runs                                                     | Blocks     |
+| ------------ | -------------------------------------------------------- | ---------- |
+| `pre-commit` | Branch-name check, then `npm run lint`, `npm run format` | The commit |
+| `commit-msg` | commitlint — Conventional Commits                        | The commit |
+| `pre-push`   | `npm run build`, which is the type check                 | The push   |
+
+Branch names must be `feature/`, `bugfix/`, `release/` or `hotfix/` followed by lowercase `a-z0-9-`
+(`feature/step-4-data-model`); `master` and `develop` are exempt. Commit messages need a Conventional Commits
+type — `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`.
+
+Lint and format run on every commit because they are fast. The build runs once per push, because it is what
+catches a type error, a broken metadata route or an invalid env schema — cheap here, expensive in CI or in a
+branch someone else has pulled.
+
+If the hooks ever stop firing, `npm run prepare` reinstalls them. `--no-verify` skips them; treat that as a
+last resort, not a shortcut.
 
 ## Design system
 
