@@ -8,8 +8,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-heading: var(--font-poppins);
+  /*
+    Deliberately pointed at `--font-body` / `--font-display` rather than straight at
+    the next/font variables. `@theme inline` inlines the value into the utility, so
+    `.font-sans` becomes `font-family: var(--font-body)` — which means the font can be
+    swapped per language by reassigning that one variable further down the cascade.
+    Pointing at `--font-inter` here would bake Inter in and make the swap impossible.
+  */
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -57,6 +64,8 @@
 }
 
 :root {
+  --font-body: var(--font-inter);
+  --font-display: var(--font-poppins);
   --radius: 0.75rem;
   --background: oklch(0.99 0.003 265);
   --foreground: oklch(0.21 0.025 265);
@@ -141,6 +150,17 @@
   --accent-blue: oklch(0.74 0.13 230);
   --accent-teal: oklch(0.74 0.12 175);
   --accent-amber: oklch(0.8 0.14 65);
+}
+
+/*
+  Bengali script. Inter and Poppins carry no Bengali glyphs, so `bn` swaps both faces
+  for ones that do. Conjuncts (যুক্তাক্ষর) stack vertically and clip at the leading that
+  suits Latin, hence the extra line-height.
+*/
+html[lang='bn'] {
+  --font-body: var(--font-noto-bengali);
+  --font-display: var(--font-anek-bangla);
+  line-height: 1.7;
 }
 
 @layer base {

@@ -17,7 +17,7 @@ in a working state.
 | -------------- | ------------------------------ | -------------- | -------------- |
 | [0](#step-0)   | Project scaffold               | Phase 1        | ✅ Done        |
 | [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
-| [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ⬜ Not started |
+| [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
 | [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ⬜ Not started |
 | [4](#step-4)   | Data model                     | Phase 2        | ⬜ Not started |
 | [5](#step-5)   | Authentication                 | Phase 2        | ⬜ Not started |
@@ -133,7 +133,7 @@ variable and the reason; the Result helpers are exported from `@/lib/result` and
 
 <a id="step-2"></a>
 
-### Step 2 — i18n: English + Bangla
+### Step 2 — i18n: English + Bangla ✅ Done
 
 **Goal.** Two languages from the first string, so nothing has to be retrofitted. English at `/`, Bangla at
 `/bn`.
@@ -186,9 +186,41 @@ components/layout/site-header.tsx         gains the selector
 - `<html lang>` follows the route segment, so the font swap and screen-reader pronunciation key off the same
   value.
 
-**Acceptance.** `/` renders English and `/bn` renders the same page with Bengali-capable type and no clipped
-conjuncts; the language selector moves between them preserving the current path; `npm run i18n:generate`
-reproduces both JSON files from the CSV; no literal UI string remains in `components/`.
+**Acceptance.** ✅ Verified in the browser. `/` renders English with Inter/Poppins and `lang="en"`; `/bn`
+renders Bangla with Noto Sans Bengali / Anek Bangla and `lang="bn"`; the selector moves between them and sets
+the locale cookie; `/bn/does-not-exist` renders the translated 404 inside the shell; `npm run i18n:generate`
+produces 90 keys per locale from the CSV; build prerenders `/en` and `/bn`; lint, format and build are green.
+
+**Deviations from the plan, and why.**
+
+- **I wrote a Bangla draft after saying I would not.** The reason I changed course: with an English-filled
+  `bn-BD` column there is no way to verify the thing most likely to break — Bengali glyph rendering,
+  conjunct clipping and the font swap. An unverified font pipeline is a worse handover than a draft you can
+  correct in one CSV column. **Please review `l10n/l10n.csv`;** the terminology is standard but the prose is
+  mine, not a native speaker's.
+- **Two font bugs, both found by checking computed styles rather than by looking at the page.** First,
+  `@theme inline` _inlines_ its value, so `.font-sans` compiled to `font-family: var(--font-inter)` and
+  overriding `--font-sans` per language did nothing. The theme now points at `--font-body` / `--font-display`,
+  one level of indirection that makes the swap possible. Second, the next/font variables were on `<body>`
+  while `--font-body` is declared on `<html>` — a custom property resolves against the element that declares
+  it, so the swap resolved to nothing and the page silently fell back to the system stack. The font classes
+  moved to `<html>`.
+- **`l10n/routing.ts` imports `@/constants/i18n.const` directly, not the barrel.** `proxy.ts` pulls routing
+  into the middleware bundle, and the barrel drags `lucide-react` in with it, which the middleware runtime
+  cannot resolve. The production build passed; only the dev middleware failed, which is exactly the kind of
+  thing that reaches a branch unnoticed.
+- **Added `app/[locale]/[...rest]/page.tsx`**, not in the plan. Without it an unmatched path escapes the
+  `[locale]` segment and Next serves its own unstyled 404 instead of the translated one.
+- **`app/[locale]/layout.tsx` is the root layout** — there is no `app/layout.tsx`. `global-error.tsx`,
+  `robots.ts` and `icon.svg` stay at the app root, and `global-error.tsx` keeps its English strings because it
+  renders outside the locale provider.
+- **The generator falls back instead of failing.** aloowing's script throws on an empty cell; this one falls
+  back to the default locale and prints the list of keys that fell back. A missing key at runtime is a visible
+  defect, an untranslated string is not.
+- **Constants hold visuals only now.** The translator rulebook forbids collecting keys into arrays and
+  iterating (i18n-ally only detects literal `l10n('KEY')` calls), so the sections render each card explicitly
+  and `constants/home.const.ts` keeps just icons and accent classes. `types/{nav-item,feature-item,role-card-item,phase-item,tech-item}.ts`
+  were deleted and replaced by `role-visual.ts` / `feature-visual.ts`.
 
 ---
 
