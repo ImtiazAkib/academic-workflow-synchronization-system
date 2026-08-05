@@ -23,6 +23,7 @@
     "latn",
     "llms",
     "llmstxt",
+    "maxlength",
     "MERN",
     "mongodb",
     "mongoose",
@@ -34,6 +35,7 @@
     "Poppins",
     "shadcn",
     "syncable",
+    "uppercased",
     "vercel"
   ]
 }

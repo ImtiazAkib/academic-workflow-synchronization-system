@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 
 import { env } from '@/env/server';
 
+// Imported from the module, not the barrel — this file is loaded by standalone
+// scripts, and the barrel re-exports UI constants that pull in `lucide-react`.
+import { DATABASE_NAME } from '@/constants/database.const';
+
 /*
   Next.js reloads server modules on every change in development, and every route
   handler runs in its own module scope in production. Without a cache that means a
@@ -25,15 +29,13 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     return cache.connection;
   }
 
-  const uri = env.MONGODB_URI;
-
-  if (!uri) {
-    throw new Error('MONGODB_URI is not set. Copy .env.example to .env.local and add a connection string.');
-  }
-
   if (!cache.promise) {
-    // Fail fast instead of queueing operations against a database that is not there.
-    cache.promise = mongoose.connect(uri, { bufferCommands: false });
+    cache.promise = mongoose.connect(env.MONGODB_URI, {
+      // Owned by the code, not by whoever pasted the connection string.
+      dbName: DATABASE_NAME,
+      // Fail fast instead of queueing operations against a database that is not there.
+      bufferCommands: false,
+    });
   }
 
   try {
