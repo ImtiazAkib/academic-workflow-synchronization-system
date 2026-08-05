@@ -41,7 +41,19 @@ export const USERS_VALIDATION = {
  * Business layer errors for Users (31000-31999).
  */
 export const USERS_BUSINESS = {
-  ACCOUNT_NOT_APPROVED: createErrorDefinition(31000, 'This account is waiting for administrator approval.'),
-  ACCOUNT_DEACTIVATED: createErrorDefinition(31001, 'This account has been deactivated.'),
-  LAST_ADMIN_CANNOT_BE_REMOVED: createErrorDefinition(31002, 'The last administrator cannot be deactivated.'),
+  LAST_ADMIN_CANNOT_BE_REMOVED: createErrorDefinition(31000, 'The last administrator cannot be deactivated.'),
+} as const;
+
+/**
+ * Authentication errors for Users (51000-51999).
+ */
+export const USERS_AUTH = {
+  /*
+    Deliberately the same error for an unknown email and a wrong password. Telling
+    the two apart lets anyone test which addresses have accounts here.
+  */
+  INVALID_CREDENTIALS: createErrorDefinition(51000, 'Email or password is incorrect.'),
+  ACCOUNT_NOT_APPROVED: createErrorDefinition(51001, 'This account is waiting for administrator approval.'),
+  ACCOUNT_DEACTIVATED: createErrorDefinition(51002, 'This account has been deactivated.'),
+  SIGN_IN_FAILED: createErrorDefinition(51003, 'Sign-in could not be completed. Try again.'),
 } as const;

@@ -1,5 +1,5 @@
 import { COMMON_AUTH, COMMON_BUSINESS, COMMON_DATABASE, COMMON_VALIDATION } from './codes-common.const';
-import { USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './codes-users.const';
+import { USERS_AUTH, USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './codes-users.const';
 
 /*
   Central codes registry organized by layers.
@@ -42,5 +42,6 @@ export const CODES = {
    */
   AUTH: {
     COMMON: COMMON_AUTH, // 50xxx
+    USERS: USERS_AUTH, // 51xxx
   },
 } as const;

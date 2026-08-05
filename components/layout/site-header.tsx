@@ -4,6 +4,7 @@ import { APP_DATA, ROUTES, SECTION_IDS } from '@/constants';
 import { Link } from '@/l10n/navigation';
 
 import { AppLogo, Container, LanguageSelector } from '@/components/shared';
+import { Button } from '@/components/ui';
 
 const NAV_LINK_CLASS = 'text-muted-foreground hover:text-foreground text-sm font-medium transition-colors';
 
@@ -38,6 +39,10 @@ export async function SiteHeader() {
           </nav>
 
           <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
+
+          <Button variant="appOutline" size="sm" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+            {l10n('NAV_SIGN_IN')}
+          </Button>
         </div>
       </Container>
     </header>
