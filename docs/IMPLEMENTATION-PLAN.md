@@ -24,7 +24,7 @@ in a working state.
 | [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
 | [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
 | [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
-| [5](#step-5)   | Authentication                 | Phase 2        | ⬜ Not started |
+| [5](#step-5)   | Authentication                 | Phase 2        | ✅ Done        |
 | [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ⬜ Not started |
 | [7](#step-7)   | Admin — user management        | Phase 3        | ⬜ Not started |
 | [8](#step-8)   | Scheduling system              | Phase 4        | ⬜ Not started |
@@ -42,7 +42,7 @@ Settled up front, because they shape every step below.
 | -------------- | ---------------------------------------------------------------------------------------------- | ------------------------ |
 | **Styling**    | Inline Tailwind utilities with design tokens, `cn()` for conditionals                          | android-walls, katastarx |
 | **Data layer** | zod schemas → services → DTO mappers → Result pattern → `actions.ts` server actions            | aloowing                 |
-| **Auth**       | NextAuth v5 (`next-auth@5.0.0-beta.32`), credentials provider over MongoDB                     | —                        |
+| **Auth**       | Session JWT signed with `jose`, credentials verified against MongoDB — no pre-release deps     | —                        |
 | **i18n**       | next-intl, English + Bangla, `l10n('KEY')`, flat `SCOPE_COMPONENT_ELEMENT` keys, CSV → JSON    | aloowing                 |
 | **Locales**    | `en-US` default at `/`, `bn-BD` at `/bn` — `localePrefix: 'as-needed'`, Latin digits in Bangla | —                        |
 
@@ -392,22 +392,25 @@ SEED_ADMIN_NAME="Department Head" SEED_ADMIN_EMAIL="head@dept.edu" SEED_ADMIN_PA
 
 <a id="step-5"></a>
 
-### Step 5 — Authentication
+### Step 5 — Authentication ✅ Done
 
 **Goal.** Real sign-in, with the session carrying the role.
 
 **Deliverables.**
 
 ```
-auth.ts                    NextAuth v5 config — credentials provider, JWT session strategy
-app/api/auth/[...nextauth]/route.ts
-app/(auth)/sign-in/page.tsx
+lib/auth/session.ts        sign and verify the session JWT with jose
+lib/auth/session-cookie.ts set and clear the httpOnly cookie
+lib/auth/current-user.ts   getSessionUser() for server components
+lib/auth/index.ts
+lib/services/auth.service.ts            credential verification, returns a Result
+constants/auth.const.ts    cookie name, lifetime, issuer, audience, algorithm
+types/session-user.ts      what rides inside the token
+app/[locale]/(auth)/sign-in/page.tsx
 components/auth/sign-in.form.tsx        client component, react-hook-form + zod resolver
 components/auth/actions.ts              signInAction, signOutAction
 components/auth/index.ts
-types/next-auth.d.ts       module augmentation putting `role` and `isApproved` on the session
 proxy.ts                   extended — step 2's locale middleware plus the route guard
-lib/services/auth.service.ts
 ```
 
 **Notes.**
@@ -419,10 +422,59 @@ lib/services/auth.service.ts
 - Sign-in rejects accounts with `isApproved: false` with a distinct message; approval is the admin's job in
   step 7.
 - No public sign-up: the proposal has the administrator creating and approving accounts.
-- Adds `next-auth@beta`, `react-hook-form`, `@hookform/resolvers`.
+- Adds `jose`, `react-hook-form`, `@hookform/resolvers` — all stable releases.
 
-**Acceptance.** A seeded administrator signs in and lands on their dashboard; an unapproved account is
-refused; hitting a protected route while signed out redirects to sign-in.
+**Acceptance.** ✅ Verified in the browser against two temporary accounts, created for the test and deleted
+after (the database is back to one user — the real administrator):
+
+| Attempt                                  | Result                                                        |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| `/admin` signed out, Bangla cookie set   | `→ /bn/sign-in?next=%2Fadmin` — language and destination kept |
+| `/teacher` signed out, no cookie         | `→ /sign-in?next=%2Fteacher`, page is `noindex, nofollow`     |
+| Approved account, wrong password         | "Email or password is incorrect."                             |
+| **Unapproved** account, correct password | "This account is waiting for administrator approval."         |
+| Approved account, correct password       | `→ /`, session cookie set and not readable from page scripts  |
+| `/bn/sign-in` while signed in            | `→ /bn` — the redirect keeps the language                     |
+| `/admin` while signed in                 | 404 — the guard lets it through; the route arrives in step 6  |
+
+Re-run in full after NextAuth was replaced with `jose`; server logs were clean, with no errors at all. Lint,
+format and build are green, and the project has no pre-release dependencies.
+
+**Deviations from the plan, and why.**
+
+- **NextAuth was removed and replaced with a `jose`-signed session.** It was built on
+  `next-auth@5.0.0-beta.32` first — the only App-Router-native release is a beta — and then rebuilt when the
+  rule became "stable releases only". `next-auth@4` is stable and declares Next 16 support, but it is in
+  maintenance and its `authorize()` can only signal pass or fail, which would have collapsed "waiting for
+  approval" into a generic failure. `jose` is stable, is what next-auth uses internally, and the codebase
+  already had the harder half: a service returning a Result with precise codes.
+  **The project now has no pre-release dependencies.**
+- **Everything auth lives under `lib/auth/`** — `session.ts` (sign and verify), `session-cookie.ts` (set and
+  clear), `current-user.ts` (read it in a server component). No root-level `auth.ts` / `auth.config.ts`.
+- **`proxy.ts` imports `@/lib/auth/session`, not the `@/lib/auth` barrel.** The barrel also exports the cookie
+  helpers, which use `next/headers` — unavailable in the middleware runtime. Verifying a token needs only
+  `jose`, which runs there fine. Same class of trap as the `@/constants` barrel in step 2.
+- **A verified signature is not a valid payload.** `verifySessionToken()` parses the decoded claims with zod
+  before returning them: a token minted before a field was renamed verifies perfectly and then hands back
+  nonsense. It also pins `algorithms: ['HS256']`, which is what refuses a token arriving with `alg: none`.
+- **Sign-in lives at `app/[locale]/(auth)/sign-in/`**, not `app/(auth)/sign-in/` as written. Every page sits
+  under the locale segment since step 2, so the sign-in page is translated like everything else.
+- **Successful sign-in redirects to `/`, not a dashboard**, because no dashboard exists yet. The guard already
+  records the intended destination in `?next=`; step 6 consumes it and routes by role.
+- **`PROTECTED_SEGMENTS` moved into `constants/routes.const.ts`** and `seo.const.ts` now derives its
+  `Disallow` list from it. Two copies of that list is exactly how a route ends up guarded but crawled, or
+  crawled but unguarded.
+- **Added `components/ui/{input,label}.tsx`** — the form needed them and only `button` existed.
+- **Error codes gained a `USERS_AUTH` block (51xxx)**, and `ACCOUNT_NOT_APPROVED` / `ACCOUNT_DEACTIVATED`
+  moved there out of `USERS_BUSINESS`. Refusing a sign-in is an auth concern, not a business rule.
+- **`types/next-auth.d.ts` is gone.** With no library in the way, `SessionUser` is an ordinary type in
+  `types/session-user.ts` — no module augmentation, and none of the re-export trap that made the NextAuth
+  version fail silently.
+- **Sign-in never distinguishes an unknown email from a wrong password.** Both return
+  `INVALID_CREDENTIALS`, and account state is only disclosed _after_ the password is verified — otherwise the
+  form doubles as a way to test which addresses have accounts here.
+- The session cookie is `httpOnly`, `sameSite: lax`, `secure` in production, and lives for seven days.
+  Confirmed unreadable from page scripts during verification.
 
 ---
 

@@ -1,4 +1,5 @@
 export * from './app-data.const';
+export * from './auth.const';
 export * from './database.const';
 export * from './datetime.const';
 export * from './i18n.const';

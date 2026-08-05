@@ -5,9 +5,9 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 4 of 14 complete.** Toolchain, design system, validated environment, result/error
-> layer, English/Bangla localization, the SEO surface and the data model are in place. Authentication is next
-> — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> **Current state: step 5 of 14 complete.** Toolchain, design system, validated environment, result/error
+> layer, English/Bangla localization, the SEO surface, the data model and credential sign-in are in place. The
+> dashboard shell is next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -25,9 +25,10 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 10. [Internationalization](#internationalization)
 11. [SEO and structured data](#seo-and-structured-data)
 12. [Data layer](#data-layer)
-13. [Roadmap](#roadmap)
-14. [Toolchain notes](#toolchain-notes)
-15. [Deployment](#deployment)
+13. [Authentication](#authentication)
+14. [Roadmap](#roadmap)
+15. [Toolchain notes](#toolchain-notes)
+16. [Deployment](#deployment)
 
 ---
 
@@ -62,15 +63,15 @@ functionality stays focused before any thought of scaling.
 
 ## Tech stack
 
-| Layer      | Choice                          | Why                                                            |
-| ---------- | ------------------------------- | -------------------------------------------------------------- |
-| Framework  | Next.js 16 (App Router)         | Server rendering and the API layer in one codebase             |
-| UI         | React 19 + Tailwind CSS v4      | Design tokens, responsive by default                           |
-| Primitives | shadcn (`base-nova`) on Base UI | Accessible components that match the token system              |
-| Language   | TypeScript (strict)             | No `any`, no unchecked casts                                   |
-| Database   | MongoDB + Mongoose              | Document-shaped data: profiles, courses, nested structures     |
-| Auth       | NextAuth v5 (from step 5)       | Credentials provider with role on the session                  |
-| i18n       | next-intl (from step 2)         | English and Bangla, `l10n('KEY')` from a CSV-driven dictionary |
+| Layer      | Choice                           | Why                                                              |
+| ---------- | -------------------------------- | ---------------------------------------------------------------- |
+| Framework  | Next.js 16 (App Router)          | Server rendering and the API layer in one codebase               |
+| UI         | React 19 + Tailwind CSS v4       | Design tokens, responsive by default                             |
+| Primitives | shadcn (`base-nova`) on Base UI  | Accessible components that match the token system                |
+| Language   | TypeScript (strict)              | No `any`, no unchecked casts                                     |
+| Database   | MongoDB + Mongoose               | Document-shaped data: profiles, courses, nested structures       |
+| Auth       | `jose` session JWT (from step 5) | Signed httpOnly cookie carrying the role — no library in between |
+| i18n       | next-intl (from step 2)          | English and Bangla, `l10n('KEY')` from a CSV-driven dictionary   |
 
 ## Getting started
 
@@ -93,13 +94,13 @@ Open [http://localhost:3000](http://localhost:3000).
 cp .env.example .env.local
 ```
 
-| Variable         | Required                  | Notes                                                                |
-| ---------------- | ------------------------- | -------------------------------------------------------------------- |
-| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`              |
-| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it  |
-| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index  |
-| `MONGODB_URI`    | **Yes**                   | Local or Atlas. The database name is set in code, not read from this |
-| `AUTH_SECRET`    | From step 5               | At least 32 characters — `openssl rand -base64 32`                   |
+| Variable         | Required                  | Notes                                                                 |
+| ---------------- | ------------------------- | --------------------------------------------------------------------- |
+| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
+| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it   |
+| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index   |
+| `MONGODB_URI`    | **Yes**                   | Local or Atlas. The database name is set in code, not read from this  |
+| `AUTH_SECRET`    | **Yes**                   | At least 32 random characters — see [Authentication](#authentication) |
 
 Every variable is declared in [env/server.ts](env/server.ts) and validated with zod. That module is imported
 by [next.config.ts](next.config.ts), so an invalid value **fails the build** rather than surfacing on some
@@ -115,8 +116,7 @@ Read variables through `env`, never `process.env` — that is what keeps the val
 import { env } from '@/env/server';
 ```
 
-`MONGODB_URI` is the only one you must supply — the rest have safe defaults. `AUTH_SECRET` becomes required
-when authentication lands in step 5.
+`MONGODB_URI` and `AUTH_SECRET` must both be supplied; the rest have safe defaults.
 
 ## Scripts
 
@@ -141,7 +141,7 @@ app/
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
   globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
 l10n/             l10n.csv (source of truth), generated dictionaries, routing, navigation
-proxy.ts          Locale negotiation (Next 16's middleware file)
+proxy.ts          Locale negotiation, then the route guard (Next 16's middleware file)
 components/
   home/           Landing sections — hero, roles, features, stack, roadmap
   layout/         SiteHeader, SiteFooter
@@ -152,8 +152,10 @@ env/              Zod-validated server and client environment
 models/           Mongoose models — user, course, class-session, material, notice
 lib/
   api/            Route-handler response helpers — withOk, withBadRequest, withForbidden…
+  auth/           session (sign/verify) · session-cookie (set/clear) · current-user
   result/         SingleResult · ListResult · EmptyResult and their factories
   schemas/        Zod schemas, {entity}-{action}.schema.ts
+  services/       One class per entity — auth.service.ts is the first
   mongo.utils.ts  toId() — renders a reference as a string id, populated or not
   error.utils.ts  Display formatting, normalizing unknown caught values
   zod.utils.ts    Zod issues → ErrorDto, with the code encoded in the message
@@ -174,8 +176,7 @@ Open it in a browser; it has no dependencies.
 Growing into this as the steps land:
 
 ```
-lib/services/     Business logic, one class per entity
-auth.ts           NextAuth configuration
+lib/services/     One class per entity — auth.service.ts is the first
 ```
 
 Every folder exposes a barrel `index.ts`, and components import through it (`@/components/home`,
@@ -451,6 +452,63 @@ SEED_ADMIN_NAME="Department Head" SEED_ADMIN_EMAIL="head@dept.edu" SEED_ADMIN_PA
 ```
 
 Re-running it never resets an existing password — if the email is already registered it reports and stops.
+
+## Authentication
+
+A session JWT signed with [`jose`](https://github.com/panva/jose), stored in an httpOnly cookie. No auth
+library sits in between — the pieces are small enough that owning them costs less than working around someone
+else's abstraction, and it keeps the project free of pre-release dependencies.
+
+There is **no public sign-up**: the administrator creates every account, which is why the first one comes from
+the seed script.
+
+### The pieces
+
+| File                           | Runs            | Does                                     |
+| ------------------------------ | --------------- | ---------------------------------------- |
+| `lib/auth/session.ts`          | Server and edge | Signs and verifies the token             |
+| `lib/auth/session-cookie.ts`   | Server only     | Sets and clears the cookie               |
+| `lib/auth/current-user.ts`     | Server only     | `getSessionUser()` for pages and layouts |
+| `lib/services/auth.service.ts` | Server only     | Checks credentials, returns a Result     |
+
+`proxy.ts` imports **`@/lib/auth/session` directly, not the barrel** — the barrel also exports the cookie
+helpers, which use `next/headers`, and that does not exist in the middleware runtime. Verifying a token needs
+only `jose`, which runs there fine.
+
+### What the session carries
+
+`userId`, `role`, `email`, `name` and `isApproved` ride inside the token, so a guarded page knows who is
+asking without a database round trip. The shape is [types/session-user.ts](types/session-user.ts) — an
+ordinary type, no module augmentation.
+
+Two things `verifySessionToken()` does that are easy to leave out:
+
+- **Pins the algorithm.** `algorithms: ['HS256']` is what refuses a token arriving with `alg: none`.
+- **Parses the payload with zod after checking the signature.** A signature proves the token was minted here,
+  not that its shape still matches the current code — a token issued before a field was renamed verifies
+  perfectly and then hands back nonsense.
+
+The cookie is `httpOnly` (so a scripting bug cannot lift the session), `sameSite: lax`, `secure` in
+production, and lives seven days.
+
+### Refusals
+
+`AuthService.verifyCredentials()` checks the password **first**, then account state. An unknown email and a
+wrong password return the same `INVALID_CREDENTIALS` code, and "waiting for approval" or "deactivated" is only
+ever disclosed to someone who has already proved they own the account. Otherwise the sign-in form doubles as a
+way to discover which addresses are registered.
+
+Reasons travel as codes, not sentences: the service returns a `SingleResult` carrying an `ErrorDto`, and the
+form renders the translated string for that code.
+
+### The route guard
+
+`PROTECTED_SEGMENTS` in [constants/routes.const.ts](constants/routes.const.ts) is the single source for both
+the guard and the `Disallow` list in robots.txt. A signed-out request to a protected route is redirected to
+sign-in **in the language it was already reading**, with the intended destination in `?next=`.
+
+Role-based access — a teacher being turned away from `/admin` — arrives with the dashboard shell in step 6.
+Today the guard only checks that a session exists.
 
 ## Roadmap
 
