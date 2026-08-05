@@ -204,14 +204,14 @@ the private surface is never indexed.
 ```
 app/[locale]/layout.tsx     metadataBase from APP_BASE_URL, canonical, hreflang alternates
 app/sitemap.ts              absolute URLs, both locales, alternates.languages per entry
-app/robots.ts               extended — sitemap reference, Disallow on the dashboard segments
+app/robots.ts               sitemap reference, dashboard Disallow, ROBOTS_ENABLED staging gate
 app/[locale]/opengraph-image.tsx   social card per locale via next/og ImageResponse
 app/llms.txt/route.ts       short summary for LLM crawlers, served from constants
 app/llms-full.txt/route.ts  the long form — every landing section as markdown
-components/shared/json-ld.tsx   renders <script type="application/ld+json"> from a server component
-lib/json-ld.utils.ts        builders — organization · website · softwareApplication · breadcrumb
-constants/seo.const.ts      organization details, keywords, social profiles
-types/json-ld.ts            the subset of schema.org shapes actually emitted
+components/shared/json-ld.tsx   kfz-profiler's component, verbatim
+constants/json-ld.const.ts  the @graph nodes — Organization · WebSite · SoftwareApplication
+constants/seo.const.ts      keywords, social profiles, sitemap priority tiers
+env/server.ts               gains ROBOTS_ENABLED
 ```
 
 **Notes.**
@@ -238,7 +238,15 @@ types/json-ld.ts            the subset of schema.org shapes actually emitted
   fail: `Disallow` entries in `robots.ts` here, and `robots: { index: false, follow: false }` on the
   `(dashboard)` layout metadata. That layout does not exist yet — its half is listed in
   [step 6](#step-6) so it lands with the shell.
-- No new dependencies; `next/og` ships with Next.
+- **`kfz-profiler` already solved most of this — copy it rather than reinvent.** Its
+  `components/shared/json-ld.tsx` is seven lines, its `app/robots.ts` and `app/sitemap.ts` are the shapes to
+  follow, and `constants/jsonld-data.ts` shows the `@graph` nodes cross-linked by `@id` fragments
+  (`${BASE_URL}/#organization`) so `founder` / `publisher` references resolve inside one document. One
+  filename change: `constants/json-ld.const.ts` here, to keep this repo's `.const.ts` suffix.
+- **`ROBOTS_ENABLED` comes from kfz-profiler too** — a staging deploy that gets indexed is painful to undo,
+  so `robots.ts` disallows everything unless the flag is on, while still emitting the `sitemap:` line.
+- Adds `schema-dts`: JSON-LD typed against schema.org, so a malformed node is a compile error rather than
+  something the validator finds later. `next/og` ships with Next.
 
 **Acceptance.** `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` and `/opengraph-image` all return
 200 with absolute URLs built from `APP_BASE_URL`; the JSON-LD passes the schema.org validator with no errors;
