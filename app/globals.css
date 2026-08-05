@@ -153,6 +153,17 @@
 }
 
 /*
+  Make buttons and buttons-like elements (which we use for row actions)
+  behave like buttons when enabled:
+*/
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/*
   Bengali script. Inter and Poppins carry no Bengali glyphs, so `bn` swaps both faces
   for ones that do. Conjuncts (যুক্তাক্ষর) stack vertically and clip at the leading that
   suits Latin, hence the extra line-height.

@@ -11,13 +11,18 @@ export async function SiteHeader() {
 
   return (
     <header className="bg-background/80 border-border sticky top-0 z-50 border-b backdrop-blur-md">
-      <Container className="flex h-16 items-center justify-between gap-4">
-        <Link href={ROUTES.HOME.HREF} className="flex items-center gap-2.5">
-          <AppLogo className="size-8" />
-          <span className="font-heading text-regular-bold tracking-tight">{APP_DATA.SHORT_NAME}</span>
+      {/*
+        Tightened gaps below `sm`, and the brand is allowed to shrink: at 375px the
+        language selector and sign-in button together are wider than what is left after
+        a non-shrinking brand, which pushed the row 11px past the viewport.
+      */}
+      <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
+        <Link href={ROUTES.HOME.HREF} className="flex min-w-0 items-center gap-2.5">
+          <AppLogo className="size-8 shrink-0" />
+          <span className="font-heading text-regular-bold truncate tracking-tight">{APP_DATA.SHORT_NAME}</span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
           <nav className="hidden items-center gap-6 md:flex">
             <a href={`#${SECTION_IDS.ROLES}`} className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
               {l10n('NAV_ROLES')}

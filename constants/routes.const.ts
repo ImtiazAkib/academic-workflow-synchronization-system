@@ -20,6 +20,14 @@ export const ROUTES = {
     LABEL: 'Administrator',
     HREF: '/admin',
   },
+  ADMIN_USERS: {
+    LABEL: 'Users',
+    HREF: '/admin/users',
+  },
+  ADMIN_USERS_NEW: {
+    LABEL: 'Create account',
+    HREF: '/admin/users/new',
+  },
   TEACHER: {
     LABEL: 'Teacher',
     HREF: '/teacher',

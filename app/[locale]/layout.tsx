@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 import { APP_DATA, getMessageLocale, I18N, SEO } from '@/constants';
 import { env } from '@/env/server';
@@ -50,6 +51,18 @@ type LocaleLayoutProps = {
 
 export async function generateMetadata({ params }: Omit<LocaleLayoutProps, 'children'>): Promise<Metadata> {
   const { locale } = await params;
+
+  /*
+    Checked here as well as in the layout, because metadata is built first. A browser
+    asking for `/favicon.ico` matches this dynamic segment with `locale` set to
+    "favicon.ico", and without this guard that string reaches `getTranslations()` and
+    then `Intl`, which complains about an invalid locale identifier before the layout
+    below ever gets to reject it.
+  */
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
   const l10n = await getTranslations({ locale });
 
   const baseUrl = env.APP_BASE_URL;
@@ -126,7 +139,14 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     */
     <html lang={locale} className={`${inter.variable} ${poppins.variable} ${notoSansBengali.variable} ${anekBangla.variable}`}>
       <body className="font-sans antialiased">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        {/*
+          `NuqsAdapter` teaches nuqs how this app routes. It wraps the whole tree rather
+          than the one screen that uses it, because the hooks read from context and a
+          later screen adding a URL filter should not have to remember this.
+        */}
+        <NextIntlClientProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
