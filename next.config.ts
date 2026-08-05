@@ -7,6 +7,15 @@ import '@/env/server';
 
 const production = process.env.NODE_ENV === 'production';
 
+/*
+  `output: 'standalone'` exists for the PM2 deployment, which runs
+  `.next/standalone/server.js`. Vercel traces and packages the output itself, and there
+  the standalone copy step dies on a missing `.next/next-server.js.nft.json`. The option
+  buys nothing on Vercel, so it is left off when VERCEL is set — which Vercel does on
+  every build.
+*/
+const selfHosted = !process.env.VERCEL;
+
 const packagesForProduction = ['pino'];
 const packagesForDevelopment = ['pino', 'pino-pretty'];
 
@@ -17,7 +26,7 @@ const consoleForDevelopment = false;
 
 const nextConfig: NextConfig = {
   // build optimizations
-  output: 'standalone',
+  output: selfHosted ? 'standalone' : undefined,
   poweredByHeader: false,
   reactStrictMode: true,
 

@@ -601,9 +601,13 @@ compiler package as a resolver and every `@/*` import fails to resolve.
 
 ## Deployment
 
-[next.config.ts](next.config.ts) sets `output: 'standalone'`. On Linux, `npm run build:linux` copies
-`.next/static` and `public` into the standalone bundle, and [ecosystem.config.js](ecosystem.config.js) runs it
-under PM2 on port **3101**.
+[next.config.ts](next.config.ts) sets `output: 'standalone'`, but only when `VERCEL` is unset. On Linux,
+`npm run build:linux` copies `.next/static` and `public` into the standalone bundle, and
+[ecosystem.config.js](ecosystem.config.js) runs it under PM2 on port **3101**.
+
+On Vercel the option is skipped. The platform traces and packages the output itself, and leaving
+`standalone` on makes the build fail on a missing `.next/next-server.js.nft.json` — the file the standalone
+copy step reads. Nothing else differs between the two targets.
 
 ```bash
 npm run build:linux
