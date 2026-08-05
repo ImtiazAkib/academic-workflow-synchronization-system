@@ -14,7 +14,9 @@ import { PROTECTED_SEGMENTS, ROUTES } from '@/constants/routes.const';
   Verifying a token needs only `jose`, which runs there happily.
 */
 import { verifySessionToken } from '@/lib/auth/session';
-import { splitLocaleFromPathname } from '@/lib/url.utils';
+// Also module-direct rather than `@/lib/utils`, so the edge bundle carries only the
+// path helper instead of every util the barrel re-exports.
+import { splitLocaleFromPathname } from '@/lib/utils/url.utils';
 
 /*
   Next.js 16 calls this file `proxy.ts` (it was `middleware.ts` before). Only one is

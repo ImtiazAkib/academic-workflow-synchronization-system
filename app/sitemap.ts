@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 import { I18N, SEO } from '@/constants';
 import { env } from '@/env/server';
 
-import { buildLocaleUrl } from '@/lib/url.utils';
+import { buildLocaleUrl } from '@/lib/utils';
 
 /*
   One entry per locale, each listing every language alternate plus `x-default`.

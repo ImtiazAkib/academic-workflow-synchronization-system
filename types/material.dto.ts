@@ -1,4 +1,4 @@
-import { toId } from '@/lib/mongo.utils';
+import { toId } from '@/lib/utils';
 
 import type { MaterialEntity } from '@/models/material.model';
 
