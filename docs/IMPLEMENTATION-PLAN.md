@@ -1,6 +1,6 @@
 # Implementation Plan
 
-The build is split into **13 steps**. Each one is self-contained, ends with a green build, and leaves the app
+The build is split into **14 steps**. Each one is self-contained, ends with a green build, and leaves the app
 in a working state.
 
 ## How this works
@@ -13,35 +13,38 @@ in a working state.
 
 ## Status at a glance
 
-| #              | Step                    | Proposal phase | Status         |
-| -------------- | ----------------------- | -------------- | -------------- |
-| [0](#step-0)   | Project scaffold        | Phase 1        | ✅ Done        |
-| [1](#step-1)   | Foundations             | Phase 1        | ⬜ Not started |
-| [2](#step-2)   | Internationalization    | Phase 1        | ⬜ Not started |
-| [3](#step-3)   | Data model              | Phase 2        | ⬜ Not started |
-| [4](#step-4)   | Authentication          | Phase 2        | ⬜ Not started |
-| [5](#step-5)   | Dashboard shell & RBAC  | Phase 3        | ⬜ Not started |
-| [6](#step-6)   | Admin — user management | Phase 3        | ⬜ Not started |
-| [7](#step-7)   | Scheduling system       | Phase 4        | ⬜ Not started |
-| [8](#step-8)   | Teacher — materials     | Phase 4        | ⬜ Not started |
-| [9](#step-9)   | Student dashboard       | Phase 5        | ⬜ Not started |
-| [10](#step-10) | Notices & announcements | Phase 5        | ⬜ Not started |
-| [11](#step-11) | Polish & hardening      | Phase 6        | ⬜ Not started |
-| [12](#step-12) | Testing & deployment    | Phase 6        | ⬜ Not started |
+| #              | Step                           | Proposal phase | Status         |
+| -------------- | ------------------------------ | -------------- | -------------- |
+| [0](#step-0)   | Project scaffold               | Phase 1        | ✅ Done        |
+| [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
+| [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ⬜ Not started |
+| [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ⬜ Not started |
+| [4](#step-4)   | Data model                     | Phase 2        | ⬜ Not started |
+| [5](#step-5)   | Authentication                 | Phase 2        | ⬜ Not started |
+| [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ⬜ Not started |
+| [7](#step-7)   | Admin — user management        | Phase 3        | ⬜ Not started |
+| [8](#step-8)   | Scheduling system              | Phase 4        | ⬜ Not started |
+| [9](#step-9)   | Teacher — materials            | Phase 4        | ⬜ Not started |
+| [10](#step-10) | Student dashboard              | Phase 5        | ⬜ Not started |
+| [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
+| [12](#step-12) | Polish & hardening             | Phase 6        | ⬜ Not started |
+| [13](#step-13) | Testing & deployment           | Phase 6        | ⬜ Not started |
 
 ## Decisions
 
 Settled up front, because they shape every step below.
 
-| Area           | Choice                                                                                              | Follows                  |
-| -------------- | --------------------------------------------------------------------------------------------------- | ------------------------ |
-| **Styling**    | Inline Tailwind utilities with design tokens, `cn()` for conditionals                               | android-walls, katastarx |
-| **Data layer** | zod schemas → services → DTO mappers → Result pattern → `actions.ts` server actions                 | aloowing                 |
-| **Auth**       | NextAuth v5 (`next-auth@5.0.0-beta.32`), credentials provider over MongoDB                          | —                        |
-| **i18n**       | next-intl from the start, `l10n('KEY')`, flat `SCOPE_COMPONENT_ELEMENT` keys, CSV → JSON generation | aloowing                 |
+| Area           | Choice                                                                                         | Follows                  |
+| -------------- | ---------------------------------------------------------------------------------------------- | ------------------------ |
+| **Styling**    | Inline Tailwind utilities with design tokens, `cn()` for conditionals                          | android-walls, katastarx |
+| **Data layer** | zod schemas → services → DTO mappers → Result pattern → `actions.ts` server actions            | aloowing                 |
+| **Auth**       | NextAuth v5 (`next-auth@5.0.0-beta.32`), credentials provider over MongoDB                     | —                        |
+| **i18n**       | next-intl, English + Bangla, `l10n('KEY')`, flat `SCOPE_COMPONENT_ELEMENT` keys, CSV → JSON    | aloowing                 |
+| **Locales**    | `en-US` default at `/`, `bn-BD` at `/bn` — `localePrefix: 'as-needed'`, Latin digits in Bangla | —                        |
 
-The styling choice is the one deliberate split from aloowing, which puts all styling in
-`app/styles/*.page.css` with `@apply`. This project keeps utilities in the JSX.
+Two deliberate splits from aloowing. It puts all styling in `app/styles/*.page.css` with `@apply` — this
+project keeps utilities in the JSX. It also resolves locale from a cookie with no URL segment — this project
+prefixes the URL, because two languages sharing one URL means search engines can only ever index one of them.
 
 ## Definition of done
 
@@ -52,6 +55,7 @@ A step is finished only when all of these hold:
 - [ ] `npm run build` succeeds, including the TypeScript pass
 - [ ] The affected screens render with no console errors
 - [ ] New user-facing strings are `l10n` keys, not literals (from step 2 onward)
+- [ ] New public routes are in the sitemap; new private routes are `noindex` (from step 3 onward)
 - [ ] New files are wired into their barrel `index.ts`
 - [ ] This document's status table is updated
 
@@ -81,7 +85,7 @@ Data         lib/mongodb.ts — globalThis-cached Mongoose connection
 
 <a id="step-1"></a>
 
-### Step 1 — Foundations
+### Step 1 — Foundations ✅ Done
 
 **Goal.** Put the shared plumbing in place before any feature needs it, so no step has to invent its own
 error shape or read `process.env` directly.
@@ -107,47 +111,144 @@ constants/                app-code.const.ts (error/message codes)
   Business failures return a failure result; only genuinely exceptional things throw.
 - Adds `@t3-oss/env-nextjs`, `zod`, `pino`, `pino-pretty`.
 
-**Acceptance.** A deliberately missing env var fails `npm run build` with a readable message; the Result
-helpers are exported from `@/lib/result` and typed end to end.
+**Acceptance.** ✅ Verified. `APP_BASE_URL=not-a-url npm run build` fails before the build starts, naming the
+variable and the reason; the Result helpers are exported from `@/lib/result` and typed end to end;
+`npm run lint`, `npm run format` and `npm run build` are all green.
+
+**Deviations from the plan, and why.**
+
+- Acceptance was proven with an **invalid** value rather than a missing one. Nothing is required yet —
+  `MONGODB_URI` and `AUTH_SECRET` are optional until steps 4 and 5, and `LOG_LEVEL` / `APP_BASE_URL` have
+  defaults — so a clean clone still runs with no `.env.local`. Validation still catches a malformed value.
+- `env/client.ts` ships with an **empty** `client: {}`. The app has no `NEXT_PUBLIC_*` variable yet; the file
+  exists so the first one gets declared and validated there instead of being read off `process.env`.
+- `lib/logger.ts` exports pino directly, rather than porting aloowing's `createLoggerAdapter`. That adapter
+  exists to preserve an older call signature in that codebase; here it would be indirection with nothing
+  behind it. Call sites use pino's own API: `log.info({ userId }, 'message')`.
+- `constants/codes.const.ts` + `codes-common.const.ts` replace the planned `app-code.const.ts`, matching
+  aloowing's file naming and its layered registry.
+- `lib/mongodb.ts` was updated to read `env.MONGODB_URI` instead of `process.env` directly.
 
 ---
 
 <a id="step-2"></a>
 
-### Step 2 — Internationalization
+### Step 2 — i18n: English + Bangla
 
-**Goal.** Every user-facing string comes from a dictionary before there are hundreds of them.
+**Goal.** Two languages from the first string, so nothing has to be retrofitted. English at `/`, Bangla at
+`/bn`.
 
 **Deliverables.**
 
 ```
-l10n/l10n.csv             master translation source — yours to edit
-l10n/en-US.json           generated, never hand-edited
-l10n/request.config.ts    cookie-based locale resolution
-l10n/format.config.ts     date, number and list formats
-scripts/csv-to-json.mjs   the generator behind `npm run i18n:generate`
-next.config.ts            wrapped in createNextIntlPlugin
-constants/i18n.const.ts   locale list, default locale, cookie name
-components/shared/language-selector.tsx   only if a second locale is added
+l10n/l10n.csv               master translation source — columns: KEY, en-US, bn-BD
+l10n/en-US.json             generated, never hand-edited
+l10n/bn-BD.json             generated, never hand-edited
+l10n/routing.ts             defineRouting — locales, defaultLocale 'en', localePrefix 'as-needed'
+l10n/navigation.ts          createNavigation — Link, redirect, usePathname, useRouter, getPathname
+l10n/request.config.ts      resolves the request locale, loads the dictionary
+l10n/format.config.ts       per-locale date, time and number formats
+scripts/csv-to-json.mjs     the generator behind `npm run i18n:generate`
+next.config.ts              wrapped in createNextIntlPlugin
+proxy.ts                    next-intl middleware — locale negotiation and redirects
+app/[locale]/               layout.tsx · page.tsx · not-found.tsx move under the segment
+app/globals.css             Bengali font + line-height under html[lang='bn']
+constants/i18n.const.ts     locale list, default locale, cookie name
+components/shared/language-selector.tsx   swaps locale while preserving the current path
+components/layout/site-header.tsx         gains the selector
 ```
 
 **Notes.**
 
+- **Routing.** `localePrefix: 'as-needed'` — English stays at `/`, Bangla gets `/bn`. Distinct URLs are what
+  make both languages indexable in step 3; the cookie only remembers a returning visitor's choice, the URL
+  decides what renders.
+- **`proxy.ts` is created here**, not in the auth step. next-intl's middleware handles locale negotiation, and
+  step 5 composes the route guard into that same file — Next allows only one, and the locale has to resolve
+  before a redirect target can be built.
+- **Navigation.** Import `Link`, `redirect`, `usePathname` and `useRouter` from `@/l10n/navigation`, never from
+  `next/link` or `next/navigation`. Only the wrappers know to keep the `/bn` prefix. `ROUTES` stays
+  unprefixed — the wrapper adds the locale.
+- **Fonts are the part that bites.** Inter and Poppins carry no Bengali glyphs, so Bangla would render as
+  fallback boxes. Add `Noto_Sans_Bengali` (body) and `Anek_Bangla` (headings) from `next/font/google`, expose
+  them as CSS variables, and remap `--font-sans` / `--font-heading` under `html[lang='bn']`. Bengali
+  conjuncts clip at tight leading, so the same selector raises `line-height`.
+- **Latin digits in Bangla.** `Intl` gives `bn-BD` Bengali numerals by default; `format.config.ts` pins
+  `numberingSystem: 'latn'` so clock times and room numbers stay legible beside identifiers like `CSE-401`.
 - Translation variable is always named `l10n`; keys are flat and ALL CAPS: `HOME_HERO_TITLE`,
   `ADMIN_USERS_TABLE_EMPTY`.
 - Server components call `getTranslations()`; client components receive already-translated strings as props.
-- The existing landing copy moves out of `constants/home.const.ts` into the CSV. Structural data
-  (icons, accent classes, roadmap rows) stays in the constants file.
-- Starts with `en-US` only; adding a locale later is a CSV column plus one line of config.
+- The existing landing copy moves out of `constants/home.const.ts` into the CSV. Structural data (icons,
+  accent classes) stays in the constants file.
+- **The `bn-BD` column is yours to fill.** I will not invent Bangla copy — machine-translated academic
+  terminology is exactly the kind of thing that reads wrong to the people using it. Keys ship with the
+  English text in place, and the step ends with the list of keys still awaiting translation.
+- `<html lang>` follows the route segment, so the font swap and screen-reader pronunciation key off the same
+  value.
 
-**Acceptance.** The landing page renders entirely from `l10n` keys, `npm run i18n:generate` reproduces the
-JSON from the CSV, and no literal UI string remains in `components/`.
+**Acceptance.** `/` renders English and `/bn` renders the same page with Bengali-capable type and no clipped
+conjuncts; the language selector moves between them preserving the current path; `npm run i18n:generate`
+reproduces both JSON files from the CSV; no literal UI string remains in `components/`.
 
 ---
 
 <a id="step-3"></a>
 
-### Step 3 — Data model
+### Step 3 — SEO, structured data and llms.txt
+
+**Goal.** Make the public surface legible to search engines, social cards and LLM crawlers — and make sure
+the private surface is never indexed.
+
+**Deliverables.**
+
+```
+app/[locale]/layout.tsx     metadataBase from APP_BASE_URL, canonical, hreflang alternates
+app/sitemap.ts              absolute URLs, both locales, alternates.languages per entry
+app/robots.ts               extended — sitemap reference, Disallow on the dashboard segments
+app/[locale]/opengraph-image.tsx   social card per locale via next/og ImageResponse
+app/llms.txt/route.ts       short summary for LLM crawlers, served from constants
+app/llms-full.txt/route.ts  the long form — every landing section as markdown
+components/shared/json-ld.tsx   renders <script type="application/ld+json"> from a server component
+lib/json-ld.utils.ts        builders — organization · website · softwareApplication · breadcrumb
+constants/seo.const.ts      organization details, keywords, social profiles
+types/json-ld.ts            the subset of schema.org shapes actually emitted
+```
+
+**Notes.**
+
+- `metadataBase` is finally possible: `APP_BASE_URL` is validated in step 1, so canonical links, OG URLs and
+  sitemap entries resolve as absolute instead of silently rendering relative.
+- Metadata text comes from `getTranslations()`, which is why this sits after step 2. JSON-LD keeps its
+  structural fields (`@type`, URLs, names) in English and takes translated text only for `description`.
+- Three schemas on the landing page: `Organization` (the department), `WebSite`, and `SoftwareApplication`
+  (the system itself). `BreadcrumbList` follows if inner public pages appear.
+- JSON-LD is injected as a `<script type="application/ld+json">` with `dangerouslySetInnerHTML` from a server
+  component — Next's documented approach, and it ships no client JavaScript.
+- **Two languages, two indexable URLs.** Every public page emits `alternates.languages` for `en-US` and
+  `bn-BD` plus an `x-default` pointing at the English URL, and each sitemap entry repeats the pair. This is
+  the payoff for prefixing the URL in step 2.
+- **The Bangla OG card needs its font embedded.** `next/og` renders with no Bengali glyphs unless a font is
+  passed explicitly, so the Bangla card must ship a Noto Sans Bengali subset through `ImageResponse`'s
+  `fonts` option, or it comes out as empty boxes on every social preview.
+- `llms.txt` is served in English only, with a line noting the Bangla site exists. The convention is
+  English-centric and a per-locale copy is drift waiting to happen for no crawler benefit.
+- `llms.txt` follows the [llmstxt.org](https://llmstxt.org) convention: an H1, a blockquote summary, then
+  linked sections. Both routes read the same constants the page renders, so they cannot drift from the UI.
+- **The dashboards must never be indexed**, and two independent mechanisms cover it because either alone can
+  fail: `Disallow` entries in `robots.ts` here, and `robots: { index: false, follow: false }` on the
+  `(dashboard)` layout metadata. That layout does not exist yet — its half is listed in
+  [step 6](#step-6) so it lands with the shell.
+- No new dependencies; `next/og` ships with Next.
+
+**Acceptance.** `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` and `/opengraph-image` all return
+200 with absolute URLs built from `APP_BASE_URL`; the JSON-LD passes the schema.org validator with no errors;
+view-source shows a canonical link and complete OpenGraph and Twitter tags.
+
+---
+
+<a id="step-4"></a>
+
+### Step 4 — Data model
 
 **Goal.** The schemas the whole application reads and writes, with validation and DTO mapping around them.
 
@@ -169,6 +270,7 @@ scripts/seed-admin.mjs      creates the first administrator
 
 **Notes.**
 
+- `MONGODB_URI` becomes required in `env/server.ts` here.
 - Every model is guarded with `mongoose.models.X ?? mongoose.model('X', schema)` so hot reload does not
   redefine it.
 - Passwords are hashed in a `pre('save')` hook with `bcryptjs` — never in a route handler or action.
@@ -180,9 +282,9 @@ through its DTO mapper with correct types.
 
 ---
 
-<a id="step-4"></a>
+<a id="step-5"></a>
 
-### Step 4 — Authentication
+### Step 5 — Authentication
 
 **Goal.** Real sign-in, with the session carrying the role.
 
@@ -196,16 +298,18 @@ components/auth/sign-in.form.tsx        client component, react-hook-form + zod 
 components/auth/actions.ts              signInAction, signOutAction
 components/auth/index.ts
 types/next-auth.d.ts       module augmentation putting `role` and `isApproved` on the session
-proxy.ts                   Next 16 middleware — protects /admin, /teacher, /student
+proxy.ts                   extended — step 2's locale middleware plus the route guard
 lib/services/auth.service.ts
 ```
 
 **Notes.**
 
+- `AUTH_SECRET` becomes required in `env/server.ts` here.
 - Next.js 16 names the middleware file `proxy.ts` and exports `proxy(request)` plus `config.matcher` — not
-  `middleware.ts`.
+  `middleware.ts`. It already exists from step 2; the guard composes into it, running after locale
+  negotiation so the sign-in redirect lands on the right language.
 - Sign-in rejects accounts with `isApproved: false` with a distinct message; approval is the admin's job in
-  step 6.
+  step 7.
 - No public sign-up: the proposal has the administrator creating and approving accounts.
 - Adds `next-auth@beta`, `react-hook-form`, `@hookform/resolvers`.
 
@@ -214,9 +318,9 @@ refused; hitting a protected route while signed out redirects to sign-in.
 
 ---
 
-<a id="step-5"></a>
+<a id="step-6"></a>
 
-### Step 5 — Dashboard shell & RBAC
+### Step 6 — Dashboard shell & RBAC
 
 **Goal.** One shell, three role-scoped entrances, with access decided in one place.
 
@@ -224,6 +328,7 @@ refused; hitting a protected route while signed out redirects to sign-in.
 
 ```
 app/(dashboard)/layout.tsx           sidebar + topbar, server-rendered per role
+                                     + robots: { index: false, follow: false } metadata
 app/(dashboard)/admin/page.tsx
 app/(dashboard)/teacher/page.tsx
 app/(dashboard)/student/page.tsx
@@ -240,16 +345,20 @@ constants/routes.const.ts            extended with the real routes
 
 - `sidebar-*` design tokens are already defined in `globals.css` for exactly this.
 - `requireRole('admin')` redirects rather than rendering an empty screen — no role check duplicated per page.
+- Dashboard routes sit under the locale segment (`/admin` and `/bn/admin`). `constants/routes.const.ts` stays
+  unprefixed; `@/l10n/navigation`'s `Link` adds the prefix.
+- The `noindex` metadata is the second half of the crawler exclusion set up in [step 3](#step-3); the
+  `Disallow` rules alone are a request, not an enforcement.
 - `typedRoutes` starts working for real here, since the routes now exist.
 
 **Acceptance.** Each role sees only its own navigation; a teacher requesting `/admin` is redirected, not shown
-a blank page; the shell is usable at 360px wide.
+a blank page; the shell is usable at 360px wide; dashboard routes return `noindex` in their headers.
 
 ---
 
-<a id="step-6"></a>
+<a id="step-7"></a>
 
-### Step 6 — Admin: user management
+### Step 7 — Admin: user management
 
 **Goal.** The administrator can run the department's accounts end to end.
 
@@ -276,9 +385,9 @@ filters live in the URL; a validation failure surfaces field-level messages from
 
 ---
 
-<a id="step-7"></a>
+<a id="step-8"></a>
 
-### Step 7 — Scheduling system
+### Step 8 — Scheduling system
 
 **Goal.** The feature the proposal is built around — a timetable that refuses to double-book.
 
@@ -307,9 +416,9 @@ week correctly and stays readable on a phone; filters narrow both views.
 
 ---
 
-<a id="step-8"></a>
+<a id="step-9"></a>
 
-### Step 8 — Teacher: materials
+### Step 9 — Teacher: materials
 
 **Goal.** Teachers publish course files; the repository stays organized by course code.
 
@@ -339,9 +448,9 @@ they are not assigned to is refused; oversized and disallowed types are rejected
 
 ---
 
-<a id="step-9"></a>
+<a id="step-10"></a>
 
-### Step 9 — Student dashboard
+### Step 10 — Student dashboard
 
 **Goal.** Everything a student needs on one screen, read-only.
 
@@ -366,9 +475,9 @@ details; no write action is reachable from any student screen or endpoint.
 
 ---
 
-<a id="step-10"></a>
+<a id="step-11"></a>
 
-### Step 10 — Notices & announcements
+### Step 11 — Notices & announcements
 
 **Goal.** Department-wide communication that actually lands on the right dashboards.
 
@@ -393,9 +502,9 @@ dashboards only.
 
 ---
 
-<a id="step-11"></a>
+<a id="step-12"></a>
 
-### Step 11 — Polish & hardening
+### Step 12 — Polish & hardening
 
 **Goal.** Turn a working app into one that behaves under real use.
 
@@ -414,9 +523,9 @@ no action is reachable without both an authentication and an authorization check
 
 ---
 
-<a id="step-12"></a>
+<a id="step-13"></a>
 
-### Step 12 — Testing & deployment
+### Step 13 — Testing & deployment
 
 **Goal.** Ship it, repeatably.
 
@@ -425,7 +534,8 @@ no action is reachable without both an authentication and an authorization check
 - Smoke tests over the critical paths: sign in, create user, create session with a conflict, upload,
   download, publish notice.
 - Seed script for a demo department — administrator, two teachers, five students, a week of classes.
-- Production env checklist; `MONGODB_URI` pointing at Atlas.
+- Production env checklist; `MONGODB_URI` pointing at Atlas, `APP_BASE_URL` at the real domain so every
+  canonical, OG and sitemap URL resolves.
 - `npm run build:linux` + `ecosystem.config.js` (PM2, port 3101) on the target server.
 - README deployment section verified against an actual deploy.
 
