@@ -1,11 +1,15 @@
 import { APP_LOCALES, DEFAULT_APP_LOCALE } from './i18n.const';
+import { PROTECTED_SEGMENTS, ROUTES } from './routes.const';
 
 /*
-  Route segments that must never be indexed. The `Disallow` lines built from these are
-  only a request to well-behaved crawlers — the enforcing half is the `noindex`
-  metadata on the dashboard layout, which lands with that layout in step 6.
+  Route segments that must never be indexed: everything behind a session, plus the
+  sign-in page itself. Derived from `PROTECTED_SEGMENTS` so the crawler rules and the
+  route guard cannot drift apart.
+
+  The `Disallow` lines are only a request to well-behaved crawlers — the enforcing
+  half is the `noindex` metadata on the dashboard layout, which lands in step 6.
 */
-const PRIVATE_SEGMENTS = ['/sign-in', '/admin', '/teacher', '/student'];
+const PRIVATE_SEGMENTS: readonly string[] = [ROUTES.SIGN_IN.HREF, ...PROTECTED_SEGMENTS];
 
 export const SEO = {
   KEYWORDS: [

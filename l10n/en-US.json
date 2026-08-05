@@ -88,5 +88,21 @@
   "HOME_ROADMAP_PHASE_6_DURATION": "Week 8",
   "NOT_FOUND_TITLE": "Page not found",
   "NOT_FOUND_DESCRIPTION": "The page you are looking for does not exist or has been moved.",
-  "NOT_FOUND_CTA": "Back to home"
+  "NOT_FOUND_CTA": "Back to home",
+  "NAV_SIGN_IN": "Sign in",
+  "SIGN_IN_METADATA_TITLE": "Sign in",
+  "SIGN_IN_TITLE": "Sign in",
+  "SIGN_IN_SUBTITLE": "Use the account your department administrator created for you.",
+  "SIGN_IN_EMAIL_LABEL": "Email",
+  "SIGN_IN_EMAIL_PLACEHOLDER": "you@department.edu",
+  "SIGN_IN_EMAIL_INVALID": "Enter a valid email address.",
+  "SIGN_IN_PASSWORD_LABEL": "Password",
+  "SIGN_IN_PASSWORD_REQUIRED": "Enter your password.",
+  "SIGN_IN_SUBMIT": "Sign in",
+  "SIGN_IN_SUBMITTING": "Signing in…",
+  "SIGN_IN_ERROR_INVALID_CREDENTIALS": "Email or password is incorrect.",
+  "SIGN_IN_ERROR_NOT_APPROVED": "This account is waiting for administrator approval.",
+  "SIGN_IN_ERROR_DEACTIVATED": "This account has been deactivated.",
+  "SIGN_IN_ERROR_UNEXPECTED": "Sign-in could not be completed. Try again.",
+  "SIGN_IN_NO_ACCOUNT": "Accounts are created by the department administrator — there is no public sign-up."
 }

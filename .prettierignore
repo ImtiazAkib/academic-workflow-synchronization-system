@@ -1,0 +1,5 @@
+# don't format generated files
+
+# next-intl writes this from l10n/en-US.json on every build
+# (next.config.ts → createMessagesDeclaration)
+l10n/*.d.json.ts

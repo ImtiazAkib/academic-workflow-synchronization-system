@@ -34,8 +34,11 @@ export const env = createEnv({
     */
     MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
 
-    // Authentication — becomes required in step 5
-    AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters').optional(),
+    /*
+      Signs the session token. Required — a missing or short secret means a session
+      can be forged, so it fails the build rather than degrading quietly.
+    */
+    AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
   },
   experimental__runtimeEnv: process.env,
 });

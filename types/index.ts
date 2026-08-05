@@ -2,6 +2,7 @@ export * from './app-locale';
 export * from './message-locale';
 export * from './locale-model';
 export * from './user-role';
+export * from './session-user';
 export * from './notice-audience';
 export * from './day-of-week';
 export * from './role-visual';
