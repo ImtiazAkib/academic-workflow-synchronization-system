@@ -1,0 +1,1098 @@
+<title>Academic Workflow Synchronization System — Visual Overview</title>
+
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #fbfbfe;
+    --surface: #ffffff;
+    --sunk: #f4f5fa;
+    --ink: #191c2b;
+    --muted: #666c85;
+    --line: #e3e4ef;
+    --line-strong: #c9cbdd;
+    --indigo: #4f46e5;
+    --sky: #0284c7;
+    --violet: #6d3fd4;
+    --blue: #2563eb;
+    --teal: #0d8b7d;
+    --amber: #a8700a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --paper: #111320;
+      --surface: #191c2a;
+      --sunk: #1f2231;
+      --ink: #eceef7;
+      --muted: #9aa0b8;
+      --line: #2a2e40;
+      --line-strong: #3b4055;
+      --indigo: #9c96f5;
+      --sky: #4cc0f5;
+      --violet: #b49bfb;
+      --blue: #74a6fb;
+      --teal: #35d2bd;
+      --amber: #e2b055;
+    }
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --paper: #111320;
+    --surface: #191c2a;
+    --sunk: #1f2231;
+    --ink: #eceef7;
+    --muted: #9aa0b8;
+    --line: #2a2e40;
+    --line-strong: #3b4055;
+    --indigo: #9c96f5;
+    --sky: #4cc0f5;
+    --violet: #b49bfb;
+    --blue: #74a6fb;
+    --teal: #35d2bd;
+    --amber: #e2b055;
+  }
+
+  :root[data-theme='light'] {
+    color-scheme: light;
+    --paper: #fbfbfe;
+    --surface: #ffffff;
+    --sunk: #f4f5fa;
+    --ink: #191c2b;
+    --muted: #666c85;
+    --line: #e3e4ef;
+    --line-strong: #c9cbdd;
+    --indigo: #4f46e5;
+    --sky: #0284c7;
+    --violet: #6d3fd4;
+    --blue: #2563eb;
+    --teal: #0d8b7d;
+    --amber: #a8700a;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+  }
+
+  .prose {
+    max-width: 68ch;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+  h1 {
+    font-size: clamp(2rem, 5vw, 2.9rem);
+  }
+  h2 {
+    font-size: clamp(1.35rem, 3vw, 1.7rem);
+  }
+  h3 {
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  p {
+    margin: 0;
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .lede {
+    font-size: 1.12rem;
+    color: var(--muted);
+    max-width: 60ch;
+  }
+
+  code,
+  .mono {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.87em;
+  }
+  code {
+    background: var(--sunk);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.08em 0.34em;
+  }
+
+  .bangla {
+    font-family: 'Noto Sans Bengali', 'Nirmala UI', 'Shonar Bangla', sans-serif;
+    line-height: 1.75;
+  }
+
+  a {
+    color: var(--indigo);
+  }
+
+  /* ---- masthead ---- */
+  header.masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .mark {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    padding: 3px 8px;
+    color: var(--muted);
+  }
+  .chip.live {
+    border-color: var(--teal);
+    color: var(--teal);
+  }
+
+  /* ---- sections ---- */
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .section-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 68ch;
+  }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 24px;
+    overflow-x: auto;
+  }
+  figure svg {
+    display: block;
+    min-width: 620px;
+    max-width: 100%;
+    height: auto;
+    color: var(--ink);
+  }
+  figcaption {
+    font-size: 0.87rem;
+    color: var(--muted);
+    max-width: 70ch;
+  }
+  .svg-box {
+    fill: var(--surface);
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+  }
+  .svg-box-sunk {
+    fill: var(--sunk);
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+  }
+  .svg-title {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    fill: var(--ink);
+  }
+  .svg-sub {
+    font-size: 11px;
+    fill: var(--muted);
+  }
+  .svg-edge {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+  }
+  .svg-edge-accent {
+    fill: none;
+    stroke: var(--indigo);
+    stroke-width: 1.75;
+  }
+  .svg-label {
+    font-size: 11px;
+    fill: var(--muted);
+  }
+  .svg-label-accent {
+    font-size: 11px;
+    font-weight: 600;
+    fill: var(--indigo);
+  }
+
+  /* ---- tables ---- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.92rem;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--sunk);
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  td.center {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .role-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .yes {
+    color: var(--teal);
+    font-weight: 700;
+  }
+  .no {
+    color: var(--muted);
+  }
+
+  /* ---- problem grid ---- */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card .from {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--line-strong);
+  }
+  .card .to {
+    font-weight: 600;
+  }
+
+  /* ---- tree ---- */
+  pre.tree {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.82rem;
+    line-height: 1.85;
+  }
+  pre.tree b {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  pre.tree span {
+    color: var(--muted);
+  }
+
+  /* ---- steps ---- */
+  .phase {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .phase-label {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .steps {
+    display: flex;
+    flex-direction: column;
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    align-items: baseline;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .step:last-child {
+    border-bottom: none;
+  }
+  .step-n {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .step-name {
+    font-weight: 500;
+  }
+  .step.done .step-n {
+    color: var(--teal);
+  }
+  .status {
+    font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .status.done {
+    color: var(--teal);
+  }
+  .step-note {
+    grid-column: 2 / -1;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    max-width: 68ch;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 2px;
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="mark">
+      <svg width="40" height="40" viewBox="0 0 64 64" fill="none" role="img" aria-label="AcademicSync logo">
+        <defs>
+          <linearGradient id="logo-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#4f46e5" />
+            <stop offset="1" stop-color="#0ea5e9" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="16" fill="url(#logo-grad)" />
+        <path d="M32 17 52 26 32 35 12 26Z" fill="#fff" />
+        <path d="M21 30v8.5c0 3.6 4.9 6.5 11 6.5s11-2.9 11-6.5V30" stroke="#fff" stroke-opacity="0.85" stroke-width="3.4" stroke-linecap="round" />
+        <circle cx="49" cy="30" r="2.6" fill="#fff" />
+      </svg>
+      <div>
+        <div class="eyebrow">Departmental ERP · AcademicSync</div>
+      </div>
+    </div>
+
+    <h1>Academic Workflow Synchronization System</h1>
+
+    <p class="lede">
+      Class scheduling, course materials, notices and user management for a single university department — one platform, three role-scoped dashboards,
+      English and Bangla.
+    </p>
+
+    <div class="chips">
+      <span class="chip live">3 of 14 steps built</span>
+      <span class="chip">Phase 1 complete</span>
+      <span class="chip">Next.js 16</span>
+      <span class="chip">React 19</span>
+      <span class="chip">TypeScript strict</span>
+      <span class="chip">Tailwind v4</span>
+      <span class="chip">MongoDB</span>
+      <span class="chip">next-intl</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <h2>What it replaces</h2>
+      <p class="lede">
+        Departmental coordination usually lives in tools that were never meant to carry it. Three failures follow, and each one becomes a single
+        source of truth.
+      </p>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <span class="from">Timetables in spreadsheets</span>
+        <span class="to">A scheduler that refuses to double-book</span>
+        <p class="step-note">Room, teacher and slot conflicts are rejected at write time, not discovered in week three.</p>
+      </div>
+      <div class="card">
+        <span class="from">Slides by email and flash drive</span>
+        <span class="to">A repository filed by course code</span>
+        <p class="step-note">Uploaded once by the teacher who owns the course, downloadable the moment it lands.</p>
+      </div>
+      <div class="card">
+        <span class="from">Notices that reach whoever saw them</span>
+        <span class="to">Announcements aimed at an audience</span>
+        <p class="step-note">Published to all, teachers or students; they appear on the dashboards they concern.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Who uses it</h2>
+      <p>Access is decided by role, not by convention. Every route and every action is gated in one place.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th style="text-align: center">
+              <span class="role-dot" style="background: var(--violet)"></span>
+              Admin
+            </th>
+            <th style="text-align: center">
+              <span class="role-dot" style="background: var(--blue)"></span>
+              Teacher
+            </th>
+            <th style="text-align: center">
+              <span class="role-dot" style="background: var(--teal)"></span>
+              Student
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Create and approve accounts</td>
+            <td class="center yes">●</td>
+            <td class="center no">—</td>
+            <td class="center no">—</td>
+          </tr>
+          <tr>
+            <td>Set class times, rooms and teachers</td>
+            <td class="center yes">●</td>
+            <td class="center no">—</td>
+            <td class="center no">—</td>
+          </tr>
+          <tr>
+            <td>Publish department announcements</td>
+            <td class="center yes">●</td>
+            <td class="center no">—</td>
+            <td class="center no">—</td>
+          </tr>
+          <tr>
+            <td>View own class schedule</td>
+            <td class="center yes">●</td>
+            <td class="center yes">●</td>
+            <td class="center yes">●</td>
+          </tr>
+          <tr>
+            <td>Upload and delete course materials</td>
+            <td class="center yes">●</td>
+            <td class="center yes">●</td>
+            <td class="center no">—</td>
+          </tr>
+          <tr>
+            <td>Download course materials</td>
+            <td class="center yes">●</td>
+            <td class="center yes">●</td>
+            <td class="center yes">●</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>How a request becomes a page</h2>
+      <p>
+        The locale lives in the URL, which is what lets both languages be indexed separately. The cookie only decides where an unprefixed request is
+        sent — it never overrides a path that already names its language.
+      </p>
+    </div>
+
+    <figure>
+      <svg
+        viewBox="0 0 880 268"
+        role="img"
+        aria-label="A request passes through proxy.ts, which resolves the locale, then the locale layout loads the matching dictionary and font before the page renders">
+        <defs>
+          <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect class="svg-box-sunk" x="8" y="40" width="150" height="60" rx="3" />
+        <text class="svg-title" x="83" y="66" text-anchor="middle">GET /bn</text>
+        <text class="svg-sub" x="83" y="84" text-anchor="middle">or GET /</text>
+
+        <rect class="svg-box" x="228" y="40" width="180" height="60" rx="3" />
+        <text class="svg-title" x="318" y="66" text-anchor="middle">proxy.ts</text>
+        <text class="svg-sub" x="318" y="84" text-anchor="middle">next-intl middleware</text>
+
+        <rect class="svg-box" x="478" y="40" width="200" height="60" rx="3" />
+        <text class="svg-title" x="578" y="66" text-anchor="middle">app/[locale]/layout</text>
+        <text class="svg-sub" x="578" y="84" text-anchor="middle">root layout</text>
+
+        <rect class="svg-box" x="748" y="40" width="124" height="60" rx="3" />
+        <text class="svg-title" x="810" y="76" text-anchor="middle">page.tsx</text>
+
+        <g color="currentColor">
+          <line class="svg-edge" x1="158" y1="70" x2="220" y2="70" marker-end="url(#arw)" />
+          <line class="svg-edge" x1="408" y1="70" x2="470" y2="70" marker-end="url(#arw)" />
+          <line class="svg-edge" x1="678" y1="70" x2="740" y2="70" marker-end="url(#arw)" />
+        </g>
+        <text class="svg-label" x="443" y="62" text-anchor="middle">locale</text>
+
+        <line class="svg-edge" x1="318" y1="100" x2="318" y2="140" stroke-dasharray="3 3" />
+        <rect class="svg-box-sunk" x="188" y="140" width="260" height="76" rx="3" />
+        <text class="svg-sub" x="204" y="162">prefix present → locale from path</text>
+        <text class="svg-sub" x="204" y="182">no prefix + cookie → 307 to /bn</text>
+        <text class="svg-sub" x="204" y="202">no prefix, no cookie → English</text>
+
+        <line class="svg-edge" x1="578" y1="100" x2="578" y2="140" stroke-dasharray="3 3" />
+        <rect class="svg-box-sunk" x="478" y="140" width="290" height="76" rx="3" />
+        <text class="svg-sub" x="494" y="162">request.config.ts loads {locale}.json</text>
+        <text class="svg-sub" x="494" y="182">&lt;html lang&gt; drives the font swap</text>
+        <text class="svg-sub" x="494" y="202">step 5 adds the auth guard here</text>
+
+        <text class="svg-label-accent" x="8" y="248">One middleware file. The auth guard composes into it rather than adding a second.</text>
+      </svg>
+      <figcaption>
+        Locale resolution happens once, in
+        <code>proxy.ts</code>
+        . Next.js 16 renamed the middleware file from
+        <code>middleware.ts</code>
+        , and only one is allowed — so the route guard added in step 5 has to run inside this same function, after the locale is known.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Where the words come from</h2>
+      <p>
+        One CSV is the source of truth for both languages. The JSON dictionaries are build output and are never hand-edited; a blank Bangla cell falls
+        back to English and is reported, so an untranslated string never becomes a missing-key error.
+      </p>
+    </div>
+
+    <figure>
+      <svg
+        viewBox="0 0 880 300"
+        role="img"
+        aria-label="l10n.csv is generated into two JSON dictionaries, one of which the request config loads per locale, and server components read keys from it and pass translated strings to client components">
+        <defs>
+          <marker id="arw2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect class="svg-box-sunk" x="8" y="100" width="150" height="60" rx="3" />
+        <text class="svg-title" x="83" y="126" text-anchor="middle">l10n.csv</text>
+        <text class="svg-sub" x="83" y="144" text-anchor="middle">you edit this</text>
+
+        <rect class="svg-box" x="228" y="100" width="170" height="60" rx="3" />
+        <text class="svg-title" x="313" y="126" text-anchor="middle">i18n:generate</text>
+        <text class="svg-sub" x="313" y="144" text-anchor="middle">csv-to-json.mjs</text>
+
+        <rect class="svg-box" x="468" y="46" width="150" height="54" rx="3" />
+        <text class="svg-title" x="543" y="78" text-anchor="middle">en-US.json</text>
+
+        <rect class="svg-box" x="468" y="160" width="150" height="54" rx="3" />
+        <text class="svg-title" x="543" y="192" text-anchor="middle">bn-BD.json</text>
+
+        <rect class="svg-box" x="690" y="100" width="182" height="60" rx="3" />
+        <text class="svg-title" x="781" y="126" text-anchor="middle">request.config.ts</text>
+        <text class="svg-sub" x="781" y="144" text-anchor="middle">picks by locale</text>
+
+        <g color="currentColor">
+          <line class="svg-edge" x1="158" y1="130" x2="220" y2="130" marker-end="url(#arw2)" />
+          <path class="svg-edge" d="M 398 130 L 433 130 L 433 73 L 460 73" marker-end="url(#arw2)" />
+          <path class="svg-edge" d="M 398 130 L 433 130 L 433 187 L 460 187" marker-end="url(#arw2)" />
+          <path class="svg-edge" d="M 618 73 L 653 73 L 653 130 L 682 130" marker-end="url(#arw2)" />
+          <path class="svg-edge" d="M 618 187 L 653 187 L 653 130 L 682 130" marker-end="url(#arw2)" />
+        </g>
+        <text class="svg-label" x="189" y="122" text-anchor="middle">build</text>
+
+        <rect class="svg-box" x="228" y="232" width="230" height="54" rx="3" />
+        <text class="svg-title" x="343" y="254" text-anchor="middle">server component</text>
+        <text class="svg-sub" x="343" y="272" text-anchor="middle">l10n('HOME_HERO_TITLE_LEAD')</text>
+
+        <rect class="svg-box-sunk" x="530" y="232" width="230" height="54" rx="3" />
+        <text class="svg-title" x="645" y="254" text-anchor="middle">client component</text>
+        <text class="svg-sub" x="645" y="272" text-anchor="middle">receives translated props</text>
+
+        <g color="currentColor">
+          <path class="svg-edge-accent" d="M 781 160 L 781 259 L 768 259" marker-end="url(#arw2)" />
+          <line class="svg-edge" x1="458" y1="259" x2="522" y2="259" marker-end="url(#arw2)" />
+        </g>
+        <text class="svg-label" x="490" y="251" text-anchor="middle">props</text>
+      </svg>
+      <figcaption>
+        Client components never look a key up — they are handed finished strings. That is why the language selector takes a
+        <code>label</code>
+        prop instead of calling the dictionary itself.
+      </figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>en-US</th>
+            <th>bn-BD</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">HOME_ROLES_ADMIN_TITLE</td>
+            <td>Administrator</td>
+            <td class="bangla">প্রশাসক</td>
+          </tr>
+          <tr>
+            <td class="mono">HOME_ROLES_TEACHER_TITLE</td>
+            <td>Teacher</td>
+            <td class="bangla">শিক্ষক</td>
+          </tr>
+          <tr>
+            <td class="mono">HOME_ROLES_STUDENT_TITLE</td>
+            <td>Student</td>
+            <td class="bangla">শিক্ষার্থী</td>
+          </tr>
+          <tr>
+            <td class="mono">HOME_ROADMAP_PHASE_3_DURATION</td>
+            <td>Week 3-4</td>
+            <td class="bangla">সপ্তাহ 3-4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="step-note" style="max-width: 68ch">
+      Digits stay Latin in Bangla on purpose —
+      <code>numberingSystem: 'latn'</code>
+      keeps clock times and room numbers legible next to course codes like
+      <span class="mono">CSE-401</span>
+      . The Bangla column is a draft awaiting review by a native speaker.
+    </p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>How data will move</h2>
+      <p>
+        The layered path every write takes, arriving with steps 4 and 5. Its point is the return arrow: a rejected action comes back as
+        <em>data</em>
+        the form can render field by field, not as an exception someone has to catch.
+      </p>
+    </div>
+
+    <figure>
+      <svg
+        viewBox="0 0 880 300"
+        role="img"
+        aria-label="A form submits to a server action which validates with zod, calls a service, which reads and writes through a Mongoose model and maps rows to DTOs; the result travels back to the form as a success or failure object">
+        <defs>
+          <marker id="arw3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect class="svg-box-sunk" x="8" y="44" width="150" height="64" rx="3" />
+        <text class="svg-title" x="83" y="72" text-anchor="middle">form</text>
+        <text class="svg-sub" x="83" y="90" text-anchor="middle">client component</text>
+
+        <rect class="svg-box" x="208" y="44" width="170" height="64" rx="3" />
+        <text class="svg-title" x="293" y="72" text-anchor="middle">actions.ts</text>
+        <text class="svg-sub" x="293" y="90" text-anchor="middle">zod safeParse</text>
+
+        <rect class="svg-box" x="428" y="44" width="170" height="64" rx="3" />
+        <text class="svg-title" x="513" y="72" text-anchor="middle">service</text>
+        <text class="svg-sub" x="513" y="90" text-anchor="middle">business rules</text>
+
+        <rect class="svg-box" x="648" y="44" width="170" height="64" rx="3" />
+        <text class="svg-title" x="733" y="72" text-anchor="middle">model</text>
+        <text class="svg-sub" x="733" y="90" text-anchor="middle">Mongoose · MongoDB</text>
+
+        <g color="currentColor">
+          <line class="svg-edge" x1="158" y1="76" x2="200" y2="76" marker-end="url(#arw3)" />
+          <line class="svg-edge" x1="378" y1="76" x2="420" y2="76" marker-end="url(#arw3)" />
+          <line class="svg-edge" x1="598" y1="76" x2="640" y2="76" marker-end="url(#arw3)" />
+        </g>
+        <text class="svg-label" x="179" y="68" text-anchor="middle">input</text>
+        <text class="svg-label" x="399" y="68" text-anchor="middle">validated</text>
+        <text class="svg-label" x="619" y="68" text-anchor="middle">query</text>
+
+        <rect class="svg-box-sunk" x="428" y="150" width="390" height="58" rx="3" />
+        <text class="svg-title" x="448" y="174">DTO mapper</text>
+        <text class="svg-sub" x="448" y="194">userFromEntity() — never leaks passwordHash or _id</text>
+
+        <g color="currentColor">
+          <path class="svg-edge" d="M 733 108 L 733 142" marker-end="url(#arw3)" />
+          <path class="svg-edge-accent" d="M 428 179 L 83 179 L 83 116" marker-end="url(#arw3)" />
+        </g>
+
+        <text class="svg-label-accent" x="240" y="171">SingleResult&lt;Dto&gt; · success or failure with field errors</text>
+
+        <rect class="svg-box-sunk" x="8" y="238" width="810" height="46" rx="3" />
+        <text class="svg-sub" x="28" y="266">
+          Expected failures — a duplicate email, a room already booked — return a failure result. Only unexpected faults throw.
+        </text>
+      </svg>
+      <figcaption>
+        Validation happens inside the action, never only in the browser. The service holds the rules; the action orchestrates and returns. Components
+        render what they are given and transform nothing.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>The data model that lands next</h2>
+      <p>
+        Five collections. Two of them —
+        <span class="mono">User</span>
+        and
+        <span class="mono">Course</span>
+        — are referenced by everything else, and the conflict detection the project exists for lives on the one entity that carries a room and a time.
+      </p>
+    </div>
+
+    <figure>
+      <svg
+        viewBox="0 0 760 400"
+        role="img"
+        aria-label="Course and User are referenced by ClassSession, Material and Notice; ClassSession holds room, day and time and is where scheduling conflicts are detected">
+        <defs>
+          <marker id="arw4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect class="svg-box" x="20" y="52" width="180" height="72" rx="3" />
+        <text class="svg-title" x="110" y="80" text-anchor="middle">Course</text>
+        <text class="svg-sub" x="110" y="100" text-anchor="middle">code · title · semester</text>
+        <text class="svg-sub" x="110" y="116" text-anchor="middle">assignedTeacher</text>
+
+        <rect class="svg-box" x="20" y="248" width="180" height="72" rx="3" />
+        <text class="svg-title" x="110" y="276" text-anchor="middle">User</text>
+        <text class="svg-sub" x="110" y="296" text-anchor="middle">email · passwordHash</text>
+        <text class="svg-sub" x="110" y="312" text-anchor="middle">role · isApproved</text>
+
+        <rect class="svg-box" x="470" y="24" width="270" height="86" rx="3" stroke="currentColor" />
+        <text class="svg-title" x="605" y="52" text-anchor="middle">ClassSession</text>
+        <text class="svg-sub" x="605" y="72" text-anchor="middle">room · dayOfWeek · startTime · endTime</text>
+        <text class="svg-label-accent" x="605" y="92" text-anchor="middle">conflicts are rejected here</text>
+
+        <rect class="svg-box" x="470" y="160" width="270" height="72" rx="3" />
+        <text class="svg-title" x="605" y="188" text-anchor="middle">Material</text>
+        <text class="svg-sub" x="605" y="208" text-anchor="middle">fileName · mimeType · size</text>
+
+        <rect class="svg-box" x="470" y="284" width="270" height="72" rx="3" />
+        <text class="svg-title" x="605" y="312" text-anchor="middle">Notice</text>
+        <text class="svg-sub" x="605" y="332" text-anchor="middle">title · body · audience</text>
+
+        <g color="currentColor">
+          <line class="svg-edge" x1="200" y1="76" x2="462" y2="60" marker-end="url(#arw4)" />
+          <line class="svg-edge" x1="200" y1="106" x2="462" y2="184" marker-end="url(#arw4)" />
+          <line class="svg-edge" x1="200" y1="268" x2="462" y2="86" marker-end="url(#arw4)" />
+          <line class="svg-edge" x1="200" y1="290" x2="462" y2="206" marker-end="url(#arw4)" />
+          <line class="svg-edge" x1="200" y1="308" x2="462" y2="318" marker-end="url(#arw4)" />
+        </g>
+
+        <text class="svg-label" x="330" y="60">scheduled as</text>
+        <text class="svg-label" x="316" y="152">filed under</text>
+        <text class="svg-label" x="300" y="186">taught by</text>
+        <text class="svg-label" x="318" y="256">uploaded by</text>
+        <text class="svg-label" x="330" y="316">published by</text>
+      </svg>
+      <figcaption>
+        A session names a course, a teacher, a room and a time — which is exactly the tuple three different clashes can be detected on: same room
+        overlapping, same teacher overlapping, same course twice in one slot.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>What crawlers see</h2>
+      <p>Every URL below is derived from one environment variable and the message dictionary, so nothing is maintained by hand.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>Serves</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">/sitemap.xml</td>
+            <td>
+              One entry per locale, each with
+              <span class="mono">en-US</span>
+              ,
+              <span class="mono">bn-BD</span>
+              and
+              <span class="mono">x-default</span>
+              alternates
+            </td>
+          </tr>
+          <tr>
+            <td class="mono">/robots.txt</td>
+            <td>
+              Blocks everything unless
+              <span class="mono">ROBOTS_ENABLED</span>
+              is true; then allows all but the eight private paths
+            </td>
+          </tr>
+          <tr>
+            <td class="mono">/llms.txt</td>
+            <td>Short index for LLM crawlers, built from the same keys the page renders</td>
+          </tr>
+          <tr>
+            <td class="mono">/llms-full.txt</td>
+            <td>The long form — every landing section as markdown</td>
+          </tr>
+          <tr>
+            <td class="mono">/[locale]/opengraph-image</td>
+            <td>1200×630 social card generated at request time</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="step-note" style="max-width: 68ch">
+      Indexing is off until a deployment opts in, and it says so twice —
+      <span class="mono">Disallow: /</span>
+      in robots.txt and
+      <span class="mono">noindex</span>
+      in the page metadata. Getting a staging site back out of an index is far more work than setting one variable.
+    </p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>The repository</h2>
+      <p>
+        Every folder exposes a barrel
+        <code>index.ts</code>
+        , and one type lives in one file.
+      </p>
+    </div>
+
+    <pre class="tree">
+<b>app/</b>
+  <b>[locale]/</b>          <span>layout (the root layout) · page · not-found · catch-all · opengraph-image</span>
+  <b>llms.txt/</b>          <span>route handlers for LLM crawlers</span>
+  <span>globals.css · robots.ts · sitemap.ts · global-error.tsx · icon.svg</span>
+<b>l10n/</b>               <span>l10n.csv (source) · generated dictionaries · routing · navigation · formats</span>
+<b>proxy.ts</b>            <span>locale negotiation — Next 16's middleware file</span>
+<b>components/</b>
+  <b>home/</b>             <span>landing sections — hero, roles, features, stack, roadmap</span>
+  <b>layout/</b>           <span>SiteHeader · SiteFooter</span>
+  <b>shared/</b>           <span>Container · AppLogo · JsonLd · LanguageSelector</span>
+  <b>ui/</b>               <span>shadcn (base-nova) primitives</span>
+<b>constants/</b>          <span>copy, structural data, error-code registry, SEO and JSON-LD</span>
+<b>env/</b>                <span>zod-validated server and client environment</span>
+<b>lib/</b>
+  <b>result/</b>           <span>SingleResult · ListResult · EmptyResult and their factories</span>
+  <b>api/</b>              <span>route-handler response helpers</span>
+  <span>logger · mongodb · url.utils · llms.utils · zod.utils · error.utils · utils</span>
+<b>types/</b>              <span>one type per file, re-exported from index.ts</span>
+<b>docs/</b>               <span>the implementation plan and this page</span></pre>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Build progress</h2>
+      <p>
+        Fourteen steps, each self-contained and each ending on a green lint, format and build. The six phases come from the original project proposal.
+      </p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Phase 1 · Requirement analysis and UI/UX design · Week 1</div>
+      <div class="steps">
+        <div class="step done">
+          <span class="step-n">00</span>
+          <span class="step-name">Project scaffold</span>
+          <span class="status done">Done</span>
+          <span class="step-note">Toolchain, design tokens, landing page, Mongoose connection.</span>
+        </div>
+        <div class="step done">
+          <span class="step-n">01</span>
+          <span class="step-name">Foundations</span>
+          <span class="status done">Done</span>
+          <span class="step-note">Validated env, Result pattern, API responses, logger, error-code registry.</span>
+        </div>
+        <div class="step done">
+          <span class="step-n">02</span>
+          <span class="step-name">i18n — English and Bangla</span>
+          <span class="status done">Done</span>
+          <span class="step-note">90 keys per locale, URL-prefixed routing, Bengali font swap.</span>
+        </div>
+        <div class="step done">
+          <span class="step-n">03</span>
+          <span class="step-name">SEO, structured data, llms.txt</span>
+          <span class="status done">Done</span>
+          <span class="step-note">hreflang alternates, typed JSON-LD, sitemap, staging-safe robots.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Phase 2 · Database schema and authentication · Week 2</div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">04</span>
+          <span class="step-name">Data model</span>
+          <span class="status">Next</span>
+          <span class="step-note">Five models, DTO mappers, zod schemas, admin seed script.</span>
+        </div>
+        <div class="step">
+          <span class="step-n">05</span>
+          <span class="step-name">Authentication</span>
+          <span class="status">Planned</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Phase 3 · Admin dashboard and user management · Weeks 3–4</div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">06</span>
+          <span class="step-name">Dashboard shell and RBAC</span>
+          <span class="status">Planned</span>
+        </div>
+        <div class="step">
+          <span class="step-n">07</span>
+          <span class="step-name">Admin — user management</span>
+          <span class="status">Planned</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Phase 4 · Scheduling and teacher dashboard · Weeks 5–6</div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">08</span>
+          <span class="step-name">Scheduling system</span>
+          <span class="status">Planned</span>
+          <span class="step-note">Conflict detection on room, teacher and slot.</span>
+        </div>
+        <div class="step">
+          <span class="step-n">09</span>
+          <span class="step-name">Teacher — materials</span>
+          <span class="status">Planned</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Phase 5 · Student dashboard and materials · Week 7</div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">10</span>
+          <span class="step-name">Student dashboard</span>
+          <span class="status">Planned</span>
+        </div>
+        <div class="step">
+          <span class="step-n">11</span>
+          <span class="step-name">Notices and announcements</span>
+          <span class="status">Planned</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Phase 6 · Testing and deployment · Week 8</div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">12</span>
+          <span class="step-name">Polish and hardening</span>
+          <span class="status">Planned</span>
+        </div>
+        <div class="step">
+          <span class="step-n">13</span>
+          <span class="step-name">Testing and deployment</span>
+          <span class="status">Planned</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Generated from the repository at step 3 of 14. The authoritative plan, including per-step deliverables, acceptance criteria and every deviation
+      taken, lives in
+      <code>docs/IMPLEMENTATION-PLAN.md</code>
+      .
+    </p>
+  </footer>
+</div>
