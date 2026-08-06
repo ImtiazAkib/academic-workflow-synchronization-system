@@ -1,5 +1,5 @@
 import { User } from '@/models/user.model';
-import { UserDto, UserFilters, userFromEntity } from '@/types';
+import { UserDto, UserFilters, UserRole, userFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
@@ -12,8 +12,8 @@ import type { UserActivateOutput, UserApproveOutput, UserCreateOutput, UserUpdat
 import { escapeRegExp } from '@/lib/utils';
 
 import type { UserAttributes, UserEntity } from '@/models/user.model';
-// Mongoose 9 renamed `FilterQuery` to `QueryFilter`.
-import type { QueryFilter } from 'mongoose';
+// Mongoose 9 renamed `FilterQuery` to `QueryFilter`. `UpdateQuery` kept its name.
+import type { QueryFilter, UpdateQuery } from 'mongoose';
 
 const log = createLoggerWithContext('user.service');
 
@@ -71,6 +71,7 @@ export class UserService {
         role: input.role,
         designation: this.optionalText(input.designation),
         studentId: this.optionalText(input.studentId),
+        semester: this.semesterFor(input.role, input.semester),
         phone: this.optionalText(input.phone),
       });
 
@@ -113,13 +114,14 @@ export class UserService {
 
       const updated = await User.findByIdAndUpdate(
         input.userId,
-        {
+        this.toUpdateDocument({
           name: input.name,
           role: input.role,
           designation: this.optionalText(input.designation),
           studentId: this.optionalText(input.studentId),
+          semester: this.semesterFor(input.role, input.semester),
           phone: this.optionalText(input.phone),
-        },
+        }),
         { returnDocument: 'after' }
       ).lean<UserEntity | null>();
 
@@ -270,6 +272,52 @@ export class UserService {
    */
   private optionalText(value: string | undefined): string | undefined {
     return value ? value : undefined;
+  }
+
+  /**
+   * A semester belongs to a student and to nobody else.
+   *
+   * Dropped rather than stored for the other two roles, so promoting a student to a
+   * teacher cannot leave a year behind on the record — invisible on every screen, and
+   * still there for anything that later reads the field.
+   *
+   * @param role - The role being saved.
+   * @param semester - Semester from the form, already validated.
+   *
+   * @returns The semester to store, or undefined.
+   */
+  private semesterFor(role: UserRole, semester: number | undefined): number | undefined {
+    return role === USER_ROLES.STUDENT ? semester : undefined;
+  }
+
+  /**
+   * Turn a set of field values into the update Mongo actually applies.
+   *
+   * Mongoose drops `undefined` keys from an update rather than clearing the field, so
+   * emptying an optional input would otherwise be a silent no-op: the form would say
+   * the designation was gone while the record still held it. Present values are
+   * written with `$set`, absent ones removed with `$unset`.
+   *
+   * @param fields - The values the form produced, `undefined` meaning "no longer set".
+   *
+   * @returns An update document that both writes and clears.
+   */
+  private toUpdateDocument(fields: Record<string, unknown>): UpdateQuery<UserAttributes> {
+    const assigned: Record<string, unknown> = {};
+    const cleared: Record<string, ''> = {};
+
+    Object.entries(fields).forEach(([field, value]) => {
+      if (value === undefined) {
+        cleared[field] = '';
+
+        return;
+      }
+
+      assigned[field] = value;
+    });
+
+    // An empty `$unset` is rejected by the driver, so it is only included when it has work.
+    return Object.keys(cleared).length > 0 ? { $set: assigned, $unset: cleared } : { $set: assigned };
   }
 
   private userNotFound(): SingleResult<UserDto> {

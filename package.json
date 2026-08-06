@@ -16,6 +16,7 @@
     "verify:users": "tsx --env-file-if-exists=.env.local scripts/verify-user-service.ts",
     "verify:materials": "tsx --env-file-if-exists=.env.local scripts/verify-materials.ts",
     "verify:schedule": "tsx --env-file-if-exists=.env.local scripts/verify-schedule.ts",
+    "verify:student": "tsx --env-file-if-exists=.env.local scripts/verify-student.ts",
     "prepare": "husky"
   },
   "dependencies": {

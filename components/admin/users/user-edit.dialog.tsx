@@ -31,6 +31,7 @@ import {
 } from '@/components/ui';
 
 import { updateUserAction } from './actions';
+import { UserSemesterField } from './user-semester.field';
 
 import type { UsersLabels } from './users.types';
 
@@ -63,6 +64,8 @@ export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEd
       role: user.role,
       designation: user.designation ?? '',
       studentId: user.studentId ?? '',
+      // Back to the string the select speaks; the schema turns it into a number again.
+      semester: user.semester ? String(user.semester) : '',
       phone: user.phone ?? '',
     },
   });
@@ -170,6 +173,8 @@ export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEd
               <Input id="edit-student-id" aria-invalid={Boolean(errors.studentId)} {...register('studentId')} />
               {errors.studentId && <p className="text-destructive text-sm">{labels.fieldErrors.studentIdTooLong}</p>}
             </div>
+
+            <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="edit" />
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-phone">

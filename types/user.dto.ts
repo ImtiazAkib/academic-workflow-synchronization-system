@@ -17,6 +17,7 @@ export type UserDto = {
   isActive: boolean;
   designation?: string | null;
   studentId?: string | null;
+  semester?: number | null;
   phone?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -43,6 +44,7 @@ export function userFromEntity(entity: UserEntity): UserDto {
     isActive: entity.isActive,
     designation: entity.designation ?? null,
     studentId: entity.studentId ?? null,
+    semester: entity.semester ?? null,
     phone: entity.phone ?? null,
     createdAt: entity.createdAt.toISOString(),
     updatedAt: entity.updatedAt.toISOString(),

@@ -14,6 +14,8 @@ export type UsersFieldLabels = {
   role: string;
   designation: string;
   studentId: string;
+  semester: string;
+  semesterUnset: string;
   phone: string;
   optional: string;
 };
@@ -26,6 +28,7 @@ export type UsersFieldErrorLabels = {
   roleInvalid: string;
   designationTooLong: string;
   studentIdTooLong: string;
+  semesterInvalid: string;
   phoneTooLong: string;
 };
 

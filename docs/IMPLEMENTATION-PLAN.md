@@ -30,7 +30,7 @@ in a working state.
 | [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
 | [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
-| [10](#step-10) | Student dashboard              | Phase 5        | ⬜ Not started |
+| [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
 | [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
 | [12](#step-12) | Polish & hardening             | Phase 6        | ⬜ Not started |
 | [13](#step-13) | Testing & deployment           | Phase 6        | ⬜ Not started |
@@ -849,7 +849,7 @@ that is a service decision rather than a function. Logged in [Backlog](#backlog)
 
 <a id="step-10"></a>
 
-### Step 10 — Student dashboard
+### Step 10 — Student dashboard ✅ Done
 
 **Goal.** Everything a student needs on one screen, read-only.
 
@@ -859,9 +859,13 @@ that is a service decision rather than a function. Logged in [Backlog](#backlog)
 app/(dashboard)/student/schedule/page.tsx     the routine for their semester
 app/(dashboard)/student/materials/page.tsx    grouped by course code
 app/(dashboard)/student/teachers/page.tsx     directory
-components/student/  student-routine-card · student-material-list · teacher-directory
-                     teacher-profile-card · index.ts
+app/(dashboard)/student/page.tsx              today's classes, then the three screens
+components/student/  student-routine · student-routine-card · student-material-list
+                     teacher-directory · teacher-profile-card · student-empty
+                     student.types.ts · index.ts
 lib/services/student.service.ts
+types/teacher-directory.dto.ts                the projection a student may read
+components/admin/users/user-semester.field.tsx
 ```
 
 **Notes.**
@@ -869,8 +873,101 @@ lib/services/student.service.ts
 - Entirely server components — there is nothing here to mutate.
 - The teacher directory shows only fields marked public on the profile.
 
-**Acceptance.** A student sees their semester routine, downloads a material, and finds a teacher's contact
-details; no write action is reachable from any student screen or endpoint.
+**Acceptance.** ⚠️ Service proven, screens not. `npm run verify:student` runs 37 checks against the real
+database, 0 failures, with throwaway teachers, students, courses, sessions and materials deleted afterwards:
+
+| Check                                    | Result                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------- |
+| Routine for semester 7                   | Only semester 7; another year is not visible                      |
+| A cancelled class                        | **Still listed** — off for the week, not removed                  |
+| Courses in the semester                  | Another semester and a deactivated course both excluded           |
+| Materials in the semester                | Another semester's file excluded                                  |
+| File on a deactivated course             | **Excluded** — the course list and the file list agree            |
+| A semester with no courses               | Returns nothing, not every material in the database               |
+| `storageKey` in a student-visible DTO    | Never present                                                     |
+| Directory: pending / deactivated teacher | Both excluded; students excluded                                  |
+| Directory entry                          | Carries email, designation, courses                               |
+| Directory entry: `phone`, `isApproved`   | **Absent** — the decision lives in the mapper                     |
+| Semester `''` / `'3'` / `'9'` / `'3.5'`  | Undefined / 3 / refused / refused                                 |
+| Parsing a semester twice                 | **Idempotent** — the action can re-validate the form's own output |
+| Semester submitted for a teacher         | Dropped                                                           |
+| Student promoted to teacher              | **Semester cleared from the record**, not just from view          |
+| Designation emptied on the form          | Cleared from the record                                           |
+
+The three earlier suites still pass unchanged — users 12, schedule 14, materials 14. Lint, format and build
+are green; all four student routes register. 32 keys shipped with Bangla alongside the English — 401 in
+total, no fallbacks.
+
+**Not verified: every screen.** The routine, the material list, the directory and the overview have not
+rendered once — they sit behind the student guard, and the assistant driving the browser does not sign in.
+The same limit as steps 7 and 8. **The Bangla column is machine-written and wants your eye**, particularly
+`STUDENT_LINKS_TITLE` and `STUDENT_NO_SEMESTER_DESCRIPTION`.
+
+**Deviations from the plan, and why.**
+
+- **A `semester` was added to the user record**, which the plan never called for. It had to be: the step asks
+  for "the routine for their semester" and nothing on a student said which one. It is optional 1–8, set by an
+  administrator, and it ripples into the user schemas, `UserDto`, `UserService` and both admin account
+  screens. The alternative — a semester picker on the student's own page — would have turned "their routine"
+  into "a routine", and let the answer reset on every visit.
+- **The semester field appears only when the role is `student`.** The first role-conditional field in the app:
+  designation and student ID are shown to everyone. A designation on a student is merely unused, but a
+  semester on a teacher is a claim about the model that is not true. `UserService.semesterFor()` drops it for
+  the other two roles regardless, so the form agrees with the rule rather than enforcing it.
+- **`UserService.update()` now writes `$set` and `$unset` rather than a plain object.** Mongoose drops
+  `undefined` keys from an update instead of clearing the field — verified directly against the cluster: the
+  old code left a designation and a semester on the record after the form emptied them. Promoting a student to
+  a teacher would have kept their year, invisible on every screen and still in the database. **This was a
+  pre-existing bug reaching back to step 7**; it is fixed here because a semester that survives a role change
+  is this step's problem, and the fix is the same one line for every optional field.
+- **No `codes-students.const.ts`.** The service raises no refusal of its own — every method is a read, and the
+  only way one fails is the collection it reads failing, which the owning feature already has a code for. A
+  sixth block would mean two codes for "listing materials failed".
+- **`types/teacher-directory.dto.ts` is a second, narrower projection of the user record**, rather than
+  passing `UserDto` to the directory. It carries name, email, designation and courses — no phone, no account
+  state. Same defence `MaterialDto` uses to keep `storageKey` off the client: a column added to the user
+  record later is invisible until somebody deliberately publishes it.
+- **The semester is read from the database on every student page, never from the session token.** The token is
+  self-contained and only refreshed at sign-in, so a semester inside it would keep showing last year's routine
+  until the student signed out — the same staleness the backlog already records for deactivation.
+- **`StudentService.resolveSemester()` throws where every other method returns a Result.** No semester set and
+  a read that failed are both "no number", and folding them together would answer a database blip with "ask an
+  administrator to set your semester" — sending a student off to chase their department over an outage. Null
+  means the field is genuinely empty; a failure reaches the dashboard error boundary, which offers a retry.
+- **`components/student/` has no `actions.ts`,** unlike every other feature folder. The absence is the
+  guarantee: no `'use client'`, no `useTransition`, no toast, and `StudentMaterialList` has no action props
+  that a later flag could switch on.
+- **Dedicated read-only components rather than reusing `ScheduleWeekView` and `MaterialsList`.** Both take
+  permission flags and callbacks; rendering them here would mean handing a server component functions that
+  exist only never to be called. `groupSessionsByDay`, `resolveSemesterLabel`, `resolveDepartmentToday` and
+  `formatFileSize` are shared as they stand.
+- **Materials are scoped to the courses in the student's own semester,** not the whole department's
+  repository. "Everything a student needs" is a handful of courses; four hundred files grouped by course code
+  is a wall. Every course in the semester keeps its section even with nothing published, so the page answers
+  "has anything been uploaded for CSE-401 yet".
+- **The directory is not scoped to the student's semester.** A student asks about the teacher who runs a lab
+  or will supervise a project next year — five names would make it useless for the question it exists for.
+- **The student overview became a real screen** rather than staying "under construction" like the
+  administrator's and teacher's. It shows today's classes and links to the three screens, which is the step's
+  own goal sentence. Step 11 adds the notices feed on top.
+- **The courses lookup on the routine page is unfiltered.** A class session carries its own semester, and
+  nothing stops an administrator scheduling a course into a year other than the one the course is registered
+  under; narrowing the lookup would leave those cards showing a raw id instead of a code.
+- **`npm run verify:student` was added**, alongside the users, schedule and materials suites.
+
+**One bug this step wrote and then caught.** `userFields.semester` was first written as `z.string()` with a
+transform to a number — the only field in the app whose parsed output has a different type from its input.
+That is fine once, and wrong twice: `zodResolver` transforms the value in the browser, and then the Server
+Action re-validates whatever the form hands it, because an action is a public endpoint and cannot trust its
+caller. The second parse received a number where a string was required and refused it, so **no student could
+be given a semester at all** — and silently, because a native zod type error carries no encoded code and
+surfaced as the generic message with no field highlighted. The build could not see it (`values: unknown`), and
+the first version of the verify suite could not either, because it parsed once and asserted the output. The
+field now accepts a number as well as a string, and the suite asserts the round trip.
+
+**Known limit, worth writing down:** a student retaking a course from an earlier semester sees neither its
+classes nor its files — both follow the single number on their account. Fixing it properly needs per-student
+enrolment, which is a new collection rather than a new field. Logged in [Backlog](#backlog).
 
 ---
 
@@ -947,13 +1044,17 @@ test passes against it.
 
 Real, out of scope for now, and here so they are not lost:
 
-| Item                              | Why it is parked                                                                                                                                                                        |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Per-user unread state for notices | Needs read receipts — a schema change with no feature ask yet                                                                                                                           |
-| Password reset by email           | Requires SMTP credentials the project does not have                                                                                                                                     |
-| Attendance tracking               | Not in the proposal scope                                                                                                                                                               |
-| Multi-department support          | Proposal is explicit: one department first                                                                                                                                              |
-| Revoking a live session           | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list |
-| Bangla OpenGraph card             | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                             |
-| Storybook for the UI package      | Worth it if the component count grows past ~25                                                                                                                                          |
-| E2E tests (Playwright)            | Smoke tests first; full E2E once the flows settle                                                                                                                                       |
+| Item                                    | Why it is parked                                                                                                                                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                 |
+| Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                         |
+| Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones |
+| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 12's polish pass owns it                                         |
+| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 12's accessibility pass owns the sweep                                                                       |
+| Password reset by email                 | Requires SMTP credentials the project does not have                                                                                                                                                           |
+| Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                     |
+| Multi-department support                | Proposal is explicit: one department first                                                                                                                                                                    |
+| Revoking a live session                 | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list                       |
+| Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                   |
+| Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                |
+| E2E tests (Playwright)                  | Smoke tests first; full E2E once the flows settle                                                                                                                                                             |

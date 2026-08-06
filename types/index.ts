@@ -13,3 +13,4 @@ export * from './course.dto';
 export * from './class-session.dto';
 export * from './material.dto';
 export * from './notice.dto';
+export * from './teacher-directory.dto';
