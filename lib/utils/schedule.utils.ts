@@ -1,6 +1,77 @@
+import { CODES } from '@/constants/codes.const';
+import { DEFAULT_TIMEZONE } from '@/constants/datetime.const';
 import { TEACHING_DAYS } from '@/constants/schedule.const';
 
 import type { ClassSessionDto, DayOfWeek } from '@/types';
+
+const VALIDATION = CODES.VALIDATION.SCHEDULE;
+const BUSINESS = CODES.BUSINESS.SCHEDULE;
+
+export type ScheduleErrorLabels = {
+  roomTaken: string;
+  teacherBusy: string;
+  courseScheduled: string;
+  notFound: string;
+  courseMissing: string;
+  teacherMissing: string;
+  generic: string;
+};
+
+/**
+ * Turn a refusal code from a schedule action into a sentence the administrator reads.
+ *
+ * @param code - Error code from the failed action.
+ * @param labels - Translated messages, one per refusal.
+ *
+ * @returns The message to show.
+ */
+export function resolveScheduleErrorMessage(code: number, labels: ScheduleErrorLabels): string {
+  if (code === BUSINESS.ROOM_TAKEN.CODE) {
+    return labels.roomTaken;
+  }
+
+  if (code === BUSINESS.TEACHER_BUSY.CODE) {
+    return labels.teacherBusy;
+  }
+
+  if (code === BUSINESS.COURSE_ALREADY_SCHEDULED.CODE) {
+    return labels.courseScheduled;
+  }
+
+  if (code === VALIDATION.SESSION_NOT_FOUND.CODE) {
+    return labels.notFound;
+  }
+
+  if (code === VALIDATION.COURSE_NOT_FOUND.CODE) {
+    return labels.courseMissing;
+  }
+
+  if (code === VALIDATION.TEACHER_NOT_FOUND.CODE || code === VALIDATION.TEACHER_INVALID_ROLE.CODE) {
+    return labels.teacherMissing;
+  }
+
+  return labels.generic;
+}
+
+const WEEKDAY_INDEX: Record<string, DayOfWeek> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/**
+ * Which day it is in the department's timezone.
+ *
+ * Deliberately not `getDay()`. The stored times are bare `HH:mm` and need no
+ * conversion, but "which column is today" does: a Vercel instance runs UTC, so after
+ * 6pm in Dhaka `new Date().getDay()` still reports yesterday and would highlight the
+ * wrong column for six hours of every evening.
+ *
+ * @param now - The instant to resolve, passed in so the caller owns the clock.
+ *
+ * @returns The weekday in `Asia/Dhaka`, indexed to match `dayOfWeek`.
+ */
+export function resolveDepartmentToday(now: Date): DayOfWeek {
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: DEFAULT_TIMEZONE, weekday: 'short' }).format(now);
+
+  return WEEKDAY_INDEX[weekday] ?? 0;
+}
 
 /**
  * Whether two time ranges on the same day overlap.

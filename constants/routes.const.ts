@@ -36,6 +36,18 @@ export const ROUTES = {
     LABEL: 'Create course',
     HREF: '/admin/courses/new',
   },
+  ADMIN_SCHEDULE: {
+    LABEL: 'Schedule',
+    HREF: '/admin/schedule',
+  },
+  ADMIN_SCHEDULE_NEW: {
+    LABEL: 'Add class',
+    HREF: '/admin/schedule/new',
+  },
+  TEACHER_SCHEDULE: {
+    LABEL: 'My schedule',
+    HREF: '/teacher/schedule',
+  },
   TEACHER: {
     LABEL: 'Teacher',
     HREF: '/teacher',

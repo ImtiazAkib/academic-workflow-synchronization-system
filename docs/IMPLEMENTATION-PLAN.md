@@ -28,7 +28,7 @@ in a working state.
 | [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
 | [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
 | [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
-| [8](#step-8)   | Scheduling system              | Phase 4        | 🚧 In progress |
+| [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ⬜ Not started |
 | [10](#step-10) | Student dashboard              | Phase 5        | ⬜ Not started |
 | [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
@@ -701,7 +701,7 @@ not sign in. `CourseService.update` and its duplicate-code check are covered by 
 
 <a id="step-8"></a>
 
-### Step 8 — Scheduling system 🚧 In progress
+### Step 8 — Scheduling system ✅ Done 🚧 In progress
 
 **Goal.** The feature the proposal is built around — a timetable that refuses to double-book.
 
@@ -731,8 +731,51 @@ constants/schedule.const.ts             days, time slots, semesters
   `l10n/request.config.ts`) rather than from the server's clock or the browser's — a Vercel instance runs UTC,
   so `new Date().getDay()` would highlight the wrong day for six hours of every Bangladeshi evening.
 
-**Acceptance.** A conflicting session is refused with a message naming the clash; the grid renders a full
-week correctly and stays readable on a phone; filters narrow both views.
+**Acceptance.** ⚠️ Service proven, screens not. `npm run verify:schedule` exercises conflict detection against
+the real database — 15 checks, 0 failures, with throwaway teachers, courses and sessions deleted afterwards:
+
+| Check                            | Result                                                      |
+| -------------------------------- | ----------------------------------------------------------- |
+| Same room, overlapping           | Refused, error tagged to `room`                             |
+| Same teacher, overlapping        | Refused, tagged to `teacherId`                              |
+| Same course, overlapping         | Refused, tagged to `courseId`                               |
+| All three clashing at once       | **Three errors returned together**, not the first one found |
+| Back-to-back in one room         | Allowed — the overlap test is half-open                     |
+| Another day / another semester   | Allowed                                                     |
+| Editing a session in place       | Allowed — it does not clash with itself                     |
+| Moving onto an occupied slot     | Refused                                                     |
+| Course with classes, deactivated | Refused                                                     |
+
+Lint, format and build are green; all three routes register. 62 keys shipped with Bangla alongside the
+English — 322 in total, no fallbacks.
+
+**Not verified: every screen.** The week grid, the conflict notice, the filters, the create page, the edit
+dialog and the teacher view have not rendered once — they sit behind the admin and teacher guards, and the
+assistant driving the browser does not sign in. The rule underneath them is proven; the wiring between it and
+the buttons is covered by types and the build alone.
+
+**Deviations from the plan, and why.**
+
+- **A prerequisite step was split out first.** Every session needs a `courseId`, and nothing in the plan ever
+  created a course — this step's own acceptance could not be run against an empty course list. See
+  [step 7b](#step-7b).
+- **The week view is day columns, not a day × time-slot grid.** A fixed hour scale spends most of its height
+  on empty rows and is unreadable on a phone; each day lists its classes in order instead, which carries the
+  same information and stacks cleanly below `lg`. A literal time grid is a real change, not a tweak.
+- **`resolveDepartmentToday()` decides which column is today**, using `Intl.DateTimeFormat` in
+  `Asia/Dhaka` on the server. Not `getDay()`: a Vercel instance runs UTC, so after 6pm in Dhaka the runtime
+  clock still reports yesterday and would highlight the wrong column every evening. The class times need no
+  such care — they are bare `HH:mm` and carry no zone at all.
+- **The teacher page renders `ScheduleWeekView` directly**, not `ScheduleScreen`. With no filters, dialogs or
+  state, the orchestrator would only hand it machinery it never uses. Its teacher id comes from the session
+  rather than the URL, so one teacher cannot read another's week by editing a query string.
+- **`lib/utils/schedule-labels.utils.ts` builds the label bundle once** for both screens, so a class card
+  cannot drift between the administrator's view and the teacher's.
+- **The create page and edit dialog share `session-fields.tsx`**, the same way the courses screen does.
+- **Sessions are deleted, not deactivated.** Unlike an account, a slot that was never taught leaves nothing
+  behind that needs a valid author.
+- **`lib/schedule.utils.ts` landed at `lib/utils/schedule.utils.ts`**, following the `{domain}.utils.ts`
+  convention the repo settled on after the plan was written.
 
 ---
 
