@@ -120,7 +120,7 @@ export class UserService {
           studentId: this.optionalText(input.studentId),
           phone: this.optionalText(input.phone),
         },
-        { new: true }
+        { returnDocument: 'after' }
       ).lean<UserEntity | null>();
 
       if (!updated) {
@@ -187,7 +187,7 @@ export class UserService {
         return this.lastAdministrator();
       }
 
-      const updated = await User.findByIdAndUpdate(userId, change, { new: true }).lean<UserEntity | null>();
+      const updated = await User.findByIdAndUpdate(userId, change, { returnDocument: 'after' }).lean<UserEntity | null>();
 
       if (!updated) {
         return this.userNotFound();

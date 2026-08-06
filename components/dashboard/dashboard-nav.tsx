@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, Users } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Users } from 'lucide-react';
 
 import { Link, usePathname } from '@/l10n/navigation';
 import { UserRole } from '@/types';
@@ -15,6 +15,7 @@ type DashboardNavProps = {
   navLabel: string;
   overviewLabel: string;
   usersLabel: string;
+  coursesLabel: string;
   className?: string;
 };
 
@@ -23,10 +24,11 @@ type DashboardNavProps = {
   Hard-coding "overview is current" would start lying the moment a second entry lands
   underneath it — which is what step 7 did.
 */
-export function DashboardNav({ role, navLabel, overviewLabel, usersLabel, className }: DashboardNavProps) {
+export function DashboardNav({ role, navLabel, overviewLabel, usersLabel, coursesLabel, className }: DashboardNavProps) {
   const pathname = usePathname();
   const overviewHref = ROLE_HOME[role];
   const usersHref = ROUTES.ADMIN_USERS.HREF;
+  const coursesHref = ROUTES.ADMIN_COURSES.HREF;
 
   return (
     <nav aria-label={navLabel} className={cn('flex gap-1', className)}>
@@ -56,6 +58,21 @@ export function DashboardNav({ role, navLabel, overviewLabel, usersLabel, classN
           )}>
           <Users className="size-4 shrink-0" />
           {usersLabel}
+        </Link>
+      )}
+
+      {role === USER_ROLES.ADMIN && (
+        <Link
+          href={coursesHref}
+          aria-current={pathname.startsWith(coursesHref) ? 'page' : undefined}
+          className={cn(
+            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            pathname.startsWith(coursesHref)
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+          )}>
+          <BookOpen className="size-4 shrink-0" />
+          {coursesLabel}
         </Link>
       )}
     </nav>

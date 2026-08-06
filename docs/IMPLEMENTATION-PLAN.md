@@ -26,8 +26,9 @@ in a working state.
 | [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
 | [5](#step-5)   | Authentication                 | Phase 2        | ✅ Done        |
 | [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
-| [7](#step-7)   | Admin — user management        | Phase 3        | ⬜ Not started |
-| [8](#step-8)   | Scheduling system              | Phase 4        | ⬜ Not started |
+| [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
+| [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
+| [8](#step-8)   | Scheduling system              | Phase 4        | 🚧 In progress |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ⬜ Not started |
 | [10](#step-10) | Student dashboard              | Phase 5        | ⬜ Not started |
 | [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
@@ -558,7 +559,7 @@ which is logged in [Backlog](#backlog).
 
 <a id="step-7"></a>
 
-### Step 7 — Admin: user management
+### Step 7 — Admin: user management ✅ Done
 
 **Goal.** The administrator can run the department's accounts end to end.
 
@@ -580,14 +581,127 @@ components/ui/           table · dialog · input · label · select · badge (s
 - Deactivate rather than delete, so schedules and materials keep a valid author.
 - Adds `nuqs`, `sonner` for toasts.
 
-**Acceptance.** Creating, approving, editing and deactivating an account all work and survive a refresh;
-filters live in the URL; a validation failure surfaces field-level messages from the Result.
+**Acceptance.** ⚠️ Partly verified. Confirmed against the running app, from the server log:
+
+| Attempt                   | Result                                                           |
+| ------------------------- | ---------------------------------------------------------------- |
+| `/admin/users` signed out | `→ /bn/sign-in?next=%2Fadmin%2Fusers` — language and target kept |
+| Role filter changed       | `GET /admin/users?role=teacher 200` — the filter reaches the URL |
+| Create an account         | `createUserAction` ran, the row appeared as waiting for approval |
+| Approve, then revoke      | `approveUserAction` with `isApproved` true, then false           |
+
+The four paths the browser check could not reach — editing, deactivation, the last-administrator guard and
+duplicate-email validation — were exercised against the real database through `UserService` instead, with a
+throwaway account that was deleted afterwards. 12 checks, 0 failures:
+
+| Check                   | Result                                                              |
+| ----------------------- | ------------------------------------------------------------------- |
+| Create                  | Succeeds and starts unapproved, per the model default               |
+| Duplicate email         | Refused, error tagged to the `email` field                          |
+| Update                  | Name and designation saved; a blank optional field stores as `null` |
+| Deactivate / reactivate | Both flip `isActive` and come back in the DTO                       |
+| Last admin, deactivated | Refused — and the record is confirmed untouched afterwards          |
+| Last admin, demoted     | Refused by the same guard                                           |
+
+Lint, format and build are green. Bangla is complete: all 71 new keys are translated, and the generator
+reports no fallbacks.
+
+**Still only proven at the service layer:** the dialogs and forms that call these actions were not clicked
+through by a signed-in administrator. The logic holds; the wiring between it and the buttons is covered by
+types and the build alone.
+
+**Deviations from the plan, and why.**
+
+- **Creating an account is a page, not a dialog.** Seven fields plus their errors never sat comfortably in a
+  popup — on a phone it filled the screen and still scrolled. `/admin/users/new` also gives the work a URL,
+  so it survives a refresh and can be linked.
+- **One `user-confirm.dialog.tsx` instead of a separate approve dialog.** Approve, revoke, deactivate and
+  reactivate are the same dialog with different words; four near-identical files would drift.
+- **Actions guard with `getSessionUser()`, not `requireRole()`.** `requireRole` calls `getLocale()`, which
+  reads `next/root-params` — unavailable inside a Server Action. They return a refusal the dialog can render
+  rather than a redirect it cannot follow.
+- **The last-administrator guard also covers demotion.** Changing the only admin's role locks everyone out of
+  the admin area exactly as deactivating them would.
+- **Accounts start unapproved**, per the model's default, so approval is a deliberate second act.
+- **`components/ui/button.tsx` and `select.tsx` were edited after all.** The `outline` variant sets
+  `border-border` but the base had no border _width_, so every outline button rendered as bare text; the
+  button scale also started at `h-8` against an `h-10` input. Both were first worked around at call sites —
+  twelve overrides, one of which was missed and shipped a broken dropdown — then fixed in the two files.
+- **`?next=` is still not consumed**, though step 6 expected this step to do it. The proxy records it and the
+  sign-in form still routes by role.
+
+**Found while building, worth knowing:** `/favicon.ico` matches the `[locale]` segment as `locale =
+"favicon.ico"`, and `generateMetadata` passed that to `getTranslations()` before the layout's `hasLocale`
+check could reject it — logging an invalid-locale warning on every request. Guarded in `generateMetadata`.
+The marketing header also overflowed at 375px; the brand could not shrink. Both were pre-existing.
+
+---
+
+<a id="step-7b"></a>
+
+### Step 7b — Admin: courses ✅ Done
+
+**Goal.** Somewhere to create the courses a timetable schedules.
+
+**Why this exists.** It was not in the original plan, and step 8 could not be built without it. Every
+`ClassSession` requires a `courseId`, but courses appeared in the plan only as a step 4 model and as something
+steps 9–10 _read_ — nothing ever created one. Step 8's own acceptance test, "a conflicting session is refused",
+cannot be run against an empty course list. Split out rather than folded into step 8, per _one step at a time_.
+
+**Deliverables.**
+
+```
+lib/services/course.service.ts          ✅ list · create · update · setActive
+lib/schemas/course-update.schema.ts     ✅
+constants/codes-courses.const.ts        ✅ 12xxx · 22xxx · 32xxx
+components/admin/courses/               courses-table · courses-table-row · course-create.form
+                                        course-edit.dialog · courses-empty · actions.ts · index.ts
+app/(dashboard)/admin/courses/page.tsx  list, filtered by semester
+app/(dashboard)/admin/courses/new       create, following the users screen
+```
+
+**Notes.**
+
+- Mirrors the users screen deliberately — a list with an edit dialog and a separate create page — so the two
+  admin areas do not diverge in shape.
+- The assigned teacher is optional; a course can exist before anyone is given it. The service still refuses an
+  id that is not a teacher.
+- Deactivating a course that still has sessions is refused rather than cascaded.
+
+**Acceptance.** ⚠️ Service verified, screen not. `npm run verify:schedule` exercises the course paths against
+the real database as part of its setup — creating courses, and the refusal to deactivate one that still has
+classes on the timetable. Lint, format and build are green, and both routes register:
+
+```
+├ ƒ /[locale]/admin/courses
+├ ƒ /[locale]/admin/courses/new
+```
+
+Bangla shipped with the English this round rather than being backfilled — 59 keys, 260 in total, and the
+generator reports no fallbacks.
+
+**Not verified: the screen itself.** The filter round-trip, the edit dialog, the toasts and the duplicate-code
+message have not rendered once — the page is behind the admin guard and the assistant driving the browser does
+not sign in. `CourseService.update` and its duplicate-code check are covered by types and the build alone.
+
+**Deviations from the plan, and why.**
+
+- **The create page and the edit dialog share `course-fields.tsx`.** The users screen duplicates its fields
+  across both, and that duplication is exactly where a missed `<SelectContent>` hid for three rounds. The cost
+  is that `CourseFields` is typed loosely — `Control<never>` — because the create and update schemas differ by
+  `courseId` alone, and a generic would buy nothing at two call sites.
+- **The semester filter is validated in the page, not by a zod schema.** It is one optional integer in a known
+  range; `UserFiltersSchema` exists because that screen has three fields with different failure modes.
+- **`setCourseActiveAction` takes `(courseId, isActive)` rather than an object**, since there is no form behind
+  it — the row's button is the whole input.
+- **The teacher picker lists only approved, active teachers.** The service re-checks the role anyway: a form
+  field is user input whatever put it there.
 
 ---
 
 <a id="step-8"></a>
 
-### Step 8 — Scheduling system
+### Step 8 — Scheduling system 🚧 In progress
 
 **Goal.** The feature the proposal is built around — a timetable that refuses to double-book.
 
@@ -610,6 +724,12 @@ constants/schedule.const.ts             days, time slots, semesters
   overlapping in time, same teacher overlapping in time, same course scheduled twice in one slot.
 - The conflict comes back as a `singleFailureWithErrors` the dialog renders inline — not a thrown error.
 - Grid view is a CSS grid keyed by day × time slot; filters by semester and teacher.
+- **The timetable reads in Bangladesh time.** `startTime` / `endTime` are stored as bare `HH:mm` strings, not
+  `Date`s, so they carry no zone at all — 09:30 is 09:30 wherever the server runs, and rendering them needs no
+  conversion. The zone matters for everything _derived_: which column is "today", whether a class is on now,
+  and any `createdAt` shown. Those must be computed in `DEFAULT_TIMEZONE` (`Asia/Dhaka`, already wired into
+  `l10n/request.config.ts`) rather than from the server's clock or the browser's — a Vercel instance runs UTC,
+  so `new Date().getDay()` would highlight the wrong day for six hours of every Bangladeshi evening.
 
 **Acceptance.** A conflicting session is refused with a message naming the clash; the grid renders a full
 week correctly and stays readable on a phone; filters narrow both views.

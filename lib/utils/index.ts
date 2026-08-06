@@ -8,11 +8,13 @@
   imports `./url.utils` directly; see the comment in `proxy.ts`.
 */
 export * from './class-name.utils';
+export * from './course.utils';
 export * from './auth.utils';
 export * from './error.utils';
 export * from './llms.utils';
 export * from './mongo.utils';
 export * from './role.utils';
+export * from './schedule.utils';
 export * from './url.utils';
 export * from './user.utils';
 export * from './zod.utils';
