@@ -53,6 +53,8 @@ export type UsersConfirmLabels = {
 };
 
 export type UsersLabels = {
+  title: string;
+  intro: string;
   createCta: string;
   search: string;
   searchPlaceholder: string;

@@ -55,6 +55,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     <UsersScreen
       users={users}
       labels={{
+        title: l10n('USERS_TITLE'),
+        intro: l10n('USERS_INTRO'),
         createCta: l10n('USERS_CREATE_CTA'),
         search: l10n('USERS_FILTERS_SEARCH_LABEL'),
         searchPlaceholder: l10n('USERS_FILTERS_SEARCH_PLACEHOLDER'),
@@ -68,7 +70,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         roleAdmin: l10n('ROLE_ADMIN_LABEL'),
         roleTeacher: l10n('ROLE_TEACHER_LABEL'),
         roleStudent: l10n('ROLE_STUDENT_LABEL'),
-        tableLabel: l10n('USERS_TITLE'),
+        tableLabel: l10n('USERS_TABLE_LABEL'),
         columnName: l10n('USERS_TABLE_NAME'),
         columnEmail: l10n('USERS_TABLE_EMAIL'),
         columnRole: l10n('USERS_TABLE_ROLE'),

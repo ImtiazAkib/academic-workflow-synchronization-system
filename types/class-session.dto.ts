@@ -8,11 +8,11 @@ export type ClassSessionDto = {
   classSessionId: string;
   courseId: string;
   teacherId: string;
-  room: string;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
   semester: number;
+  isCancelled: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -29,11 +29,11 @@ export function classSessionFromEntity(entity: ClassSessionEntity): ClassSession
     classSessionId: toId(entity._id),
     courseId: toId(entity.course),
     teacherId: toId(entity.teacher),
-    room: entity.room,
     dayOfWeek: entity.dayOfWeek,
     startTime: entity.startTime,
     endTime: entity.endTime,
     semester: entity.semester,
+    isCancelled: entity.isCancelled,
     createdAt: entity.createdAt.toISOString(),
     updatedAt: entity.updatedAt.toISOString(),
   };
