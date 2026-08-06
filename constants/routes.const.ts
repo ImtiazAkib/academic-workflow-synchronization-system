@@ -64,6 +64,18 @@ export const ROUTES = {
     LABEL: 'Student',
     HREF: '/student',
   },
+  STUDENT_SCHEDULE: {
+    LABEL: 'My routine',
+    HREF: '/student/schedule',
+  },
+  STUDENT_MATERIALS: {
+    LABEL: 'Materials',
+    HREF: '/student/materials',
+  },
+  STUDENT_TEACHERS: {
+    LABEL: 'Teachers',
+    HREF: '/student/teachers',
+  },
 } as const;
 
 /**

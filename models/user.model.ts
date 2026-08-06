@@ -9,6 +9,7 @@ import { UserRole } from '@/types';
   React tree, dead weight in a seed script and fatal in the middleware bundle.
 */
 import { USER_ROLES } from '@/constants/roles.const';
+import { SEMESTER } from '@/constants/schedule.const';
 
 const PASSWORD_SALT_ROUNDS = 12;
 
@@ -25,6 +26,11 @@ export type UserAttributes = {
   isActive: boolean;
   designation?: string;
   studentId?: string;
+  /**
+   * Which semester a student is in, 1 through 8. Absent on everyone else — it is what
+   * their routine is filtered by, and a teacher does not sit in one.
+   */
+  semester?: number;
   phone?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -55,6 +61,8 @@ const userSchema = new Schema<UserAttributes, UserModel, UserMethods>(
     isActive: { type: Boolean, required: true, default: true },
     designation: { type: String, trim: true, maxlength: 120 },
     studentId: { type: String, trim: true, maxlength: 40 },
+    // Bounded here as well as in the schema: the seed script writes straight to the model.
+    semester: { type: Number, min: SEMESTER.MIN, max: SEMESTER.MAX },
     phone: { type: String, trim: true, maxlength: 40 },
   },
   { timestamps: true }

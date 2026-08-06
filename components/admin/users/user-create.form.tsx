@@ -18,6 +18,7 @@ import { resolveUserErrorMessage } from '@/lib/utils';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { createUserAction } from './actions';
+import { UserSemesterField } from './user-semester.field';
 
 import type { UserCreateFormLabels } from './users.types';
 
@@ -50,6 +51,7 @@ export function UserCreateForm({ labels }: UserCreateFormProps) {
       role: USER_ROLES.TEACHER,
       designation: '',
       studentId: '',
+      semester: '',
       phone: '',
     },
   });
@@ -149,6 +151,8 @@ export function UserCreateForm({ labels }: UserCreateFormProps) {
           <Input id="create-student-id" aria-invalid={Boolean(errors.studentId)} {...register('studentId')} />
           {errors.studentId && <p className="text-destructive text-sm">{labels.fieldErrors.studentIdTooLong}</p>}
         </div>
+
+        <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="create" />
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="create-phone">

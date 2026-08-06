@@ -1,5 +1,7 @@
 import { CODES } from '@/constants/codes.const';
 
+import type { MaterialDto } from '@/types';
+
 const VALIDATION = CODES.VALIDATION.MATERIALS;
 const AUTH = CODES.AUTH.MATERIALS;
 
@@ -81,4 +83,45 @@ export function formatFileSize(bytes: number): string {
   }
 
   return `${unit === 0 ? size : size.toFixed(1)} ${UNITS[unit]}`;
+}
+
+/**
+ * One entry per course, with the files published against it.
+ */
+export type CourseMaterialGroup<TCourse> = {
+  course: TCourse;
+  materials: MaterialDto[];
+};
+
+/**
+ * Arrange files under the course they belong to.
+ *
+ * Every course keeps its entry even when nothing has been published against it, so the
+ * page answers "has anything been uploaded for CSE-401 yet" rather than leaving the
+ * course out and the question open.
+ *
+ * Order comes from the courses passed in — the caller has already sorted them by code —
+ * and the files inside each group keep the order they arrived in, which is newest first.
+ *
+ * @param materials - Files to arrange.
+ * @param courses - The courses in view.
+ *
+ * @returns One group per course, in the order the courses were given.
+ */
+export function groupMaterialsByCourse<TCourse extends { courseId: string }>(
+  materials: MaterialDto[],
+  courses: TCourse[]
+): CourseMaterialGroup<TCourse>[] {
+  const grouped = new Map<string, MaterialDto[]>();
+
+  courses.forEach(x => {
+    grouped.set(x.courseId, []);
+  });
+
+  materials.forEach(x => {
+    // A file whose course is not in view — another semester's — has no group to sit in.
+    grouped.get(x.courseId)?.push(x);
+  });
+
+  return courses.map(x => ({ course: x, materials: grouped.get(x.courseId) ?? [] }));
 }

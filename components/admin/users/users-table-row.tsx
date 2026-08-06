@@ -1,6 +1,6 @@
 import { UserDto } from '@/types';
 
-import { resolveUserRoleLabel, resolveUserStatus, resolveUserStatusLabel } from '@/lib/utils';
+import { resolveSemesterLabel, resolveUserRoleLabel, resolveUserStatus, resolveUserStatusLabel } from '@/lib/utils';
 
 import { Badge, Button, TableCell, TableRow } from '@/components/ui';
 
@@ -47,6 +47,8 @@ export function UsersTableRow({ user, labels, onEdit, onApproval, onActivation }
         <span className="block">{user.name}</span>
         {user.designation && <span className="text-muted-foreground block text-xs">{user.designation}</span>}
         {user.studentId && <span className="text-muted-foreground block text-xs">{user.studentId}</span>}
+        {/* The year a student's routine is filtered by — worth seeing without opening the dialog. */}
+        {user.semester && <span className="text-muted-foreground block text-xs">{resolveSemesterLabel(user.semester)}</span>}
       </TableCell>
 
       <TableCell className="text-muted-foreground">{user.email}</TableCell>
