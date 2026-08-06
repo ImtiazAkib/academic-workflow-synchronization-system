@@ -1011,10 +1011,12 @@ scripts/seed-admin.ts                        retired — the super administrator
 - **It cannot be created, edited, demoted, deactivated, revoked or deleted by anyone, including itself.**
   Every mutating path in `UserService` refuses when the target carries that role, and the role select on the
   create and edit screens never offers it. Seeded once by `npm run seed:super-admin`.
-- **The ceiling is three _active_ administrators**, and the super administrator is not one of them. Checked on
-  create and on promotion. A deactivated administrator frees its seat — the alternative is a department that
-  cannot replace someone who left, because accounts are deactivated rather than deleted and the seat would
-  never come back.
+- **The ceiling is three _active_ administrators, and the super administrator is not one of them** — settled:
+  three plus one, four accounts with administrative reach in total. The count is over the `admin` role only,
+  so the super administrator can always create a third administrator no matter how the arithmetic is read.
+  Checked on create and on promotion. A deactivated administrator frees its seat — the alternative is a
+  department that cannot replace someone who left, because accounts are deactivated rather than deleted and
+  the seat would never come back.
 - **An administrator account is the super administrator's alone.** Stated as one rule rather than a list of
   verbs — _every_ operation that puts an account into the `admin` role, takes it out, or changes its access
   belongs to the super administrator: create, promote, demote, approve, revoke, activate, deactivate. An
@@ -1061,43 +1063,50 @@ languages.
 
 ### Step 10c — Accounts: identity, registration and email verification
 
-**Goal.** People create their own accounts, prove the address they own, and then sign in with the identifier
-the department already knows them by — a roll number or a staff ID, not an email address.
+**Goal.** People create their own accounts, prove the address they own, and are then issued the identifier they
+sign in with — delivered to the address they just proved.
 
 **This is the largest step in the plan**, and it is one step because its three halves cannot be separated: the
-new identity fields decide what registration collects, and registration is what needs an address verified.
-Splitting it would mean shipping a login that half the accounts cannot use.
+new identity fields decide what registration collects, registration is what needs an address verified, and
+verification is what issues the identifier. Splitting it would ship a login that nobody has credentials for.
 
 **The identity model, which is the part that changes everything.**
 
-| Role                | Signs in with          | Set by                               | Unique among |
-| ------------------- | ---------------------- | ------------------------------------ | ------------ |
-| Student             | **Roll number**        | The applicant, at registration       | Students     |
-| Teacher             | **Generated staff ID** | The server, at registration          | Teachers     |
-| Admin / super admin | **Email**              | The super administrator, or the seed | Everyone     |
+| Role                | Signs in with            | Issued                         | Delivered by              |
+| ------------------- | ------------------------ | ------------------------------ | ------------------------- |
+| Student             | **Generated student ID** | When email verification passes | Email                     |
+| Teacher             | **Generated staff ID**   | When email verification passes | Email                     |
+| Admin / super admin | **Email**                | On creation                    | The person who created it |
 
-Email stops being the way in and becomes the way _back_ in: the recovery channel, and the thing verification
-proves you own.
+Email stops being the way in and becomes the way _back_ in: the channel the identifier arrives on, the thing
+verification proves you own, and the route to a forgotten password.
+
+**Recommendation: one field, not two.** "Student ID" and "Teacher ID" are what they are called on screen, but
+storing them as two columns buys nothing and costs a second unique index, a second generator and a branch at
+every lookup. One `loginId`, unique across every account, with the role written into its prefix — `S-2026-0042`,
+`T-2026-0007` — gives one index, one generator and one resolution path, while the UI still labels it "Student
+ID" or "Teacher ID" per role. The rest of this step assumes that; say so if you want them separate.
 
 **Deliverables.**
 
 ```
-models/user.model.ts        roll · registrationNo · session · department · teacherId
+models/user.model.ts        roll · registrationNo · session · department · loginId
                             emailVerified · emailVerificationToken · emailVerificationExpiresAt
-                            partial unique indexes on roll (students) and teacherId (teachers)
+                            unique index on loginId · unique index on roll among students
 types/user.dto.ts           the widened DTO, still naming every field explicitly
 lib/schemas/registration-student.schema.ts · registration-teacher.schema.ts
 lib/schemas/sign-in.schema.ts                 identifier, not email
 lib/services/auth.service.ts                  resolveByIdentifier() · register() · verifyEmail()
-lib/services/teacher-id.service.ts            or a util — generates and collision-checks the staff ID
+lib/utils/login-id.utils.ts                   generates the prefixed, sequential identifier
 lib/mail/                                     transport behind a small interface, like lib/storage/
-                                              plus a development driver that logs the link
+                                              two templates: verify-address · your-login-id
+                                              plus a development driver that writes both to the log
 env/server.ts                                 the mail provider's credentials become required
 app/[locale]/(auth)/register/page.tsx         a role chooser, then the matching form
 app/[locale]/(auth)/register/student · teacher
-app/[locale]/(auth)/registration-received/page.tsx   shows the teacher their staff ID to copy
-app/[locale]/(auth)/verify-email/page.tsx     the link's landing page
-components/auth/  register-student.form · register-teacher.form · teacher-id-notice · actions.ts
+app/[locale]/(auth)/registration-received/page.tsx   "check your inbox" — no identifier yet
+app/[locale]/(auth)/verify-email/page.tsx     issues the identifier, shows it, and emails it
+components/auth/  register-student.form · register-teacher.form · login-id-notice · actions.ts
 constants/codes-users.const.ts                the new refusals
 scripts/verify-accounts.ts                    the suite for all of it
 ```
@@ -1105,21 +1114,29 @@ scripts/verify-accounts.ts                    the suite for all of it
 **What registration collects.**
 
 - **Student** — name, email, roll, registration number, session, semester, department, password.
-- **Teacher** — name, email, department, password. The staff ID is generated, not chosen.
+- **Teacher** — name, email, department, password.
+
+Neither of them chooses an identifier. Both are issued one.
 
 **Notes.**
 
-- **The staff ID is generated on the server, and only _displayed_ by the front end.** Worth being explicit,
-  because "generated in the front end" is how it was described: an identifier minted in the browser is
-  attacker-controlled — a teacher could submit one that already exists, or one shaped like a roll number — and
-  uniqueness cannot be checked from there anyway. The server generates it inside the same operation that
-  writes the row, so the uniqueness check and the insert cannot race. The confirmation screen then shows it
-  large, with a copy button and a warning that it is the only thing they sign in with.
-- **Give the staff ID a shape that cannot collide with a roll number**, e.g. `T-2026-0007`. One sign-in field
-  serving three identifier kinds means they share a namespace, and a teacher whose ID happened to equal
-  somebody's roll number would be a sign-in that resolves to the wrong person. A prefix makes the collision
-  impossible rather than unlikely.
-- **One sign-in field, labelled for all three.** `resolveByIdentifier()` tries roll, then staff ID, then
+- **The identifier is issued when verification passes, not when the form is submitted.** It arrives by email,
+  in the same message that confirms the address — which is the only place it can safely be delivered, since
+  the address is the one thing about the applicant that has just been proven. Generating it at verification
+  also means an application that is never confirmed never burns an identifier.
+- **It is generated on the server, and only _displayed_ by the front end.** Worth being explicit, because
+  "generated in the front end" is how it was described: an identifier minted in the browser is
+  attacker-controlled — the applicant could submit one that already exists — and uniqueness cannot be checked
+  from there anyway. The server generates it inside the same operation that flips `emailVerified`, so the
+  uniqueness check and the write cannot race. The landing page then shows it large with a copy button, and the
+  email carries the durable copy for the day they close that tab.
+- **Prefix by role**: `S-2026-0042`, `T-2026-0007`. One sign-in field serving both means they share a
+  namespace, and the prefix makes a collision impossible rather than unlikely. It also makes a mistyped ID
+  fail fast rather than resolve to a stranger.
+- **The roll number is data, not a login.** Collected at registration and unique among students, because the
+  department identifies people by it — but the student signs in with the issued ID. That keeps the login
+  identifier something the application controls, rather than something an applicant types.
+- **One sign-in field, labelled for all three roles.** `resolveByIdentifier()` tries the login ID, then
   email. The alternative — a role picker beside the password — asks the visitor to classify themselves before
   the app has any reason to care.
 - **Two gates, and they must say different things.** An account is usable only when `emailVerified` **and**
@@ -1132,9 +1149,15 @@ scripts/verify-accounts.ts                    the suite for all of it
 - **The verification token is a hashed, expiring, single-use secret.** Stored as a hash, not the value, for
   the same reason a password is — a leaked database read should not hand out account takeovers. It expires,
   and it is cleared on use.
-- **`studentId` is renamed to `roll`.** The existing field is free text set by an administrator; the roll
-  number is now the student's login identifier and unique among students. Keeping both would leave two fields
-  meaning the same thing with only one of them load-bearing. Existing rows need the rename applied.
+- **`studentId` is renamed to `roll`.** The existing field is free text set by an administrator, and the name
+  is now actively misleading: a student's "student ID" is the identifier the application issues them. Two
+  fields called almost the same thing, with only one of them load-bearing, is how the wrong one gets read.
+  Existing rows need the rename applied.
+- **The two emails are the whole delivery mechanism, so they need to say the right thing.** The first carries
+  the confirmation link and nothing else. The second carries the identifier, states plainly that it — not the
+  email address — is what they sign in with, and warns that the department still has to approve the account
+  before it will let them in. Without that last line the identifier arrives and the first sign-in is refused,
+  which reads as the ID being wrong.
 - **`department` is a text field, not an entity.** The proposal is explicit that this is one department, and
   nothing scopes data by it — see [Backlog](#backlog). It is collected because the form should ask, and it
   will be the seam if multi-department ever lands.
@@ -1159,19 +1182,21 @@ be walked without sending anything.
 
 **Acceptance.**
 
-| Check                                               | Expected                                               |
-| --------------------------------------------------- | ------------------------------------------------------ |
-| Student registers, signs in before verifying        | Refused — "check your inbox", not "wrong password"     |
-| Verifies, signs in before approval                  | Refused — and it says approval, not verification       |
-| Approved, signs in with roll + password             | Reaches the student area                               |
-| Signs in with email + password as a student         | Refused — roll is the identifier                       |
-| Teacher registers                                   | Staff ID shown once, copyable, and stored              |
-| Two teachers register at the same moment            | Two different staff IDs — the check cannot race        |
-| A staff ID shaped like a roll number                | Impossible by construction — the prefix separates them |
-| Duplicate roll, duplicate email                     | Refused by a unique index, not only by a service check |
-| A verification link used twice, or after it expires | Refused                                                |
-| A `role` field posted to the registration action    | Ignored — the form decides the role, not the body      |
-| An unverified registration                          | Absent from the administrator's pending queue          |
+| Check                                               | Expected                                                              |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| Registers, then signs in before verifying           | Refused — "check your inbox", not "wrong password"                    |
+| An account that has registered but not verified     | **Holds no identifier at all** — none was issued                      |
+| Verification link clicked                           | Identifier issued, shown on the page, and emailed                     |
+| The verification email                              | Names the identifier as the login, and says approval is still pending |
+| Verifies, signs in before approval                  | Refused — and it says approval, not verification                      |
+| Approved, signs in with the issued ID + password    | Reaches their area                                                    |
+| Signs in with email + password as a student         | Refused — the issued ID is the identifier                             |
+| Two people verify at the same moment                | Two different identifiers — the check cannot race                     |
+| A student ID and a staff ID colliding               | Impossible by construction — the prefix separates them                |
+| Duplicate roll, duplicate email                     | Refused by a unique index, not only by a service check                |
+| A verification link used twice, or after it expires | Refused, and no second identifier is issued                           |
+| A `role` field posted to the registration action    | Ignored — the form decides the role, not the body                     |
+| An unverified registration                          | Absent from the administrator's pending queue                         |
 
 **Open questions.**
 
@@ -1181,8 +1206,13 @@ be walked without sending anything.
 2. **What does a roll number look like?** Free text, or a pattern the schema enforces? A pattern catches
    typos at registration, when the account is easiest to fix; free text never rejects a legitimate student.
 3. **Session format** — `2021-22`, `2021-2022`, or free text?
-4. **Can a student change their roll number later?** Assumed no — it is their identifier, and changing it
-   changes who they sign in as.
+4. **Can a student change their roll number later?** Assumed an administrator can correct it and the student
+   cannot. It is no longer the login, so a correction is now harmless — which is one of the quieter arguments
+   for issuing an identifier rather than trusting a typed one.
+5. **What happens if the identifier email never arrives?** Assumed a "resend" on the sign-in screen, keyed by
+   email address, that re-sends whichever message the account is waiting on. Without it, a spam-filtered email
+   means an account nobody can ever reach — and the department has no way to look the identifier up for them
+   short of the admin user list, which is worth checking shows it.
 
 ---
 
@@ -1204,9 +1234,12 @@ constants/routes.const.ts                    PROFILE, and /profile added to PROT
 
 **Notes.**
 
-- **Editable: name, email, address, phone.** Nothing else. Roll, staff ID, registration number, session,
-  semester, department, role and approval are set by the department or fixed at registration — a profile that
-  could change them would be a privilege escalation with a friendly form around it.
+- **Editable: name, email, address, phone.** Nothing else. The login ID, roll, registration number, session,
+  semester, department, role and approval are issued by the application or set by the department — a profile
+  that could change them would be a privilege escalation with a friendly form around it.
+- **The login ID belongs on this page, prominently.** It arrives once by email and is the only thing that
+  opens the account; the profile is where somebody goes when they cannot find that message. Read-only, with a
+  copy button.
 - **Changing an email re-opens verification, and must.** The address is the password-recovery channel, so an
   unverified change is an account takeover waiting for a stolen session: change the email, request a reset,
   own the account. The new address is stored as pending, the verification mail goes to it, and the old address
@@ -1218,7 +1251,7 @@ constants/routes.const.ts                    PROFILE, and /profile added to PROT
 - **Read-only, and worth showing:** the identifier they sign in with, their department and session, their
   semester, the courses a teacher is assigned, and whether the account is approved.
 
-**Acceptance.** A student corrects their address and phone; a teacher sees their staff ID and assigned
+**Acceptance.** A student corrects their address and phone; a teacher sees their login ID and assigned
 courses; an email change sends a fresh verification and does not take effect until the link is clicked; a
 profile update naming `role`, `roll` or `isApproved` changes nothing, because those fields are not in the
 schema.
