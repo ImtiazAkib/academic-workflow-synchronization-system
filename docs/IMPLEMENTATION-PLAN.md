@@ -1,6 +1,6 @@
 # Implementation Plan
 
-The build is split into **14 steps**. Each one is self-contained, ends with a green build, and leaves the app
+The build is split into **17 steps**. Each one is self-contained, ends with a green build, and leaves the app
 in a working state.
 
 ## How this works
@@ -31,9 +31,12 @@ in a working state.
 | [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
 | [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
-| [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
-| [12](#step-12) | Polish & hardening             | Phase 6        | ⬜ Not started |
-| [13](#step-13) | Testing & deployment           | Phase 6        | ⬜ Not started |
+| [11](#step-11) | Roles and access control       | Phase 5        | ⬜ Not started |
+| [12](#step-12) | Accounts, registration, email  | Phase 5        | ⬜ Not started |
+| [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
+| [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
+| [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
+| [16](#step-16) | Testing & deployment           | Phase 6        | ⬜ Not started |
 
 ## Decisions
 
@@ -949,7 +952,7 @@ The same limit as steps 7 and 8. **The Bangla column is machine-written and want
   or will supervise a project next year — five names would make it useless for the question it exists for.
 - **The student overview became a real screen** rather than staying "under construction" like the
   administrator's and teacher's. It shows today's classes and links to the three screens, which is the step's
-  own goal sentence. Step 11 adds the notices feed on top.
+  own goal sentence. Step 14 adds the notices feed on top.
 - **The courses lookup on the routine page is unfiltered.** A class session carries its own semester, and
   nothing stops an administrator scheduling a course into a year other than the one the course is registered
   under; narrowing the lookup would leave those cards showing a raw id instead of a code.
@@ -973,7 +976,295 @@ enrolment, which is a new collection rather than a new field. Logged in [Backlog
 
 <a id="step-11"></a>
 
-### Step 11 — Notices & announcements
+### Step 11 — Roles and access control
+
+**Goal.** One permanent super administrator above a bounded set of administrators, and an account nobody can
+turn on themselves.
+
+**Why here, before notices.** This changes the role enum, and step 14 filters every notice by role. Written in
+the other order, the audience rules would be built against a role set that is about to change and then
+revisited. It also removes the sharpest edge in the app today: an administrator can currently deactivate
+themselves, and the only thing standing between the department and a locked-out installation is the
+`LAST_ADMIN_CANNOT_BE_REMOVED` guard.
+
+**Deliverables.**
+
+```
+constants/roles.const.ts                     SUPER_ADMIN added to USER_ROLES and the labels
+types/user-role.ts · types/user-filters.ts   the widened union
+models/user.model.ts                         partial unique index pinning super-admin to one row
+lib/auth/guards.ts                           requireAdminArea() — admits admin and super administrator
+lib/services/user.service.ts                 the ceiling, the self-action guard, the immutable account
+constants/codes-users.const.ts               31001 ceiling · 31003 super administrator
+                                             51004 an admin account is the super administrator's
+                                             31002 nobody acts on their own access
+lib/utils/role.utils.ts                      the fourth literal l10n branch
+scripts/seed-super-admin.ts                  the one account no screen can create
+scripts/seed-admin.ts                        retired — the super administrator creates the first admin
+```
+
+**Notes.**
+
+- **The super administrator is enforced by the database, not only by the service.** A partial unique index —
+  `{ role: 1 }` unique, `partialFilterExpression: { role: 'super-admin' }` — makes a second one impossible
+  even from a script or a shell. A service check alone is a rule the next caller can forget.
+- **It cannot be created, edited, demoted, deactivated, revoked or deleted by anyone, including itself.**
+  Every mutating path in `UserService` refuses when the target carries that role, and the role select on the
+  create and edit screens never offers it. Seeded once by `npm run seed:super-admin`.
+- **The ceiling is three _active_ administrators, and the super administrator is not one of them** — settled:
+  three plus one, four accounts with administrative reach in total. The count is over the `admin` role only,
+  so the super administrator can always create a third administrator no matter how the arithmetic is read.
+  Checked on create and on promotion. A deactivated administrator frees its seat — the alternative is a
+  department that cannot replace someone who left, because accounts are deactivated rather than deleted and
+  the seat would never come back.
+- **An administrator account is the super administrator's alone.** Stated as one rule rather than a list of
+  verbs — _every_ operation that puts an account into the `admin` role, takes it out, or changes its access
+  belongs to the super administrator: create, promote, demote, approve, revoke, activate, deactivate. An
+  administrator may create, edit and approve **teacher and student accounts only**.
+- **That rule is enforced in the service, not in the role select.** The forms offer an administrator only
+  teacher and student, and offer the super administrator administrator as well — but the form is the
+  convenience. `UserService` refuses an `admin` operation from a requester who is not the super administrator,
+  so a hand-built action call is refused too.
+- **It also closes the self-deactivation hole from the other side.** An administrator's own account is an
+  administrator account, so the rule above already forbids them switching themselves off. The explicit
+  "nobody acts on their own access" guard stays anyway: it is the rule that keeps holding when the role rules
+  next change, and it costs one comparison. It needs the signed-in user threaded into `setActive`,
+  `setApproval` and `update`, which take only their input today.
+- **`LAST_ADMIN_CANNOT_BE_REMOVED` can be retired.** It exists to prevent a department locking itself out of
+  the admin area. With a permanent super administrator who owns the entire administrator lifecycle, and with
+  administrators unable to deactivate each other or themselves, the guard has no reachable path left. Retire
+  it rather than leave a rule nothing can trigger.
+- **`scripts/seed-admin.ts` is retired with it.** The seeded account becomes the super administrator, and the
+  first administrator is created through the UI — one fewer script, and one fewer way to mint an account
+  outside the rules. An existing installation keeps the administrators it already has; the super administrator
+  is seeded alongside them, and the ceiling is measured against what is there.
+
+**Acceptance.**
+
+| Check                                                 | Expected                                     |
+| ----------------------------------------------------- | -------------------------------------------- |
+| Administrator creates an administrator                | Refused — the super administrator's alone    |
+| Administrator promotes a teacher to administrator     | Refused — the same rule, a different verb    |
+| Administrator edits or deactivates another admin      | Refused                                      |
+| Administrator deactivates or revokes themselves       | Refused, naming the reason                   |
+| Administrator creates a teacher or a student          | Allowed, unchanged                           |
+| Super administrator creates a fourth active admin     | Refused, and the ceiling is named            |
+| Deactivating one, then creating another               | Allowed — the seat came back                 |
+| Any edit, demotion or deactivation of the super admin | Refused, from every role including itself    |
+| A second super administrator, inserted directly       | **Rejected by the unique index**             |
+| An `admin` operation from a hand-built action call    | Refused by the service, not only by the form |
+
+Plus the usual: `npm run verify:users` extended; lint, format and build green; every new string in both
+languages.
+
+---
+
+<a id="step-12"></a>
+
+### Step 12 — Accounts: identity, registration and email verification
+
+**Goal.** People create their own accounts, prove the address they own, and are then issued the identifier they
+sign in with — delivered to the address they just proved.
+
+**This is the largest step in the plan**, and it is one step because its three halves cannot be separated: the
+new identity fields decide what registration collects, registration is what needs an address verified, and
+verification is what issues the identifier. Splitting it would ship a login that nobody has credentials for.
+
+**The identity model, which is the part that changes everything.**
+
+| Role                | Signs in with            | Issued                         | Delivered by              |
+| ------------------- | ------------------------ | ------------------------------ | ------------------------- |
+| Student             | **Generated student ID** | When email verification passes | Email                     |
+| Teacher             | **Generated staff ID**   | When email verification passes | Email                     |
+| Admin / super admin | **Email**                | On creation                    | The person who created it |
+
+Email stops being the way in and becomes the way _back_ in: the channel the identifier arrives on, the thing
+verification proves you own, and the route to a forgotten password.
+
+**Recommendation: one field, not two.** "Student ID" and "Teacher ID" are what they are called on screen, but
+storing them as two columns buys nothing and costs a second unique index, a second generator and a branch at
+every lookup. One `loginId`, unique across every account, with the role written into its prefix — `S-2026-0042`,
+`T-2026-0007` — gives one index, one generator and one resolution path, while the UI still labels it "Student
+ID" or "Teacher ID" per role. The rest of this step assumes that; say so if you want them separate.
+
+**Deliverables.**
+
+```
+models/user.model.ts        roll · registrationNo · session · department · loginId
+                            emailVerified · emailVerificationToken · emailVerificationExpiresAt
+                            unique index on loginId · unique index on roll among students
+types/user.dto.ts           the widened DTO, still naming every field explicitly
+lib/schemas/registration-student.schema.ts · registration-teacher.schema.ts
+lib/schemas/sign-in.schema.ts                 identifier, not email
+lib/services/auth.service.ts                  resolveByIdentifier() · register() · verifyEmail()
+lib/utils/login-id.utils.ts                   generates the prefixed, sequential identifier
+lib/mail/                                     transport behind a small interface, like lib/storage/
+                                              two templates: verify-address · your-login-id
+                                              plus a development driver that writes both to the log
+env/server.ts                                 the mail provider's credentials become required
+app/[locale]/(auth)/register/page.tsx         a role chooser, then the matching form
+app/[locale]/(auth)/register/student · teacher
+app/[locale]/(auth)/registration-received/page.tsx   "check your inbox" — no identifier yet
+app/[locale]/(auth)/verify-email/page.tsx     issues the identifier, shows it, and emails it
+components/auth/  register-student.form · register-teacher.form · login-id-notice · actions.ts
+constants/codes-users.const.ts                the new refusals
+scripts/verify-accounts.ts                    the suite for all of it
+```
+
+**What registration collects.**
+
+- **Student** — name, email, roll, registration number, session, semester, department, password.
+- **Teacher** — name, email, department, password.
+
+Neither of them chooses an identifier. Both are issued one.
+
+**Notes.**
+
+- **The identifier is issued when verification passes, not when the form is submitted.** It arrives by email,
+  in the same message that confirms the address — which is the only place it can safely be delivered, since
+  the address is the one thing about the applicant that has just been proven. Generating it at verification
+  also means an application that is never confirmed never burns an identifier.
+- **It is generated on the server, and only _displayed_ by the front end.** Worth being explicit, because
+  "generated in the front end" is how it was described: an identifier minted in the browser is
+  attacker-controlled — the applicant could submit one that already exists — and uniqueness cannot be checked
+  from there anyway. The server generates it inside the same operation that flips `emailVerified`, so the
+  uniqueness check and the write cannot race. The landing page then shows it large with a copy button, and the
+  email carries the durable copy for the day they close that tab.
+- **Prefix by role**: `S-2026-0042`, `T-2026-0007`. One sign-in field serving both means they share a
+  namespace, and the prefix makes a collision impossible rather than unlikely. It also makes a mistyped ID
+  fail fast rather than resolve to a stranger.
+- **The roll number is data, not a login.** Collected at registration and unique among students, because the
+  department identifies people by it — but the student signs in with the issued ID. That keeps the login
+  identifier something the application controls, rather than something an applicant types.
+- **One sign-in field, labelled for all three roles.** `resolveByIdentifier()` tries the login ID, then
+  email. The alternative — a role picker beside the password — asks the visitor to classify themselves before
+  the app has any reason to care.
+- **Two gates, and they must say different things.** An account is usable only when `emailVerified` **and**
+  `isApproved`. "Check your inbox" and "waiting for the department to approve you" are different problems with
+  different remedies, so they get different messages. The existing `ACCOUNT_NOT_APPROVED` refusal is joined by
+  an `EMAIL_NOT_VERIFIED` one.
+- **Verification comes before approval, and that ordering is deliberate.** An administrator should not spend
+  attention on an application whose address has not been proven; unverified registrations stay out of the
+  pending queue until the link is clicked.
+- **The verification token is a hashed, expiring, single-use secret.** Stored as a hash, not the value, for
+  the same reason a password is — a leaked database read should not hand out account takeovers. It expires,
+  and it is cleared on use.
+- **`studentId` is renamed to `roll`.** The existing field is free text set by an administrator, and the name
+  is now actively misleading: a student's "student ID" is the identifier the application issues them. Two
+  fields called almost the same thing, with only one of them load-bearing, is how the wrong one gets read.
+  Existing rows need the rename applied.
+- **The two emails are the whole delivery mechanism, so they need to say the right thing.** The first carries
+  the confirmation link and nothing else. The second carries the identifier, states plainly that it — not the
+  email address — is what they sign in with, and warns that the department still has to approve the account
+  before it will let them in. Without that last line the identifier arrives and the first sign-in is refused,
+  which reads as the ID being wrong.
+- **`department` is a text field, not an entity.** The proposal is explicit that this is one department, and
+  nothing scopes data by it — see [Backlog](#backlog). It is collected because the form should ask, and it
+  will be the seam if multi-department ever lands.
+- **The semester is now chosen by the applicant**, reversing the assumption written into the previous draft of
+  this step. It is unverified until an administrator approves, and the approval screen is where they correct
+  it — which is the same moment they are already checking who the person is.
+- **Registration is the first unauthenticated write in the application.** The role is fixed by which form was
+  posted and is never read from the request body, so there is no `role` field for a hand-built request to set
+  to `admin`. Rate limiting is step 15's; an open sign-up endpoint with no throttle is a real gap until then,
+  and worth pulling forward if it is quick.
+- **Either an administrator or the super administrator approves**, for teachers and students. Funnelling every
+  new account through one super administrator would make them the bottleneck the three administrators exist to
+  avoid.
+- **The landing page needs a way in.** The marketing header offers only sign-in today, and the three role
+  cards describe roles nobody can take.
+
+**New external dependency, and it is a real one.** Email verification needs a provider. The project has none —
+it is why password reset sits in [Backlog](#backlog). This step has to choose one (SMTP through nodemailer, or
+an HTTP API such as Resend), add its credentials to `env/server.ts`, and put it behind a small interface the
+way `lib/storage/` is, with a development driver that writes the verification link to the log so the flow can
+be walked without sending anything.
+
+**Acceptance.**
+
+| Check                                               | Expected                                                              |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| Registers, then signs in before verifying           | Refused — "check your inbox", not "wrong password"                    |
+| An account that has registered but not verified     | **Holds no identifier at all** — none was issued                      |
+| Verification link clicked                           | Identifier issued, shown on the page, and emailed                     |
+| The verification email                              | Names the identifier as the login, and says approval is still pending |
+| Verifies, signs in before approval                  | Refused — and it says approval, not verification                      |
+| Approved, signs in with the issued ID + password    | Reaches their area                                                    |
+| Signs in with email + password as a student         | Refused — the issued ID is the identifier                             |
+| Two people verify at the same moment                | Two different identifiers — the check cannot race                     |
+| A student ID and a staff ID colliding               | Impossible by construction — the prefix separates them                |
+| Duplicate roll, duplicate email                     | Refused by a unique index, not only by a service check                |
+| A verification link used twice, or after it expires | Refused, and no second identifier is issued                           |
+| A `role` field posted to the registration action    | Ignored — the form decides the role, not the body                     |
+| An unverified registration                          | Absent from the administrator's pending queue                         |
+
+**Open questions.**
+
+1. **Which mail provider?** SMTP needs a host and credentials; an API such as Resend needs a key and a
+   verified sending domain. The interface is the same either way, so this can be answered late — but it must
+   be answered before the step can be finished, and a domain can take a day to verify.
+2. **What does a roll number look like?** Free text, or a pattern the schema enforces? A pattern catches
+   typos at registration, when the account is easiest to fix; free text never rejects a legitimate student.
+3. **Session format** — `2021-22`, `2021-2022`, or free text?
+4. **Can a student change their roll number later?** Assumed an administrator can correct it and the student
+   cannot. It is no longer the login, so a correction is now harmless — which is one of the quieter arguments
+   for issuing an identifier rather than trusting a typed one.
+5. **What happens if the identifier email never arrives?** Assumed a "resend" on the sign-in screen, keyed by
+   email address, that re-sends whichever message the account is waiting on. Without it, a spam-filtered email
+   means an account nobody can ever reach — and the department has no way to look the identifier up for them
+   short of the admin user list, which is worth checking shows it.
+
+---
+
+<a id="step-13"></a>
+
+### Step 13 — Profiles
+
+**Goal.** An account somebody owns, with the fields that are actually theirs to correct.
+
+**Deliverables.**
+
+```
+app/[locale]/(dashboard)/profile/page.tsx    one route, role-aware content
+components/profile/  profile-summary · profile-edit.form · actions.ts · profile.types.ts · index.ts
+lib/schemas/profile-update.schema.ts
+lib/services/user.service.ts                 updateOwnProfile()
+constants/routes.const.ts                    PROFILE, and /profile added to PROTECTED_SEGMENTS
+```
+
+**Notes.**
+
+- **Editable: name, email, address, phone.** Nothing else. The login ID, roll, registration number, session,
+  semester, department, role and approval are issued by the application or set by the department — a profile
+  that could change them would be a privilege escalation with a friendly form around it.
+- **The login ID belongs on this page, prominently.** It arrives once by email and is the only thing that
+  opens the account; the profile is where somebody goes when they cannot find that message. Read-only, with a
+  copy button.
+- **Changing an email re-opens verification, and must.** The address is the password-recovery channel, so an
+  unverified change is an account takeover waiting for a stolen session: change the email, request a reset,
+  own the account. The new address is stored as pending, the verification mail goes to it, and the old address
+  stays the recovery channel until the new one is proven.
+- **One `/profile` route rather than one per role.** A student's profile and a teacher's differ by which
+  read-only fields they show; two screens would be two copies of the same form drifting apart. `/profile` has
+  to be added to `PROTECTED_SEGMENTS` — it sits outside `/admin`, `/teacher` and `/student`, so the guard does
+  not cover it by accident.
+- **Read-only, and worth showing:** the identifier they sign in with, their department and session, their
+  semester, the courses a teacher is assigned, and whether the account is approved.
+
+**Acceptance.** A student corrects their address and phone; a teacher sees their login ID and assigned
+courses; an email change sends a fresh verification and does not take effect until the link is clicked; a
+profile update naming `role`, `roll` or `isApproved` changes nothing, because those fields are not in the
+schema.
+
+**Follow-on, now cheap.** Password reset by email has been in [Backlog](#backlog) only because there was no
+mail transport. Once step 12 builds one, reset is a token, two screens and a service method — worth its own
+small step rather than a fourth part here.
+
+---
+
+<a id="step-14"></a>
+
+### Step 14 — Notices & announcements
 
 **Goal.** Department-wide communication that actually lands on the right dashboards.
 
@@ -998,9 +1289,9 @@ dashboards only.
 
 ---
 
-<a id="step-12"></a>
+<a id="step-15"></a>
 
-### Step 12 — Polish & hardening
+### Step 15 — Polish & hardening
 
 **Goal.** Turn a working app into one that behaves under real use.
 
@@ -1019,9 +1310,9 @@ no action is reachable without both an authentication and an authorization check
 
 ---
 
-<a id="step-13"></a>
+<a id="step-16"></a>
 
-### Step 13 — Testing & deployment
+### Step 16 — Testing & deployment
 
 **Goal.** Ship it, repeatably.
 
@@ -1049,11 +1340,11 @@ Real, out of scope for now, and here so they are not lost:
 | Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                 |
 | Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                         |
 | Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones |
-| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 12's polish pass owns it                                         |
-| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 12's accessibility pass owns the sweep                                                                       |
-| Password reset by email                 | Requires SMTP credentials the project does not have                                                                                                                                                           |
+| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                         |
+| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                       |
+| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                       |
 | Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                     |
-| Multi-department support                | Proposal is explicit: one department first                                                                                                                                                                    |
+| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                           |
 | Revoking a live session                 | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list                       |
 | Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                   |
 | Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                |

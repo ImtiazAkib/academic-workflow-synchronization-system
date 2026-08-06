@@ -5,10 +5,10 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–9 of 15 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–10 of 17 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
-> dashboard shell, user and course management, the conflict-checked timetable and the course-materials
-> repository are in place. The student dashboard is next —
+> dashboard shell, user and course management, the conflict-checked timetable, the course-materials
+> repository and the read-only student dashboard are in place. Roles and self-registration are next —
 > see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
@@ -302,7 +302,7 @@ Typography helpers (`.tagline`, `.text-medium-normal`, `.text-regular-semibold`)
 (`.section-py`, `.section-px`) and `.surface-card` are defined alongside the tokens.
 
 The palette ships **light by default** with a complete `.dark` block already written. There is no theme toggle
-yet — step 12 adds `next-themes` and puts the class on `<html>`.
+yet — step 15 adds `next-themes` and puts the class on `<html>`.
 
 ### Type
 
@@ -590,8 +590,8 @@ Straight from the project proposal, mapped onto the
 | 2     | Database schema design and authentication setup | Week 2   | 4–5   |
 | 3     | Admin dashboard and user management             | Week 3-4 | 6–7   |
 | 4     | Scheduling system and teacher dashboard         | Week 5-6 | 8–9   |
-| 5     | Student dashboard and material management       | Week 7   | 10–11 |
-| 6     | Testing, bug fixing and final deployment        | Week 8   | 12–13 |
+| 5     | Student dashboard, accounts and notices         | Week 7   | 10–14 |
+| 6     | Testing, bug fixing and final deployment        | Week 8   | 15–16 |
 
 `typedRoutes` is on, so a `<Link>` to a route that does not exist yet is a build error. That is why the
 landing page uses in-page anchors and `ROUTES` currently holds only `HOME`.
