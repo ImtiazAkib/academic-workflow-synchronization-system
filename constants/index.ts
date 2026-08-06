@@ -7,6 +7,7 @@ export * from './routes.const';
 export * from './roles.const';
 export * from './users.const';
 export * from './schedule.const';
+export * from './material.const';
 export * from './notice.const';
 export * from './seo.const';
 export * from './json-ld.const';

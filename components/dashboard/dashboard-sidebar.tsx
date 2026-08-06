@@ -1,4 +1,4 @@
-import { APP_DATA, ROUTES } from '@/constants';
+﻿import { APP_DATA, ROUTES } from '@/constants';
 import { Link } from '@/l10n/navigation';
 import { UserRole } from '@/types';
 
@@ -13,13 +13,14 @@ type DashboardSidebarProps = {
   usersLabel: string;
   coursesLabel: string;
   scheduleLabel: string;
+  materialsLabel: string;
 };
 
 /*
   Hidden below `lg`, where the same navigation runs across the topbar instead. One
   nav component, two placements — rather than two components that drift apart.
 */
-export function DashboardSidebar({ role, navLabel, overviewLabel, usersLabel, coursesLabel, scheduleLabel }: DashboardSidebarProps) {
+export function DashboardSidebar({ role, navLabel, overviewLabel, usersLabel, coursesLabel, scheduleLabel, materialsLabel }: DashboardSidebarProps) {
   return (
     <aside className="bg-sidebar border-sidebar-border hidden w-60 shrink-0 flex-col gap-6 border-r p-4 lg:flex">
       <Link href={ROUTES.HOME.HREF} className="flex items-center gap-2.5 px-2">
@@ -34,6 +35,7 @@ export function DashboardSidebar({ role, navLabel, overviewLabel, usersLabel, co
         usersLabel={usersLabel}
         coursesLabel={coursesLabel}
         scheduleLabel={scheduleLabel}
+        materialsLabel={materialsLabel}
         className="flex-col"
       />
     </aside>

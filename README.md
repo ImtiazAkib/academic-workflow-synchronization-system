@@ -5,10 +5,11 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–8 of 15 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–9 of 15 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
-> dashboard shell, user and course management, and the conflict-checked timetable are in place. Teacher
-> materials are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> dashboard shell, user and course management, the conflict-checked timetable and the course-materials
+> repository are in place. The student dashboard is next —
+> see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -121,19 +122,20 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                    | Description                                                |
-| ------------------------- | ---------------------------------------------------------- |
-| `npm run dev`             | Start the dev server                                       |
-| `npm run build`           | Production build (`output: 'standalone'`)                  |
-| `npm run start`           | Serve the production build                                 |
-| `npm run lint`            | ESLint — import order, cspell, canonical classes, Prettier |
-| `npm run lint:fix`        | ESLint with `--fix`                                        |
-| `npm run format`          | Prettier check                                             |
-| `npm run format:write`    | Prettier write                                             |
-| `npm run i18n:generate`   | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
-| `npm run seed:admin`      | Create the first administrator (see below)                 |
-| `npm run verify:users`    | Exercise UserService against the database, then clean up   |
-| `npm run verify:schedule` | Exercise conflict detection the same way                   |
+| Script                     | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `npm run dev`              | Start the dev server                                       |
+| `npm run build`            | Production build (`output: 'standalone'`)                  |
+| `npm run start`            | Serve the production build                                 |
+| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier |
+| `npm run lint:fix`         | ESLint with `--fix`                                        |
+| `npm run format`           | Prettier check                                             |
+| `npm run format:write`     | Prettier write                                             |
+| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
+| `npm run seed:admin`       | Create the first administrator (see below)                 |
+| `npm run verify:users`     | Exercise UserService against the database, then clean up   |
+| `npm run verify:schedule`  | Exercise conflict detection the same way                   |
+| `npm run verify:materials` | Exercise upload, download, delete and the access rules     |
 
 ## Project structure
 
@@ -146,7 +148,9 @@ app/
                   admin/users · admin/users/new — account management
                   admin/courses · admin/courses/new — course management
                   admin/schedule · admin/schedule/new — the timetable
-                  teacher/schedule — the teacher's own week, read-only
+                  teacher/schedule — the teacher's own week
+                  teacher/materials · teacher/courses — the file repository
+  api/materials/  upload · [id]/download — route handlers, not Server Actions
     unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
   globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
