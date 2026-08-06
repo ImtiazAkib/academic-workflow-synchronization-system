@@ -704,7 +704,7 @@ not sign in. `CourseService.update` and its duplicate-code check are covered by 
 
 <a id="step-8"></a>
 
-### Step 8 — Scheduling system ✅ Done 🚧 In progress
+### Step 8 — Scheduling system ✅ Done
 
 **Goal.** The feature the proposal is built around — a timetable that refuses to double-book.
 
@@ -1258,7 +1258,7 @@ schema.
 
 **Follow-on, now cheap.** Password reset by email has been in [Backlog](#backlog) only because there was no
 mail transport. Once step 12 builds one, reset is a token, two screens and a service method — worth its own
-small step rather than a fourth part here.
+small step rather than folding it into this one.
 
 ---
 
