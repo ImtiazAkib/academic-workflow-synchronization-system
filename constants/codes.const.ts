@@ -1,6 +1,5 @@
 import { COMMON_AUTH, COMMON_BUSINESS, COMMON_DATABASE, COMMON_VALIDATION } from './codes-common.const';
 import { COURSES_BUSINESS, COURSES_DATABASE, COURSES_VALIDATION } from './codes-courses.const';
-import { SCHEDULE_BUSINESS, SCHEDULE_DATABASE, SCHEDULE_VALIDATION } from './codes-schedule.const';
 import { USERS_AUTH, USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './codes-users.const';
 
 /*
@@ -22,7 +21,6 @@ export const CODES = {
     COMMON: COMMON_DATABASE, // 10xxx
     USERS: USERS_DATABASE, // 11xxx
     COURSES: COURSES_DATABASE, // 12xxx
-    SCHEDULE: SCHEDULE_DATABASE, // 13xxx
   },
 
   /**
@@ -32,7 +30,6 @@ export const CODES = {
     COMMON: COMMON_VALIDATION, // 20xxx
     USERS: USERS_VALIDATION, // 21xxx
     COURSES: COURSES_VALIDATION, // 22xxx
-    SCHEDULE: SCHEDULE_VALIDATION, // 23xxx
   },
 
   /**
@@ -42,7 +39,6 @@ export const CODES = {
     COMMON: COMMON_BUSINESS, // 30xxx
     USERS: USERS_BUSINESS, // 31xxx
     COURSES: COURSES_BUSINESS, // 32xxx
-    SCHEDULE: SCHEDULE_BUSINESS, // 33xxx
   },
 
   /**

@@ -4,8 +4,6 @@ import { DAYS_OF_WEEK, SEMESTER, TIME_OF_DAY_PATTERN } from '@/constants/schedul
 
 import { objectIdField } from './object-id.schema';
 
-import type { DayOfWeek } from '@/types';
-
 const timeOfDayField = z.string().trim().regex(TIME_OF_DAY_PATTERN, 'Use a 24-hour time, for example 09:30.');
 
 /*
@@ -18,12 +16,7 @@ export const ClassSessionCreateSchema = z
     courseId: objectIdField,
     teacherId: objectIdField,
     room: z.string().trim().min(1, 'Room is required.').max(40, 'Room cannot exceed 40 characters.'),
-    /*
-      The predicate form narrows the parsed value to `DayOfWeek` rather than leaving it
-      a bare `number`, so the service can hand it to the model without a cast — the
-      boundary that validated it is the one that should say what it produced.
-    */
-    dayOfWeek: z.coerce.number().refine((value): value is DayOfWeek => DAYS_OF_WEEK.includes(value as DayOfWeek), 'Choose a valid day.'),
+    dayOfWeek: z.coerce.number().refine(value => DAYS_OF_WEEK.includes(value as (typeof DAYS_OF_WEEK)[number]), 'Choose a valid day.'),
     startTime: timeOfDayField,
     endTime: timeOfDayField,
     semester: z.coerce.number().int().min(SEMESTER.MIN, `Semester must be between ${SEMESTER.MIN} and ${SEMESTER.MAX}.`).max(SEMESTER.MAX),
