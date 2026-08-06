@@ -28,7 +28,7 @@ in a working state.
 | [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
 | [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
 | [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
-| [8](#step-8)   | Scheduling system              | Phase 4        | ⬜ Not started |
+| [8](#step-8)   | Scheduling system              | Phase 4        | 🚧 In progress |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ⬜ Not started |
 | [10](#step-10) | Student dashboard              | Phase 5        | ⬜ Not started |
 | [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
@@ -668,10 +668,9 @@ app/(dashboard)/admin/courses/new       create, following the users screen
   id that is not a teacher.
 - Deactivating a course that still has sessions is refused rather than cascaded.
 
-**Acceptance.** ⚠️ Neither the screen nor the service is independently verified on this branch. `CourseService`
-was exercised against the real database while the scheduling data layer was being built — creating courses and
-refusing to deactivate one that still has classes — but those checks live with step 8 and left with it when the
-branches were split. Lint, format and build are green, and both routes register:
+**Acceptance.** ⚠️ Service verified, screen not. `npm run verify:schedule` exercises the course paths against
+the real database as part of its setup — creating courses, and the refusal to deactivate one that still has
+classes on the timetable. Lint, format and build are green, and both routes register:
 
 ```
 ├ ƒ /[locale]/admin/courses
@@ -684,7 +683,6 @@ generator reports no fallbacks.
 **Not verified: the screen itself.** The filter round-trip, the edit dialog, the toasts and the duplicate-code
 message have not rendered once — the page is behind the admin guard and the assistant driving the browser does
 not sign in. `CourseService.update` and its duplicate-code check are covered by types and the build alone.
-A `verify:courses` script alongside `verify:users` would close this; it has not been written.
 
 **Deviations from the plan, and why.**
 
@@ -703,7 +701,7 @@ A `verify:courses` script alongside `verify:users` would close this; it has not 
 
 <a id="step-8"></a>
 
-### Step 8 — Scheduling system
+### Step 8 — Scheduling system 🚧 In progress
 
 **Goal.** The feature the proposal is built around — a timetable that refuses to double-book.
 

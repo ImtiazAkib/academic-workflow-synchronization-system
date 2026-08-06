@@ -14,6 +14,7 @@
     "i18n:generate": "node scripts/csv-to-json.mjs ./l10n/l10n.csv ./l10n",
     "seed:admin": "tsx --env-file-if-exists=.env.local scripts/seed-admin.ts",
     "verify:users": "tsx --env-file-if-exists=.env.local scripts/verify-user-service.ts",
+    "verify:schedule": "tsx --env-file-if-exists=.env.local scripts/verify-schedule.ts",
     "prepare": "husky"
   },
   "dependencies": {

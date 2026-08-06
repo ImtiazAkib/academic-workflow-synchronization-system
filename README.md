@@ -7,8 +7,8 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
 > **Current state: steps 0–7b of 15 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
-> dashboard shell, admin user management and course management are in place. The scheduling system is next —
-> see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> dashboard shell, admin user management and course management are in place. The scheduling system is next,
+> and its service layer already exists — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -121,18 +121,19 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                  | Description                                                |
-| ----------------------- | ---------------------------------------------------------- |
-| `npm run dev`           | Start the dev server                                       |
-| `npm run build`         | Production build (`output: 'standalone'`)                  |
-| `npm run start`         | Serve the production build                                 |
-| `npm run lint`          | ESLint — import order, cspell, canonical classes, Prettier |
-| `npm run lint:fix`      | ESLint with `--fix`                                        |
-| `npm run format`        | Prettier check                                             |
-| `npm run format:write`  | Prettier write                                             |
-| `npm run i18n:generate` | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
-| `npm run seed:admin`    | Create the first administrator (see below)                 |
-| `npm run verify:users`  | Exercise UserService against the database, then clean up   |
+| Script                    | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| `npm run dev`             | Start the dev server                                       |
+| `npm run build`           | Production build (`output: 'standalone'`)                  |
+| `npm run start`           | Serve the production build                                 |
+| `npm run lint`            | ESLint — import order, cspell, canonical classes, Prettier |
+| `npm run lint:fix`        | ESLint with `--fix`                                        |
+| `npm run format`          | Prettier check                                             |
+| `npm run format:write`    | Prettier write                                             |
+| `npm run i18n:generate`   | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
+| `npm run seed:admin`      | Create the first administrator (see below)                 |
+| `npm run verify:users`    | Exercise UserService against the database, then clean up   |
+| `npm run verify:schedule` | Exercise conflict detection the same way                   |
 
 ## Project structure
 
