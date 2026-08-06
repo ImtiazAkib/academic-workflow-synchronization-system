@@ -1,4 +1,5 @@
 import { COMMON_AUTH, COMMON_BUSINESS, COMMON_DATABASE, COMMON_VALIDATION } from './codes-common.const';
+import { COURSES_BUSINESS, COURSES_DATABASE, COURSES_VALIDATION } from './codes-courses.const';
 import { USERS_AUTH, USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './codes-users.const';
 
 /*
@@ -19,6 +20,7 @@ export const CODES = {
   DATABASE: {
     COMMON: COMMON_DATABASE, // 10xxx
     USERS: USERS_DATABASE, // 11xxx
+    COURSES: COURSES_DATABASE, // 12xxx
   },
 
   /**
@@ -27,6 +29,7 @@ export const CODES = {
   VALIDATION: {
     COMMON: COMMON_VALIDATION, // 20xxx
     USERS: USERS_VALIDATION, // 21xxx
+    COURSES: COURSES_VALIDATION, // 22xxx
   },
 
   /**
@@ -35,6 +38,7 @@ export const CODES = {
   BUSINESS: {
     COMMON: COMMON_BUSINESS, // 30xxx
     USERS: USERS_BUSINESS, // 31xxx
+    COURSES: COURSES_BUSINESS, // 32xxx
   },
 
   /**

@@ -5,9 +5,9 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: step 6 of 14 complete.** Toolchain, design system, validated environment, result/error
-> layer, English/Bangla localization, the SEO surface, the data model, credential sign-in and the role-scoped
-> dashboard shell are in place. Admin user management is next —
+> **Current state: steps 0–7b of 15 complete.** Toolchain, design system, validated environment, result/error
+> layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
+> dashboard shell, admin user management and course management are in place. The scheduling system is next —
 > see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
@@ -132,6 +132,7 @@ import { env } from '@/env/server';
 | `npm run format:write`  | Prettier write                                             |
 | `npm run i18n:generate` | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
 | `npm run seed:admin`    | Create the first administrator (see below)                 |
+| `npm run verify:users`  | Exercise UserService against the database, then clean up   |
 
 ## Project structure
 
@@ -141,12 +142,16 @@ app/
     (marketing)/  Landing page, catch-all, 404 — site header and footer
     (auth)/       Sign-in — logo and language selector only
     (dashboard)/  admin · teacher · student — sidebar, topbar, loading, error
+                  admin/users · admin/users/new — account management
+                  admin/courses · admin/courses/new — course management
     unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
   globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
 l10n/             l10n.csv (source of truth), generated dictionaries, routing, navigation
 proxy.ts          Locale negotiation, then the route guard (Next 16's middleware file)
 components/
+  admin/courses/  Courses table, semester filter, shared fields, create form, dialogs
+  admin/users/    Users table, filters, create form, edit and confirm dialogs, actions
   auth/           SignInForm and the sign-in / sign-out actions
   dashboard/      Sidebar, topbar, nav, sign-out button
   home/           Landing sections — hero, roles, features, stack, roadmap
@@ -161,7 +166,7 @@ lib/
   auth/           session · session-cookie · current-user · guards
   result/         SingleResult · ListResult · EmptyResult and their factories
   schemas/        Zod schemas, {entity}-{action}.schema.ts
-  services/       One class per entity — auth.service.ts is the first
+  services/       One class per entity — auth · user · course · class-session
   utils/          Every helper, barrelled — `@/lib/utils` resolves here
                   class-name (cn) · auth · error · llms · mongo · role · url · zod
   logger.ts       pino — JSON in production, pretty in development

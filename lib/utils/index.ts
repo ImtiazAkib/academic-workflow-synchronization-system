@@ -8,6 +8,7 @@
   imports `./url.utils` directly; see the comment in `proxy.ts`.
 */
 export * from './class-name.utils';
+export * from './course.utils';
 export * from './auth.utils';
 export * from './error.utils';
 export * from './llms.utils';
