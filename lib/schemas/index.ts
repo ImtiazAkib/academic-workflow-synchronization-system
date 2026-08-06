@@ -11,3 +11,4 @@ export * from './course-update.schema';
 export * from './class-session-create.schema';
 export * from './class-session-update.schema';
 export * from './notice-create.schema';
+export * from './material-upload.schema';

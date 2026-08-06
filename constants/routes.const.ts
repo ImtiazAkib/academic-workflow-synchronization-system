@@ -48,6 +48,14 @@ export const ROUTES = {
     LABEL: 'My schedule',
     HREF: '/teacher/schedule',
   },
+  TEACHER_COURSES: {
+    LABEL: 'My courses',
+    HREF: '/teacher/courses',
+  },
+  TEACHER_MATERIALS: {
+    LABEL: 'Materials',
+    HREF: '/teacher/materials',
+  },
   TEACHER: {
     LABEL: 'Teacher',
     HREF: '/teacher',

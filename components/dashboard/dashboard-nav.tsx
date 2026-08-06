@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarDays, LayoutDashboard, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Users } from 'lucide-react';
 
 import { Link, usePathname } from '@/l10n/navigation';
 import { UserRole } from '@/types';
@@ -17,6 +17,7 @@ type DashboardNavProps = {
   usersLabel: string;
   coursesLabel: string;
   scheduleLabel: string;
+  materialsLabel: string;
   className?: string;
 };
 
@@ -25,7 +26,16 @@ type DashboardNavProps = {
   Hard-coding "overview is current" would start lying the moment a second entry lands
   underneath it — which is what step 7 did.
 */
-export function DashboardNav({ role, navLabel, overviewLabel, usersLabel, coursesLabel, scheduleLabel, className }: DashboardNavProps) {
+export function DashboardNav({
+  role,
+  navLabel,
+  overviewLabel,
+  usersLabel,
+  coursesLabel,
+  scheduleLabel,
+  materialsLabel,
+  className,
+}: DashboardNavProps) {
   const pathname = usePathname();
   const overviewHref = ROLE_HOME[role];
   const usersHref = ROUTES.ADMIN_USERS.HREF;
@@ -92,6 +102,22 @@ export function DashboardNav({ role, navLabel, overviewLabel, usersLabel, course
           )}>
           <CalendarDays className="size-4 shrink-0" />
           {scheduleLabel}
+        </Link>
+      )}
+
+      {/* Materials are a teacher's own repository; the admin area has no equivalent yet. */}
+      {role === USER_ROLES.TEACHER && (
+        <Link
+          href={ROUTES.TEACHER_MATERIALS.HREF}
+          aria-current={pathname.startsWith(ROUTES.TEACHER_MATERIALS.HREF) ? 'page' : undefined}
+          className={cn(
+            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            pathname.startsWith(ROUTES.TEACHER_MATERIALS.HREF)
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+          )}>
+          <FolderOpen className="size-4 shrink-0" />
+          {materialsLabel}
         </Link>
       )}
     </nav>
