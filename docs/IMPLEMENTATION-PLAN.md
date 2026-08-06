@@ -995,8 +995,10 @@ models/user.model.ts                         partial unique index pinning super-
 lib/auth/guards.ts                           requireAdminArea() — admits admin and super administrator
 lib/services/user.service.ts                 the ceiling, the self-action guard, the immutable account
 constants/codes-users.const.ts               31001 ceiling · 31002 own access · 31003 super administrator
+                                             51004 an admin account is the super administrator's
 lib/utils/role.utils.ts                      the fourth literal l10n branch
 scripts/seed-super-admin.ts                  the one account no screen can create
+scripts/seed-admin.ts                        retired — the super administrator creates the first admin
 
 Part 2 — self-registration
 app/[locale]/(auth)/register/page.tsx
@@ -1028,13 +1030,33 @@ constants/routes.const.ts                    PROFILE + /profile added to PROTECT
 - **Nobody may deactivate, revoke or demote themselves.** Written as a rule about the actor rather than about
   the role, so it protects every row rather than only the administrators. This needs the signed-in user
   threaded into `setActive`, `setApproval` and `update`, which take only their input today.
-- **The super administrator's extra power over an administrator is deactivate and revoke.** Administrators
-  keep creating accounts of any role up to the ceiling, exactly as they do now — see the open question below,
-  because this is the reading of the requirement and not the only one.
-- **`LAST_ADMIN_CANNOT_BE_REMOVED` stops being load-bearing.** With a permanent super administrator there is
-  always somebody who can manage accounts, which is the lockout that guard exists to prevent. Retiring it is
-  a decision for the step rather than a foregone one; keeping a redundant rule costs nothing but a stale
-  comment, and removing it means one less refusal to explain.
+- **An administrator account is the super administrator's alone.** Settled: administrators are created by the
+  super administrator and nobody else. Stated as one rule rather than a list of verbs — _every_ operation that
+  puts an account into the `admin` role, takes it out, or changes its access belongs to the super
+  administrator: create, promote, demote, approve, revoke, activate, deactivate. An administrator may create,
+  edit and approve **teacher and student accounts only**.
+- **That rule is enforced in the service, not in the role select.** The create and edit forms offer an
+  administrator only teacher and student, and offer the super administrator administrator as well — but the
+  form is the convenience. `UserService` refuses an `admin` operation from a requester who is not the super
+  administrator, so a hand-built action call is refused too. New refusal: `USERS_AUTH` 51004.
+- **It also closes the self-deactivation hole from the other side.** An administrator's own account is an
+  administrator account, so the rule above already forbids them switching themselves off. The explicit
+  "nobody acts on their own access" guard stays anyway: it is the rule that keeps holding when the role
+  rules next change, and it costs one comparison.
+- **`LAST_ADMIN_CANNOT_BE_REMOVED` can be retired.** It exists to prevent a department locking itself out of
+  the admin area. With a permanent super administrator who owns the entire administrator lifecycle, that
+  cannot happen — and now that administrators cannot deactivate each other or themselves, the guard has no
+  reachable path left at all. Retire it rather than leave a rule nothing can trigger.
+- **`scripts/seed-admin.ts` is retired with it.** The seeded account becomes the super administrator, and the
+  first administrator is created through the UI by the super administrator — one fewer script, and one fewer
+  way to mint an account outside the rules. An existing installation keeps the administrators it already has;
+  the super administrator is seeded alongside them, and the ceiling is measured against what is there.
+- **Registration is the first unauthenticated write in the application.** Everything else sits behind a
+  session. The role field is narrowed to `teacher | student` in the schema so an `admin` value is _refused_
+  rather than quietly coerced, and the account is created unapproved. Sign-in already turns away an
+  unapproved account with its own message, so the gate is the one that already exists.
+- **Rate limiting is step 12's, and that is a real gap in the meantime.** An open sign-up endpoint with no
+  throttle can be used to fill the users table. Worth pulling forward into this step if it is quick.
 - **Registration is the first unauthenticated write in the application.** Everything else sits behind a
   session. The role field is narrowed to `teacher | student` in the schema so an `admin` value is _refused_
   rather than quietly coerced, and the account is created unapproved. Sign-in already turns away an
@@ -1061,13 +1083,16 @@ constants/routes.const.ts                    PROFILE + /profile added to PROTECT
 
 | Check                                                 | Expected                                       |
 | ----------------------------------------------------- | ---------------------------------------------- |
+| Administrator creates an administrator                | Refused — the super administrator's alone      |
+| Administrator promotes a teacher to administrator     | Refused — the same rule, a different verb      |
+| Administrator edits or deactivates another admin      | Refused                                        |
 | Administrator deactivates or revokes themselves       | Refused, naming the reason                     |
-| Administrator demotes themselves                      | Refused                                        |
-| Creating a fourth active administrator                | Refused, and the ceiling is named              |
+| Administrator creates a teacher or a student          | Allowed, unchanged                             |
+| Super administrator creates a fourth active admin     | Refused, and the ceiling is named              |
 | Deactivating one, then creating another               | Allowed — the seat came back                   |
-| Administrator deactivates another administrator       | Refused; only the super administrator may      |
 | Any edit, demotion or deactivation of the super admin | Refused, from every role including itself      |
 | A second super administrator, inserted directly       | **Rejected by the unique index**               |
+| An `admin` operation from a hand-built action call    | Refused by the service, not only by the form   |
 | Registering as `admin` through a hand-built request   | Refused by the schema, not coerced             |
 | Registering as a student                              | Created unapproved; sign-in refused until then |
 | Approved, then signing in                             | Reaches the student area                       |
@@ -1077,21 +1102,24 @@ constants/routes.const.ts                    PROFILE + /profile added to PROTECT
 Plus the usual: `npm run verify:users` extended to cover the ceiling, the self-action guard and the immutable
 account; lint, format and build green; every new string in both languages.
 
-**Open questions — worth settling before the step starts.**
+**Settled.** _Administrators are created by the super administrator and by nobody else._ Generalised in the
+notes above to the whole administrator lifecycle rather than to the word "create", because create, promote and
+demote are the same decision wearing different verbs — leaving promotion with the administrators would have
+let any of them mint a peer through the edit dialog.
 
-1. **Who creates an administrator?** The requirement says the super administrator's power over administrators
-   is "to deactivate or revoke", and that administrators keep the functionality they have — which today
-   includes creating any account. Read literally, an administrator creates administrators up to the ceiling
-   and only the super administrator can switch one off. The tighter alternative is that _only_ the super
-   administrator touches an `admin` account at all. The plan above assumes the literal reading.
-2. **Does the super administrator count toward the three?** Assumed no — three administrators _plus_ the
+**Still open — worth an answer before the step starts.**
+
+1. **Does the super administrator count toward the three?** Assumed no — three administrators _plus_ the
    super administrator, since it is a separate role.
-3. **Does a teacher choose their designation at registration, and a student their semester?** Assumed the
+2. **Does a teacher choose their designation at registration, and a student their semester?** Assumed the
    student picks nothing — an administrator sets the semester when approving, which is also the moment they
    verify who the person is. A semester chosen by the applicant is unverified data deciding which timetable
    they see.
-4. **Is there an email step in "verification"?** Assumed not — the project has no SMTP credentials
+3. **Is there an email step in "verification"?** Assumed not — the project has no SMTP credentials
    ([Backlog](#backlog)), so verification is an administrator confirming the person out of band.
+4. **Who approves a registration?** Assumed any administrator, for teachers and students — approval is the
+   verification the department does, and funnelling every new account through one super administrator would
+   make them the bottleneck the three administrators exist to avoid.
 
 **Size warning.** This is three steps' worth of work in one entry, and the plan's own rule is that a step
 gets split rather than stretched. Part 3 is the separable one: profiles depend on nothing in parts 1 and 2 and
