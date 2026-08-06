@@ -317,7 +317,6 @@ SCHEDULE_ERROR_COURSE_MISSING,"Choose a course that exists.","বিদ্যম
 SCHEDULE_ERROR_TEACHER_MISSING,"Choose a teacher that exists.","বিদ্যমান একজন শিক্ষক বেছে নিন।"
 TEACHER_SCHEDULE_METADATA_TITLE,"My schedule","আমার রুটিন"
 TEACHER_SCHEDULE_TITLE,"My schedule","আমার রুটিন"
-TEACHER_SCHEDULE_INTRO,"The classes assigned to you. Only an administrator can change them.","আপনার জন্য নির্ধারিত ক্লাস। কেবল প্রশাসক এগুলো বদলাতে পারেন।"
 SCHEDULE_ACTION_CANCEL,"Call off","বাতিল করুন"
 SCHEDULE_ACTION_RESTORE,"Restore","ফিরিয়ে আনুন"
 SCHEDULE_STATUS_CANCELLED,"Cancelled","বাতিল"
@@ -327,5 +326,4 @@ SCHEDULE_RESTORE_TITLE,"Restore this class?","এই ক্লাসটি ফ�
 SCHEDULE_RESTORE_DESCRIPTION,"It runs as normal again.","এটি আবার স্বাভাবিকভাবে চলবে।"
 SCHEDULE_TOAST_CANCELLED,"Class called off.","ক্লাস বাতিল করা হয়েছে।"
 SCHEDULE_TOAST_RESTORED,"Class restored.","ক্লাস ফিরিয়ে আনা হয়েছে।"
-SCHEDULE_RESCHEDULE_HINT,"The week is behind this dialog — check it before moving a class.","এই ডায়ালগের পেছনে পুরো সপ্তাহ দেখা যাচ্ছে — ক্লাস সরানোর আগে দেখে নিন।"
 TEACHER_SCHEDULE_MANAGE_INTRO,"Your classes. You can move one to another slot, or call it off for the week.","আপনার ক্লাস। অন্য সময়ে সরাতে পারেন, অথবা সপ্তাহের জন্য বাতিল করতে পারেন।"

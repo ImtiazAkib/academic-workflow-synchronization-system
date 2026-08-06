@@ -49,6 +49,8 @@ export type CourseCreateFormLabels = {
 };
 
 export type CoursesLabels = {
+  title: string;
+  intro: string;
   createCta: string;
   semesterFilter: string;
   all: string;

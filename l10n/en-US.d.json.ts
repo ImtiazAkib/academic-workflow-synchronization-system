@@ -320,7 +320,6 @@ declare const messages: {
   "SCHEDULE_ERROR_TEACHER_MISSING": "Choose a teacher that exists.",
   "TEACHER_SCHEDULE_METADATA_TITLE": "My schedule",
   "TEACHER_SCHEDULE_TITLE": "My schedule",
-  "TEACHER_SCHEDULE_INTRO": "The classes assigned to you. Only an administrator can change them.",
   "SCHEDULE_ACTION_CANCEL": "Call off",
   "SCHEDULE_ACTION_RESTORE": "Restore",
   "SCHEDULE_STATUS_CANCELLED": "Cancelled",
@@ -330,7 +329,6 @@ declare const messages: {
   "SCHEDULE_RESTORE_DESCRIPTION": "It runs as normal again.",
   "SCHEDULE_TOAST_CANCELLED": "Class called off.",
   "SCHEDULE_TOAST_RESTORED": "Class restored.",
-  "SCHEDULE_RESCHEDULE_HINT": "The week is behind this dialog — check it before moving a class.",
   "TEACHER_SCHEDULE_MANAGE_INTRO": "Your classes. You can move one to another slot, or call it off for the week."
 };
 export default messages;

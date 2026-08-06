@@ -56,6 +56,8 @@ export type SessionFormLabels = {
 };
 
 export type ScheduleLabels = {
+  title: string;
+  intro: string;
   createCta: string;
   semesterFilter: string;
   teacherFilter: string;

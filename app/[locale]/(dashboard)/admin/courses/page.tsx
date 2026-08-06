@@ -63,11 +63,13 @@ export default async function AdminCoursesPage({ searchParams }: AdminCoursesPag
       courses={courses}
       teachers={teachers}
       labels={{
+        title: l10n('COURSES_TITLE'),
+        intro: l10n('COURSES_INTRO'),
         createCta: l10n('COURSES_CREATE_CTA'),
         semesterFilter: l10n('COURSES_FILTERS_SEMESTER_LABEL'),
         all: l10n('COURSES_FILTERS_ALL'),
         clearFilter: l10n('COURSES_FILTERS_CLEAR'),
-        tableLabel: l10n('COURSES_TITLE'),
+        tableLabel: l10n('COURSES_TABLE_LABEL'),
         columnCode: l10n('COURSES_TABLE_CODE'),
         columnTitle: l10n('COURSES_TABLE_TITLE'),
         columnSemester: l10n('COURSES_TABLE_SEMESTER'),

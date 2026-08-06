@@ -133,7 +133,9 @@ export function ScheduleScreen({ sessions, courses, teachers, labels, today }: S
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl">{labels.count}</h1>
+          <h1 className="text-2xl sm:text-3xl">{labels.title}</h1>
+          <p className="text-muted-foreground text-sm">{labels.intro}</p>
+          <p className="text-muted-foreground text-xs">{labels.count}</p>
         </div>
 
         <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.ADMIN_SCHEDULE_NEW.HREF} />}>

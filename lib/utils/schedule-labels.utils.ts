@@ -42,6 +42,8 @@ export function buildDayLabels(l10n: Translator): DayLabels {
  */
 export function buildScheduleLabels(l10n: Translator, count: string): ScheduleLabels {
   return {
+    title: l10n('SCHEDULE_TITLE'),
+    intro: l10n('SCHEDULE_INTRO'),
     createCta: l10n('SCHEDULE_CREATE_CTA'),
     semesterFilter: l10n('SCHEDULE_FILTERS_SEMESTER_LABEL'),
     teacherFilter: l10n('SCHEDULE_FILTERS_TEACHER_LABEL'),
