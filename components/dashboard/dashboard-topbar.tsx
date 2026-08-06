@@ -1,4 +1,4 @@
-import { UserRole } from '@/types';
+﻿import { UserRole } from '@/types';
 
 import { LanguageSelector } from '@/components/shared';
 
@@ -14,6 +14,7 @@ type DashboardTopbarProps = {
   usersLabel: string;
   coursesLabel: string;
   scheduleLabel: string;
+  materialsLabel: string;
   languageLabel: string;
   signOutLabel: string;
   locale: string;
@@ -28,6 +29,7 @@ export function DashboardTopbar({
   usersLabel,
   coursesLabel,
   scheduleLabel,
+  materialsLabel,
   languageLabel,
   signOutLabel,
   locale,
@@ -65,6 +67,7 @@ export function DashboardTopbar({
           usersLabel={usersLabel}
           coursesLabel={coursesLabel}
           scheduleLabel={scheduleLabel}
+          materialsLabel={materialsLabel}
           className="border-border -mx-4 gap-1 overflow-x-auto border-t px-4 py-2 lg:hidden"
         />
       </div>

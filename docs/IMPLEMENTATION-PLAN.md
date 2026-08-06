@@ -29,7 +29,7 @@ in a working state.
 | [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
 | [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
 | [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
-| [9](#step-9)   | Teacher — materials            | Phase 4        | ⬜ Not started |
+| [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
 | [10](#step-10) | Student dashboard              | Phase 5        | ⬜ Not started |
 | [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
 | [12](#step-12) | Polish & hardening             | Phase 6        | ⬜ Not started |
@@ -781,7 +781,7 @@ the buttons is covered by types and the build alone.
 
 <a id="step-9"></a>
 
-### Step 9 — Teacher: materials
+### Step 9 — Teacher: materials ✅ Done
 
 **Goal.** Teachers publish course files; the repository stays organized by course code.
 
@@ -806,8 +806,44 @@ constants/material.const.ts      allowed MIME types, size cap
 - Server-side checks on MIME type and size — the client-side accept attribute is a convenience, not a control.
 - Downloads go through a route handler that verifies the requester may see the course.
 
-**Acceptance.** A teacher uploads a PDF to their own course and it appears immediately; upload to a course
-they are not assigned to is refused; oversized and disallowed types are rejected with a clear message.
+**Acceptance.** ✅ Verified in the browser by the developer — upload, download and delete all work from
+`/teacher/materials`. The service beneath is covered by `npm run verify:materials`, 14 checks against the real
+database with everything it creates deleted afterwards:
+
+| Check                              | Result                                                     |
+| ---------------------------------- | ---------------------------------------------------------- |
+| Empty file, disallowed type, > cap | All three refused by the schema                            |
+| HTML named `.pdf`, typed `pdf`     | **Refused on its opening bytes**                           |
+| Upload → read back                 | 2048 bytes and the MIME type survive the GridFS round-trip |
+| Upload to another teacher's course | Refused                                                    |
+| Delete another teacher's file      | Refused                                                    |
+| Download with no session           | Refused                                                    |
+| Owner deletes                      | Succeeds, and the file is gone afterwards                  |
+
+Lint, format and build are green. 41 keys shipped with Bangla alongside the English — 369 in total, no
+fallbacks.
+
+**Deviations from the plan, and why.**
+
+- **Files live in GridFS, not `public/uploads/{courseCode}/`.** The planned path works on the PM2 box and
+  fails silently on Vercel: the filesystem there is read-only apart from `/tmp`, which is wiped between
+  invocations — the upload would succeed and the download 404 minutes later. GridFS needs no bucket, no
+  credentials and no second service, and behaves the same on both deployments. It sits behind
+  `lib/storage/`'s three-method interface, so the swap the plan anticipated is still one file.
+- **Uploading is a route handler; deleting is a Server Action.** An action serializes its arguments, which is
+  the wrong shape for 25 MB. `FormData` streams; an id does not need to.
+- **Type validation reads the file's magic number**, which the plan did not call for. MIME type and extension
+  are both client-supplied and trivially faked — the opening bytes are not. `text/plain` passes deliberately:
+  it has no dependable signature, and the size cap and extension list already bound it.
+- **Downloads are served `attachment` + `nosniff` + `sandbox`.** An uploaded file is attacker-controlled
+  content served from the app's own origin; rendered inline, a crafted document would execute with access to
+  the session cookie. The filename is escaped before it enters the header, since the uploader chose it.
+- **`npm run verify:materials` was added**, alongside the user and schedule suites.
+
+**Known limit, worth writing down:** files are type-checked, not scanned. A PDF carrying embedded JavaScript,
+a macro document, or a zip bomb all pass every check here. The response headers mean such a file cannot
+execute in this origin — which is the risk that mattered — but real content inspection needs a scanner, and
+that is a service decision rather than a function. Logged in [Backlog](#backlog).
 
 ---
 

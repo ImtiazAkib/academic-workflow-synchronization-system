@@ -1,3 +1,4 @@
+export * from './same-origin.guard';
 export * from './responses/with-bad-request.response';
 export * from './responses/with-forbidden.response';
 export * from './responses/with-not-found.response';
