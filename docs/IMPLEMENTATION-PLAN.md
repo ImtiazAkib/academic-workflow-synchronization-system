@@ -17,26 +17,26 @@ in a working state.
 
 ## Status at a glance
 
-| #                | Step                           | Proposal phase | Status         |
-| ---------------- | ------------------------------ | -------------- | -------------- |
-| [0](#step-0)     | Project scaffold               | Phase 1        | ✅ Done        |
-| [1](#step-1)     | Foundations                    | Phase 1        | ✅ Done        |
-| [2](#step-2)     | i18n — English + Bangla        | Phase 1        | ✅ Done        |
-| [3](#step-3)     | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
-| [4](#step-4)     | Data model                     | Phase 2        | ✅ Done        |
-| [5](#step-5)     | Authentication                 | Phase 2        | ✅ Done        |
-| [6](#step-6)     | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
-| [7](#step-7)     | Admin — user management        | Phase 3        | ✅ Done        |
-| [7b](#step-7b)   | Admin — courses                | Phase 3        | ✅ Done        |
-| [8](#step-8)     | Scheduling system              | Phase 4        | ✅ Done        |
-| [9](#step-9)     | Teacher — materials            | Phase 4        | ✅ Done        |
-| [10](#step-10)   | Student dashboard              | Phase 5        | ✅ Done        |
-| [10b](#step-10b) | Roles and access control       | Phase 5        | ⬜ Not started |
-| [10c](#step-10c) | Accounts, registration, email  | Phase 5        | ⬜ Not started |
-| [10d](#step-10d) | Profiles                       | Phase 5        | ⬜ Not started |
-| [11](#step-11)   | Notices & announcements        | Phase 5        | ⬜ Not started |
-| [12](#step-12)   | Polish & hardening             | Phase 6        | ⬜ Not started |
-| [13](#step-13)   | Testing & deployment           | Phase 6        | ⬜ Not started |
+| #              | Step                           | Proposal phase | Status         |
+| -------------- | ------------------------------ | -------------- | -------------- |
+| [0](#step-0)   | Project scaffold               | Phase 1        | ✅ Done        |
+| [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
+| [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
+| [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
+| [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
+| [5](#step-5)   | Authentication                 | Phase 2        | ✅ Done        |
+| [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
+| [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
+| [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
+| [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
+| [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
+| [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
+| [11](#step-11) | Roles and access control       | Phase 5        | ⬜ Not started |
+| [12](#step-12) | Accounts, registration, email  | Phase 5        | ⬜ Not started |
+| [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
+| [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
+| [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
+| [16](#step-16) | Testing & deployment           | Phase 6        | ⬜ Not started |
 
 ## Decisions
 
@@ -952,7 +952,7 @@ The same limit as steps 7 and 8. **The Bangla column is machine-written and want
   or will supervise a project next year — five names would make it useless for the question it exists for.
 - **The student overview became a real screen** rather than staying "under construction" like the
   administrator's and teacher's. It shows today's classes and links to the three screens, which is the step's
-  own goal sentence. Step 11 adds the notices feed on top.
+  own goal sentence. Step 14 adds the notices feed on top.
 - **The courses lookup on the routine page is unfiltered.** A class session carries its own semester, and
   nothing stops an administrator scheduling a course into a year other than the one the course is registered
   under; narrowing the lookup would leave those cards showing a raw id instead of a code.
@@ -974,14 +974,14 @@ enrolment, which is a new collection rather than a new field. Logged in [Backlog
 
 ---
 
-<a id="step-10b"></a>
+<a id="step-11"></a>
 
-### Step 10b — Roles and access control
+### Step 11 — Roles and access control
 
 **Goal.** One permanent super administrator above a bounded set of administrators, and an account nobody can
 turn on themselves.
 
-**Why here, before notices.** This changes the role enum, and step 11 filters every notice by role. Written in
+**Why here, before notices.** This changes the role enum, and step 14 filters every notice by role. Written in
 the other order, the audience rules would be built against a role set that is about to change and then
 revisited. It also removes the sharpest edge in the app today: an administrator can currently deactivate
 themselves, and the only thing standing between the department and a locked-out installation is the
@@ -1059,9 +1059,9 @@ languages.
 
 ---
 
-<a id="step-10c"></a>
+<a id="step-12"></a>
 
-### Step 10c — Accounts: identity, registration and email verification
+### Step 12 — Accounts: identity, registration and email verification
 
 **Goal.** People create their own accounts, prove the address they own, and are then issued the identifier they
 sign in with — delivered to the address they just proved.
@@ -1166,7 +1166,7 @@ Neither of them chooses an identifier. Both are issued one.
   it — which is the same moment they are already checking who the person is.
 - **Registration is the first unauthenticated write in the application.** The role is fixed by which form was
   posted and is never read from the request body, so there is no `role` field for a hand-built request to set
-  to `admin`. Rate limiting is step 12's; an open sign-up endpoint with no throttle is a real gap until then,
+  to `admin`. Rate limiting is step 15's; an open sign-up endpoint with no throttle is a real gap until then,
   and worth pulling forward if it is quick.
 - **Either an administrator or the super administrator approves**, for teachers and students. Funnelling every
   new account through one super administrator would make them the bottleneck the three administrators exist to
@@ -1216,9 +1216,9 @@ be walked without sending anything.
 
 ---
 
-<a id="step-10d"></a>
+<a id="step-13"></a>
 
-### Step 10d — Profiles
+### Step 13 — Profiles
 
 **Goal.** An account somebody owns, with the fields that are actually theirs to correct.
 
@@ -1257,14 +1257,14 @@ profile update naming `role`, `roll` or `isApproved` changes nothing, because th
 schema.
 
 **Follow-on, now cheap.** Password reset by email has been in [Backlog](#backlog) only because there was no
-mail transport. Once step 10c builds one, reset is a token, two screens and a service method — worth its own
+mail transport. Once step 12 builds one, reset is a token, two screens and a service method — worth its own
 small step rather than a fourth part here.
 
 ---
 
-<a id="step-11"></a>
+<a id="step-14"></a>
 
-### Step 11 — Notices & announcements
+### Step 14 — Notices & announcements
 
 **Goal.** Department-wide communication that actually lands on the right dashboards.
 
@@ -1289,9 +1289,9 @@ dashboards only.
 
 ---
 
-<a id="step-12"></a>
+<a id="step-15"></a>
 
-### Step 12 — Polish & hardening
+### Step 15 — Polish & hardening
 
 **Goal.** Turn a working app into one that behaves under real use.
 
@@ -1310,9 +1310,9 @@ no action is reachable without both an authentication and an authorization check
 
 ---
 
-<a id="step-13"></a>
+<a id="step-16"></a>
 
-### Step 13 — Testing & deployment
+### Step 16 — Testing & deployment
 
 **Goal.** Ship it, repeatably.
 
@@ -1340,11 +1340,11 @@ Real, out of scope for now, and here so they are not lost:
 | Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                 |
 | Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                         |
 | Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones |
-| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 12's polish pass owns it                                         |
-| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 12's accessibility pass owns the sweep                                                                       |
-| Password reset by email                 | Unblocked by [step 10c](#step-10c), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                     |
+| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                         |
+| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                       |
+| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                       |
 | Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                     |
-| Multi-department support                | Proposal is explicit: one department first. [Step 10c](#step-10c) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                         |
+| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                           |
 | Revoking a live session                 | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list                       |
 | Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                   |
 | Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                |
