@@ -136,6 +136,7 @@ import { env } from '@/env/server';
 | `npm run verify:users`     | Exercise UserService against the database, then clean up   |
 | `npm run verify:schedule`  | Exercise conflict detection the same way                   |
 | `npm run verify:materials` | Exercise upload, download, delete and the access rules     |
+| `npm run verify:student`   | Exercise semester scoping and what the directory publishes |
 
 ## Project structure
 
@@ -150,6 +151,7 @@ app/
                   admin/schedule · admin/schedule/new — the timetable
                   teacher/schedule — the teacher's own week
                   teacher/materials · teacher/courses — the file repository
+                  student/schedule · student/materials · student/teachers — read-only
   api/materials/  upload · [id]/download — route handlers, not Server Actions
     unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
@@ -162,6 +164,7 @@ components/
   admin/users/    Users table, filters, create form, edit and confirm dialogs, actions
   auth/           SignInForm and the sign-in / sign-out actions
   dashboard/      Sidebar, topbar, nav, sign-out button
+  student/        Routine, material list by course code, teacher directory — no actions.ts
   home/           Landing sections — hero, roles, features, stack, roadmap
   layout/         SiteHeader, SiteFooter
   shared/         Container, AppLogo, JsonLd, LanguageSelector, NotFoundContent

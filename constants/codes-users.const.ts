@@ -35,6 +35,7 @@ export const USERS_VALIDATION = {
   STUDENT_ID_TOO_LONG: createErrorDefinition(21009, 'Student ID cannot exceed 40 characters.'),
   USER_NOT_FOUND: createErrorDefinition(21010, 'User not found.'),
   EMAIL_ALREADY_USED: createErrorDefinition(21011, 'That email address is already registered.'),
+  SEMESTER_INVALID: createErrorDefinition(21012, 'Choose a semester between 1 and 8.'),
 } as const;
 
 /**
