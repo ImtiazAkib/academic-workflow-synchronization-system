@@ -98,8 +98,9 @@ export function CoursesScreen({ courses, teachers, labels }: CoursesScreenProps)
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl">{labels.tableLabel}</h1>
-          <p className="text-muted-foreground text-sm">{labels.count}</p>
+          <h1 className="text-2xl sm:text-3xl">{labels.title}</h1>
+          <p className="text-muted-foreground text-sm">{labels.intro}</p>
+          <p className="text-muted-foreground text-xs">{labels.count}</p>
         </div>
 
         <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.ADMIN_COURSES_NEW.HREF} />}>

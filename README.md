@@ -5,10 +5,10 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–7b of 15 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–8 of 15 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
-> dashboard shell, admin user management and course management are in place. The scheduling system is next —
-> see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> dashboard shell, user and course management, and the conflict-checked timetable are in place. Teacher
+> materials are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -121,18 +121,19 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                  | Description                                                |
-| ----------------------- | ---------------------------------------------------------- |
-| `npm run dev`           | Start the dev server                                       |
-| `npm run build`         | Production build (`output: 'standalone'`)                  |
-| `npm run start`         | Serve the production build                                 |
-| `npm run lint`          | ESLint — import order, cspell, canonical classes, Prettier |
-| `npm run lint:fix`      | ESLint with `--fix`                                        |
-| `npm run format`        | Prettier check                                             |
-| `npm run format:write`  | Prettier write                                             |
-| `npm run i18n:generate` | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
-| `npm run seed:admin`    | Create the first administrator (see below)                 |
-| `npm run verify:users`  | Exercise UserService against the database, then clean up   |
+| Script                    | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| `npm run dev`             | Start the dev server                                       |
+| `npm run build`           | Production build (`output: 'standalone'`)                  |
+| `npm run start`           | Serve the production build                                 |
+| `npm run lint`            | ESLint — import order, cspell, canonical classes, Prettier |
+| `npm run lint:fix`        | ESLint with `--fix`                                        |
+| `npm run format`          | Prettier check                                             |
+| `npm run format:write`    | Prettier write                                             |
+| `npm run i18n:generate`   | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
+| `npm run seed:admin`      | Create the first administrator (see below)                 |
+| `npm run verify:users`    | Exercise UserService against the database, then clean up   |
+| `npm run verify:schedule` | Exercise conflict detection the same way                   |
 
 ## Project structure
 
@@ -144,6 +145,8 @@ app/
     (dashboard)/  admin · teacher · student — sidebar, topbar, loading, error
                   admin/users · admin/users/new — account management
                   admin/courses · admin/courses/new — course management
+                  admin/schedule · admin/schedule/new — the timetable
+                  teacher/schedule — the teacher's own week, read-only
     unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
   globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
@@ -151,6 +154,7 @@ l10n/             l10n.csv (source of truth), generated dictionaries, routing, n
 proxy.ts          Locale negotiation, then the route guard (Next 16's middleware file)
 components/
   admin/courses/  Courses table, semester filter, shared fields, create form, dialogs
+  schedule/       Week view, filters, conflict notice, create form, edit and delete dialogs
   admin/users/    Users table, filters, create form, edit and confirm dialogs, actions
   auth/           SignInForm and the sign-in / sign-out actions
   dashboard/      Sidebar, topbar, nav, sign-out button

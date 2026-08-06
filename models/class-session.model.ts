@@ -7,7 +7,6 @@ import { DAYS_OF_WEEK, SEMESTER, TIME_OF_DAY_PATTERN } from '@/constants/schedul
 export type ClassSessionAttributes = {
   course: Types.ObjectId;
   teacher: Types.ObjectId;
-  room: string;
   dayOfWeek: DayOfWeek;
   /**
    * 24-hour `HH:mm`. Zero-padded, so `startTime < endTime` is a plain string
@@ -16,6 +15,12 @@ export type ClassSessionAttributes = {
   startTime: string;
   endTime: string;
   semester: number;
+  /**
+   * A class the teacher has called off. The row stays and the slot stays blocked, so
+   * students see it struck through rather than silently missing from their week — and
+   * the teacher can put it back.
+   */
+  isCancelled: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -28,11 +33,11 @@ const classSessionSchema = new Schema<ClassSessionAttributes, ClassSessionModel>
   {
     course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
     teacher: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    room: { type: String, required: true, trim: true, maxlength: 40 },
     dayOfWeek: { type: Number, required: true, enum: DAYS_OF_WEEK },
     startTime: { type: String, required: true, match: TIME_OF_DAY_PATTERN },
     endTime: { type: String, required: true, match: TIME_OF_DAY_PATTERN },
     semester: { type: Number, required: true, min: SEMESTER.MIN, max: SEMESTER.MAX },
+    isCancelled: { type: Boolean, required: true, default: false },
   },
   { timestamps: true }
 );
@@ -48,12 +53,13 @@ classSessionSchema.pre('validate', function () {
 });
 
 /*
-  Conflict detection asks two questions on every write — is this room busy, is this
-  teacher busy — and the timetable asks for a semester's week. One index each.
+  Conflict detection asks whether this teacher or this course is already busy, and the
+  timetable asks for a semester's week. One index each. The room index went with the
+  field — nothing tracks where a class physically sits any more.
 */
 classSessionSchema.index({ semester: 1, dayOfWeek: 1, startTime: 1 });
-classSessionSchema.index({ room: 1, dayOfWeek: 1, semester: 1 });
 classSessionSchema.index({ teacher: 1, dayOfWeek: 1, semester: 1 });
+classSessionSchema.index({ course: 1, dayOfWeek: 1, semester: 1 });
 
 export const ClassSession =
   (mongoose.models.ClassSession as ClassSessionModel) ??
