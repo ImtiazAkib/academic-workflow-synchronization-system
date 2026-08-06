@@ -46,7 +46,6 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
       classSessionId: session.classSessionId,
       courseId: session.courseId,
       teacherId: session.teacherId,
-      room: session.room,
       dayOfWeek: session.dayOfWeek,
       startTime: session.startTime,
       endTime: session.endTime,

@@ -15,7 +15,7 @@ import { resolveScheduleErrorMessage } from '@/lib/utils';
 
 import { Button } from '@/components/ui';
 
-import { deleteClassSessionAction } from './actions';
+import { deleteClassSessionAction, setClassSessionCancelledAction } from './actions';
 import { ScheduleEmpty } from './schedule-empty';
 import { ScheduleFilters } from './schedule-filters';
 import { ScheduleWeekView } from './schedule-week-view';
@@ -43,6 +43,7 @@ export function ScheduleScreen({ sessions, courses, teachers, labels, today }: S
 
   const [editing, setEditing] = useState<ClassSessionDto | null>(null);
   const [removing, setRemoving] = useState<ClassSessionDto | null>(null);
+  const [cancelling, setCancelling] = useState<ClassSessionDto | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
 
   const handleEdit = (session: ClassSessionDto): void => {
@@ -58,6 +59,40 @@ export function ScheduleScreen({ sessions, courses, teachers, labels, today }: S
   const handleRemove = (session: ClassSessionDto): void => {
     setRemoveError(null);
     setRemoving(session);
+  };
+
+  const handleToggleCancel = (session: ClassSessionDto): void => {
+    setRemoveError(null);
+    setCancelling(session);
+  };
+
+  const handleCancelConfirm = (): void => {
+    if (!cancelling) {
+      return;
+    }
+
+    const target = cancelling;
+    const isCancelled = !target.isCancelled;
+
+    startWorking(async () => {
+      const result = await setClassSessionCancelledAction(target.classSessionId, isCancelled);
+
+      if (!isSuccess(result)) {
+        setRemoveError(resolveScheduleErrorMessage(result.errors[0]?.code ?? 0, labels.errors));
+
+        return;
+      }
+
+      setCancelling(null);
+      toast.success(isCancelled ? labels.toastCancelled : labels.toastRestored);
+      router.refresh();
+    });
+  };
+
+  const handleCancellingOpenChange = (open: boolean): void => {
+    if (!open) {
+      setCancelling(null);
+    }
   };
 
   const handleRemoveConfirm = (): void => {
@@ -118,8 +153,10 @@ export function ScheduleScreen({ sessions, courses, teachers, labels, today }: S
           teachers={teachers}
           labels={labels}
           today={today}
-          isReadOnly={false}
+          canManage
+          canDelete
           onEdit={handleEdit}
+          onToggleCancel={handleToggleCancel}
           onRemove={handleRemove}
         />
       )}
@@ -137,10 +174,22 @@ export function ScheduleScreen({ sessions, courses, teachers, labels, today }: S
       )}
 
       <SessionDeleteDialog
+        session={cancelling}
+        courses={courses}
+        labels={cancelling?.isCancelled ? labels.restoreDialog : labels.cancelDialog}
+        cancelLabel={labels.dialogCancel}
+        workingLabel={labels.working}
+        isWorking={isWorking}
+        error={removeError}
+        onConfirm={handleCancelConfirm}
+        onOpenChange={handleCancellingOpenChange}
+      />
+
+      <SessionDeleteDialog
         session={removing}
         courses={courses}
         labels={labels.deleteDialog}
-        cancelLabel={labels.cancel}
+        cancelLabel={labels.dialogCancel}
         workingLabel={labels.working}
         isWorking={isWorking}
         error={removeError}

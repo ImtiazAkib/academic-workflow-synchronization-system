@@ -1,6 +1,6 @@
 import { COMMON_AUTH, COMMON_BUSINESS, COMMON_DATABASE, COMMON_VALIDATION } from './codes-common.const';
 import { COURSES_BUSINESS, COURSES_DATABASE, COURSES_VALIDATION } from './codes-courses.const';
-import { SCHEDULE_BUSINESS, SCHEDULE_DATABASE, SCHEDULE_VALIDATION } from './codes-schedule.const';
+import { SCHEDULE_AUTH, SCHEDULE_BUSINESS, SCHEDULE_DATABASE, SCHEDULE_VALIDATION } from './codes-schedule.const';
 import { USERS_AUTH, USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './codes-users.const';
 
 /*
@@ -51,5 +51,6 @@ export const CODES = {
   AUTH: {
     COMMON: COMMON_AUTH, // 50xxx
     USERS: USERS_AUTH, // 51xxx
+    SCHEDULE: SCHEDULE_AUTH, // 53xxx
   },
 } as const;

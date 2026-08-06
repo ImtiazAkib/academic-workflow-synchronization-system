@@ -103,12 +103,6 @@ export function SessionFields({ register, control, errors, courses, teachers, la
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`${idPrefix}-room`}>{labels.room}</Label>
-        <Input id={`${idPrefix}-room`} aria-invalid={Boolean(errors.room)} {...register('room' as never)} />
-        {errors.room && <p className="text-destructive text-sm">{fieldErrors.roomRequired}</p>}
-      </div>
-
-      <div className="flex flex-col gap-2">
         <Label htmlFor={`${idPrefix}-day`}>{labels.day}</Label>
         <Controller
           control={control}

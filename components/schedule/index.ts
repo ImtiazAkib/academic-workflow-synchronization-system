@@ -10,3 +10,4 @@ export * from './session-create.form';
 export * from './session-delete.dialog';
 export * from './session-edit.dialog';
 export * from './session-fields';
+export * from './teacher-schedule-screen';

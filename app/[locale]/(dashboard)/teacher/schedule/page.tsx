@@ -8,7 +8,7 @@ import { requireRole } from '@/lib/auth';
 import { ClassSessionService, CourseService, UserService } from '@/lib/services';
 import { buildScheduleLabels, resolveDepartmentToday } from '@/lib/utils';
 
-import { ScheduleEmpty, ScheduleWeekView } from '@/components/schedule';
+import { TeacherScheduleScreen } from '@/components/schedule';
 
 const classSessionService = new ClassSessionService();
 const courseService = new CourseService();
@@ -54,23 +54,16 @@ export default async function TeacherSchedulePage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl sm:text-3xl">{l10n('TEACHER_SCHEDULE_TITLE')}</h1>
-        <p className="text-muted-foreground text-sm">{l10n('TEACHER_SCHEDULE_INTRO')}</p>
+        <p className="text-muted-foreground text-sm">{l10n('TEACHER_SCHEDULE_MANAGE_INTRO')}</p>
       </div>
 
-      {sessions.length === 0 ? (
-        <ScheduleEmpty title={labels.emptyTitle} description={labels.emptyDescription} />
-      ) : (
-        <ScheduleWeekView
-          sessions={sessions}
-          courses={courseResult.result.map(x => ({ courseId: x.courseId, code: x.code, title: x.title }))}
-          teachers={teacherResult.result.map(x => ({ userId: x.userId, name: x.name }))}
-          labels={labels}
-          today={resolveDepartmentToday(new Date())}
-          isReadOnly
-          onEdit={() => undefined}
-          onRemove={() => undefined}
-        />
-      )}
+      <TeacherScheduleScreen
+        sessions={sessions}
+        courses={courseResult.result.map(x => ({ courseId: x.courseId, code: x.code, title: x.title }))}
+        teachers={teacherResult.result.map(x => ({ userId: x.userId, name: x.name }))}
+        labels={labels}
+        today={resolveDepartmentToday(new Date())}
+      />
     </div>
   );
 }

@@ -18,7 +18,6 @@ export const ClassSessionUpdateSchema = z
     classSessionId: objectIdField,
     courseId: objectIdField,
     teacherId: objectIdField,
-    room: z.string().trim().min(1, 'Room is required.').max(40, 'Room cannot exceed 40 characters.'),
     dayOfWeek: z.coerce.number().refine((value): value is DayOfWeek => DAYS_OF_WEEK.includes(value as DayOfWeek), 'Choose a valid day.'),
     startTime: timeOfDayField,
     endTime: timeOfDayField,

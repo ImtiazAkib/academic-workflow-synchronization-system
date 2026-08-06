@@ -19,7 +19,6 @@ export type TeacherOption = {
 export type ScheduleFieldLabels = {
   course: string;
   teacher: string;
-  room: string;
   day: string;
   startTime: string;
   endTime: string;
@@ -29,7 +28,6 @@ export type ScheduleFieldLabels = {
 export type ScheduleFieldErrorLabels = {
   courseRequired: string;
   teacherRequired: string;
-  roomRequired: string;
   timeInvalid: string;
   endBeforeStart: string;
 };
@@ -65,8 +63,10 @@ export type ScheduleLabels = {
   clearFilters: string;
   days: DayLabels;
   today: string;
-  room: string;
   count: string;
+  statusCancelled: string;
+  cancel: string;
+  restore: string;
   emptyTitle: string;
   emptyDescription: string;
   dayEmpty: string;
@@ -79,9 +79,13 @@ export type ScheduleLabels = {
   editDescription: string;
   editSubmit: string;
   deleteDialog: ScheduleConfirmLabels;
-  cancel: string;
+  cancelDialog: ScheduleConfirmLabels;
+  restoreDialog: ScheduleConfirmLabels;
+  dialogCancel: string;
   working: string;
   toastUpdated: string;
   toastDeleted: string;
+  toastCancelled: string;
+  toastRestored: string;
   errors: ScheduleErrorLabels;
 };

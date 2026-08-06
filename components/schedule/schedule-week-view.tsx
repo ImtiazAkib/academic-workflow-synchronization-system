@@ -14,8 +14,10 @@ type ScheduleWeekViewProps = {
   teachers: TeacherOption[];
   labels: ScheduleLabels;
   today: DayOfWeek;
-  isReadOnly: boolean;
+  canManage: boolean;
+  canDelete: boolean;
   onEdit: (session: ClassSessionDto) => void;
+  onToggleCancel: (session: ClassSessionDto) => void;
   onRemove: (session: ClassSessionDto) => void;
 };
 
@@ -27,7 +29,18 @@ type ScheduleWeekViewProps = {
   `today` is resolved in `Asia/Dhaka` by the caller — never from the runtime clock,
   which is UTC on Vercel and would mark the wrong column every Bangladeshi evening.
 */
-export function ScheduleWeekView({ sessions, courses, teachers, labels, today, isReadOnly, onEdit, onRemove }: ScheduleWeekViewProps) {
+export function ScheduleWeekView({
+  sessions,
+  courses,
+  teachers,
+  labels,
+  today,
+  canManage,
+  canDelete,
+  onEdit,
+  onToggleCancel,
+  onRemove,
+}: ScheduleWeekViewProps) {
   const grouped = groupSessionsByDay(sessions);
 
   return (
@@ -52,8 +65,10 @@ export function ScheduleWeekView({ sessions, courses, teachers, labels, today, i
                 courses={courses}
                 teachers={teachers}
                 labels={labels}
-                isReadOnly={isReadOnly}
+                canManage={canManage}
+                canDelete={canDelete}
                 onEdit={onEdit}
+                onToggleCancel={onToggleCancel}
                 onRemove={onRemove}
               />
             ))

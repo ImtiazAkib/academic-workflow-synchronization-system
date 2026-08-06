@@ -65,7 +65,6 @@ export default async function AdminSessionCreatePage() {
             fields: {
               course: l10n('SCHEDULE_FIELD_COURSE_LABEL'),
               teacher: l10n('SCHEDULE_FIELD_TEACHER_LABEL'),
-              room: l10n('SCHEDULE_FIELD_ROOM_LABEL'),
               day: l10n('SCHEDULE_FIELD_DAY_LABEL'),
               startTime: l10n('SCHEDULE_FIELD_START_LABEL'),
               endTime: l10n('SCHEDULE_FIELD_END_LABEL'),
@@ -74,7 +73,6 @@ export default async function AdminSessionCreatePage() {
             fieldErrors: {
               courseRequired: l10n('SCHEDULE_FIELD_COURSE_REQUIRED'),
               teacherRequired: l10n('SCHEDULE_FIELD_TEACHER_REQUIRED'),
-              roomRequired: l10n('SCHEDULE_FIELD_ROOM_REQUIRED'),
               timeInvalid: l10n('SCHEDULE_FIELD_TIME_INVALID'),
               endBeforeStart: l10n('SCHEDULE_FIELD_END_BEFORE_START'),
             },
@@ -85,8 +83,8 @@ export default async function AdminSessionCreatePage() {
             cancel: l10n('SCHEDULE_DIALOG_CANCEL'),
             saved: l10n('SCHEDULE_TOAST_CREATED'),
             errors: {
-              roomTaken: l10n('SCHEDULE_ERROR_ROOM_TAKEN'),
               teacherBusy: l10n('SCHEDULE_ERROR_TEACHER_BUSY'),
+              notOwnClass: l10n('SCHEDULE_ERROR_NOT_OWN_CLASS'),
               courseScheduled: l10n('SCHEDULE_ERROR_COURSE_SCHEDULED'),
               notFound: l10n('SCHEDULE_ERROR_NOT_FOUND'),
               courseMissing: l10n('SCHEDULE_ERROR_COURSE_MISSING'),

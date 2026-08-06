@@ -17,7 +17,6 @@ export const ClassSessionCreateSchema = z
   .object({
     courseId: objectIdField,
     teacherId: objectIdField,
-    room: z.string().trim().min(1, 'Room is required.').max(40, 'Room cannot exceed 40 characters.'),
     /*
       The predicate form narrows the parsed value to `DayOfWeek` rather than leaving it
       a bare `number`, so the service can hand it to the model without a cast — the

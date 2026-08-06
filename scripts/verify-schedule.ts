@@ -72,7 +72,6 @@ async function run(): Promise<void> {
   const base = {
     courseId: String(courseA._id),
     teacherId: String(teacherA._id),
-    room: 'ROOM-9',
     dayOfWeek: MONDAY,
     startTime: '09:00',
     endTime: '10:00',
@@ -85,16 +84,8 @@ async function run(): Promise<void> {
 
   const firstId = first.result?.classSessionId ?? '';
 
-  console.log('\n2. the three clashes');
-  const roomClash = await sessions.create({ ...base, courseId: String(courseB._id), teacherId: String(teacherB._id), startTime: '09:30' });
-  check('same room, overlapping -> refused', !roomClash.success);
-  check(
-    'names the room',
-    roomClash.errors.some(x => x.field === 'room'),
-    JSON.stringify(roomClash.errors)
-  );
-
-  const teacherClash = await sessions.create({ ...base, courseId: String(courseB._id), room: 'ROOM-8', startTime: '09:30' });
+  console.log('\n2. the two clashes');
+  const teacherClash = await sessions.create({ ...base, courseId: String(courseB._id), startTime: '09:30' });
   check('same teacher, overlapping -> refused', !teacherClash.success);
   check(
     'names the teacher',
@@ -102,7 +93,7 @@ async function run(): Promise<void> {
     JSON.stringify(teacherClash.errors)
   );
 
-  const courseClash = await sessions.create({ ...base, teacherId: String(teacherB._id), room: 'ROOM-7', startTime: '09:30' });
+  const courseClash = await sessions.create({ ...base, teacherId: String(teacherB._id), startTime: '09:30' });
   check('same course, overlapping -> refused', !courseClash.success);
   check(
     'names the course',
@@ -110,9 +101,9 @@ async function run(): Promise<void> {
     JSON.stringify(courseClash.errors)
   );
 
-  console.log('\n3. all three at once');
+  console.log('\n3. both at once');
   const everything = await sessions.create({ ...base, startTime: '09:30' });
-  check('reports all three together', everything.errors.length === 3, `got ${everything.errors.length}: ${JSON.stringify(everything.errors)}`);
+  check('reports both together', everything.errors.length === 2, `got ${everything.errors.length}: ${JSON.stringify(everything.errors)}`);
 
   console.log('\n4. the boundaries');
   const backToBack = await sessions.create({
@@ -122,7 +113,7 @@ async function run(): Promise<void> {
     startTime: '10:00',
     endTime: '11:00',
   });
-  check('back-to-back in the same room is allowed', backToBack.success, JSON.stringify(backToBack.errors));
+  check('back-to-back is allowed', backToBack.success, JSON.stringify(backToBack.errors));
 
   const otherDay = await sessions.create({ ...base, dayOfWeek: TUESDAY });
   check('same slot on another day is allowed', otherDay.success, JSON.stringify(otherDay.errors));
@@ -134,8 +125,24 @@ async function run(): Promise<void> {
   const selfMove = await sessions.update({ ...base, classSessionId: firstId });
   check('a session does not clash with itself', selfMove.success, JSON.stringify(selfMove.errors));
 
-  const moveOntoOther = await sessions.update({ ...base, classSessionId: firstId, startTime: '10:00', endTime: '11:00' });
-  check('moving onto an occupied slot is refused', !moveOntoOther.success, JSON.stringify(moveOntoOther.errors));
+  /*
+    Two different classes may now share a slot. Nothing tracks where a class physically
+    sits since the room field went, so a different teacher teaching a different course
+    at the same hour is not a clash any more. Asserted rather than assumed, because it
+    is the rule that changed.
+  */
+  const sharedSlot = await sessions.update({ ...base, classSessionId: firstId, startTime: '10:00', endTime: '11:00' });
+  check('a different teacher and course may share a slot', sharedSlot.success, JSON.stringify(sharedSlot.errors));
+
+  // Moving onto a slot where the same teacher is already busy is still refused.
+  const moveOntoBusyTeacher = await sessions.update({
+    ...base,
+    classSessionId: firstId,
+    teacherId: String(teacherB._id),
+    startTime: '10:00',
+    endTime: '11:00',
+  });
+  check('moving onto a slot the teacher already holds is refused', !moveOntoBusyTeacher.success, JSON.stringify(moveOntoBusyTeacher.errors));
 
   console.log('\n6. course deactivation');
   const blocked = await courses.setActive(String(courseA._id), false);
@@ -144,7 +151,6 @@ async function run(): Promise<void> {
   console.log('\n7. bad references');
   const badCourse = await sessions.create({
     ...base,
-    room: 'ROOM-5',
     startTime: '14:00',
     endTime: '15:00',
     courseId: String(new mongoose.Types.ObjectId()),

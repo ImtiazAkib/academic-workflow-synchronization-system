@@ -55,7 +55,7 @@ export function SessionDeleteDialog({
           <div className="bg-muted/50 rounded-md px-3 py-2 text-sm">
             <span className="block font-medium">{course?.code ?? session.courseId}</span>
             <span className="text-muted-foreground block text-xs">
-              {session.startTime}–{session.endTime} · {session.room}
+              {session.startTime}–{session.endTime}
             </span>
           </div>
         )}

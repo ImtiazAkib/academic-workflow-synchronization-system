@@ -6,10 +6,11 @@ import type { ClassSessionDto, DayOfWeek } from '@/types';
 
 const VALIDATION = CODES.VALIDATION.SCHEDULE;
 const BUSINESS = CODES.BUSINESS.SCHEDULE;
+const AUTH = CODES.AUTH.SCHEDULE;
 
 export type ScheduleErrorLabels = {
-  roomTaken: string;
   teacherBusy: string;
+  notOwnClass: string;
   courseScheduled: string;
   notFound: string;
   courseMissing: string;
@@ -26,8 +27,8 @@ export type ScheduleErrorLabels = {
  * @returns The message to show.
  */
 export function resolveScheduleErrorMessage(code: number, labels: ScheduleErrorLabels): string {
-  if (code === BUSINESS.ROOM_TAKEN.CODE) {
-    return labels.roomTaken;
+  if (code === AUTH.NOT_OWN_CLASS.CODE) {
+    return labels.notOwnClass;
   }
 
   if (code === BUSINESS.TEACHER_BUSY.CODE) {
@@ -51,6 +52,24 @@ export function resolveScheduleErrorMessage(code: number, labels: ScheduleErrorL
   }
 
   return labels.generic;
+}
+
+/**
+ * The department's name for a semester: 1 becomes `1y-1st`, 8 becomes `4y-2nd`.
+ *
+ * Not an `l10n` key. Like a course code — `CSE-401` — it is an identifier the
+ * department writes the same way in both languages, and the Bangla column already
+ * keeps Latin digits for exactly this reason.
+ *
+ * @param semester - Stored semester, 1 through 8.
+ *
+ * @returns The label to render.
+ */
+export function resolveSemesterLabel(semester: number): string {
+  const year = Math.ceil(semester / 2);
+  const half = semester % 2 === 1 ? '1st' : '2nd';
+
+  return `${year}y-${half}`;
 }
 
 const WEEKDAY_INDEX: Record<string, DayOfWeek> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };

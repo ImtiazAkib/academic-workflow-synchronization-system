@@ -42,7 +42,6 @@ export function SessionCreateForm({ courses, teachers, labels }: SessionCreateFo
     defaultValues: {
       courseId: courses[0]?.courseId ?? '',
       teacherId: teachers[0]?.userId ?? '',
-      room: '',
       dayOfWeek: TEACHING_DAYS[0],
       startTime: '09:00',
       endTime: '10:00',

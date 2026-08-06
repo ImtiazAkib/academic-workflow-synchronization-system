@@ -82,6 +82,41 @@ export async function updateClassSessionAction(values: unknown): Promise<SingleR
 }
 
 /**
+ * Call a class off for the week, or put it back.
+ *
+ * Open to teachers as well as administrators — but a teacher's own id is passed to the
+ * service, which refuses a class they are not teaching. The scope comes from the
+ * session, never from the caller's arguments.
+ *
+ * @param classSessionId - Session to change.
+ * @param isCancelled - The new state.
+ *
+ * @returns The updated session, or a failure.
+ */
+export async function setClassSessionCancelledAction(classSessionId: unknown, isCancelled: boolean): Promise<SingleResult<ClassSessionDto>> {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return singleFailure(createError(AUTH.NOT_AUTHENTICATED.CODE, AUTH.NOT_AUTHENTICATED.MESSAGE));
+  }
+
+  if (sessionUser.role === USER_ROLES.STUDENT) {
+    return singleFailure(createError(AUTH.NOT_AUTHORIZED.CODE, AUTH.NOT_AUTHORIZED.MESSAGE));
+  }
+
+  const validation = objectIdField.safeParse(classSessionId);
+
+  if (!validation.success) {
+    return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
+  }
+
+  // Undefined for an administrator, which skips the ownership check.
+  const requestedBy = sessionUser.role === USER_ROLES.TEACHER ? sessionUser.userId : undefined;
+
+  return classSessionService.setCancelled(validation.data, isCancelled, requestedBy);
+}
+
+/**
  * Take a class off the timetable.
  *
  * @param classSessionId - Session to remove.

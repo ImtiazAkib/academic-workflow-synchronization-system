@@ -35,6 +35,7 @@ const log = createLoggerWithContext('class-session.service');
 const DATABASE = CODES.DATABASE.SCHEDULE;
 const VALIDATION = CODES.VALIDATION.SCHEDULE;
 const BUSINESS = CODES.BUSINESS.SCHEDULE;
+const AUTH = CODES.AUTH.SCHEDULE;
 
 type ScheduleFilters = {
   semester?: number;
@@ -49,7 +50,6 @@ type SlotCandidate = {
   classSessionId?: string;
   courseId: string;
   teacherId: string;
-  room: string;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
@@ -114,7 +114,6 @@ export class ClassSessionService {
       const created = await ClassSession.create({
         course: input.courseId,
         teacher: input.teacherId,
-        room: input.room,
         dayOfWeek: input.dayOfWeek,
         startTime: input.startTime,
         endTime: input.endTime,
@@ -157,7 +156,6 @@ export class ClassSessionService {
         {
           course: input.courseId,
           teacher: input.teacherId,
-          room: input.room,
           dayOfWeek: input.dayOfWeek,
           startTime: input.startTime,
           endTime: input.endTime,
@@ -176,6 +174,79 @@ export class ClassSessionService {
 
       return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
     }
+  }
+
+  /**
+   * Call a class off for the week, or put it back.
+   *
+   * The row stays and the slot stays blocked — a cancelled class is off, not given
+   * away — so students see it struck through rather than silently missing.
+   *
+   * `requestedBy` is the signed-in teacher when a teacher is acting, and undefined when
+   * an administrator is. A teacher may only touch a class they are teaching, and that
+   * is checked here rather than in the action: the rule belongs with the data, not with
+   * one of the callers.
+   *
+   * @param classSessionId - Session to change.
+   * @param isCancelled - The new state.
+   * @param requestedBy - Teacher making the request, if it is not an administrator.
+   *
+   * @returns The updated session, or a failure.
+   */
+  public async setCancelled(classSessionId: string, isCancelled: boolean, requestedBy?: string): Promise<SingleResult<ClassSessionDto>> {
+    try {
+      await connectToDatabase();
+
+      const target = await ClassSession.findById(classSessionId).lean<ClassSessionEntity | null>();
+
+      if (!target) {
+        return singleFailure(createError(VALIDATION.SESSION_NOT_FOUND.CODE, VALIDATION.SESSION_NOT_FOUND.MESSAGE));
+      }
+
+      if (requestedBy && toId(target.teacher) !== requestedBy) {
+        return singleFailure(createError(AUTH.NOT_OWN_CLASS.CODE, AUTH.NOT_OWN_CLASS.MESSAGE));
+      }
+
+      const updated = await ClassSession.findByIdAndUpdate(
+        classSessionId,
+        { isCancelled },
+        { returnDocument: 'after' }
+      ).lean<ClassSessionEntity | null>();
+
+      if (!updated) {
+        return singleFailure(createError(VALIDATION.SESSION_NOT_FOUND.CODE, VALIDATION.SESSION_NOT_FOUND.MESSAGE));
+      }
+
+      return singleSuccess(classSessionFromEntity(updated));
+    } catch (error) {
+      log.error({ err: error }, 'Cancelling a class session failed');
+
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * Confirm a teacher owns the class they are trying to move.
+   *
+   * @param classSessionId - Session being changed.
+   * @param teacherId - Teacher making the request.
+   *
+   * @returns A failure to return, or null when the class is theirs.
+   */
+  public async refuseForeignClass(classSessionId: string, teacherId: string): Promise<SingleResult<ClassSessionDto> | null> {
+    await connectToDatabase();
+
+    const target = await ClassSession.findById(classSessionId).lean<ClassSessionEntity | null>();
+
+    if (!target) {
+      return singleFailure(createError(VALIDATION.SESSION_NOT_FOUND.CODE, VALIDATION.SESSION_NOT_FOUND.MESSAGE));
+    }
+
+    if (toId(target.teacher) !== teacherId) {
+      return singleFailure(createError(AUTH.NOT_OWN_CLASS.CODE, AUTH.NOT_OWN_CLASS.MESSAGE));
+    }
+
+    return null;
   }
 
   /**
@@ -207,16 +278,17 @@ export class ClassSessionService {
   }
 
   /**
-   * The three clashes a slot can have: the room is busy, the teacher is busy, or the
-   * course is already being taught somewhere in that slot.
+   * The two clashes a slot can have: the teacher is busy, or the course is already
+   * being taught in that slot.
    *
-   * All three are reported together rather than the first one found, so moving a class
-   * does not turn into a guessing game of one error at a time.
+   * Both are reported together rather than the first one found, so moving a class does
+   * not turn into a guessing game of one error at a time.
    *
    * Candidates are narrowed in the query to the same day and semester — sessions in a
    * different week or semester cannot clash — and the overlap itself is decided in
-   * code, because `HH:mm` comparison is exact and a case-insensitive room match is not
-   * something the index can answer.
+   * code, because `HH:mm` comparison is exact.
+   *
+   * A cancelled class still holds its slot: it is off for the week, not given away.
    *
    * @param candidate - The slot being claimed.
    *
@@ -238,10 +310,6 @@ export class ClassSessionService {
     const clashing = sameSlot.filter(x => timeRangesOverlap(candidate.startTime, candidate.endTime, x.startTime, x.endTime));
 
     const errors: ErrorDto[] = [];
-
-    if (clashing.some(x => x.room.trim().toLowerCase() === candidate.room.trim().toLowerCase())) {
-      errors.push(createError(BUSINESS.ROOM_TAKEN.CODE, BUSINESS.ROOM_TAKEN.MESSAGE, 'room'));
-    }
 
     if (clashing.some(x => toId(x.teacher) === candidate.teacherId)) {
       errors.push(createError(BUSINESS.TEACHER_BUSY.CODE, BUSINESS.TEACHER_BUSY.MESSAGE, 'teacherId'));

@@ -17,7 +17,11 @@ export const TEACHING_DAYS = [0, 1, 2, 3, 4] as const satisfies readonly DayOfWe
  */
 export const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+/**
+ * Eight semesters — four years of two. Stored as 1–8 and shown as `1y-1st` … `4y-2nd`,
+ * which is what the department calls them.
+ */
 export const SEMESTER = {
   MIN: 1,
-  MAX: 12,
+  MAX: 8,
 } as const;

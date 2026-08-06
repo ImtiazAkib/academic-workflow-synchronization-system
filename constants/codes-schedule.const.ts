@@ -29,13 +29,24 @@ export const SCHEDULE_VALIDATION = {
   TEACHER_INVALID_ROLE: createErrorDefinition(23003, 'Only a teacher can take a class.'),
 } as const;
 
+/**
+ * Authorization errors for the Schedule (53000-53999).
+ */
+export const SCHEDULE_AUTH = {
+  NOT_OWN_CLASS: createErrorDefinition(53000, 'You can only change a class you are teaching.'),
+} as const;
+
 /*
-  The three clashes conflict detection refuses. Each is a business rule rather than a
+  The clashes conflict detection refuses. Each is a business rule rather than a
   validation error: the record is well-formed, the slot is simply taken. They come back
   as a failure the dialog renders inline, never as a thrown error.
+
+  There were three. `ROOM_TAKEN` (33000) went when the room field did — nothing tracks
+  where a class physically sits any more, so two classes can share a slot as long as the
+  teacher and the course differ. The code is left unused rather than reassigned, so an
+  old log line still decodes to what it meant.
 */
 export const SCHEDULE_BUSINESS = {
-  ROOM_TAKEN: createErrorDefinition(33000, 'That room is already booked in this time slot.'),
   TEACHER_BUSY: createErrorDefinition(33001, 'That teacher already has a class in this time slot.'),
   COURSE_ALREADY_SCHEDULED: createErrorDefinition(33002, 'That course is already scheduled in this time slot.'),
 } as const;
