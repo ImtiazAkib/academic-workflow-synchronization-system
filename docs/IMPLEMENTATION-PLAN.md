@@ -1,6 +1,6 @@
 # Implementation Plan
 
-The build is split into **14 steps**. Each one is self-contained, ends with a green build, and leaves the app
+The build is split into **15 steps**. Each one is self-contained, ends with a green build, and leaves the app
 in a working state.
 
 ## How this works
@@ -17,23 +17,24 @@ in a working state.
 
 ## Status at a glance
 
-| #              | Step                           | Proposal phase | Status         |
-| -------------- | ------------------------------ | -------------- | -------------- |
-| [0](#step-0)   | Project scaffold               | Phase 1        | ✅ Done        |
-| [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
-| [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
-| [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
-| [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
-| [5](#step-5)   | Authentication                 | Phase 2        | ✅ Done        |
-| [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
-| [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
-| [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
-| [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
-| [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
-| [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
-| [11](#step-11) | Notices & announcements        | Phase 5        | ⬜ Not started |
-| [12](#step-12) | Polish & hardening             | Phase 6        | ⬜ Not started |
-| [13](#step-13) | Testing & deployment           | Phase 6        | ⬜ Not started |
+| #                | Step                           | Proposal phase | Status         |
+| ---------------- | ------------------------------ | -------------- | -------------- |
+| [0](#step-0)     | Project scaffold               | Phase 1        | ✅ Done        |
+| [1](#step-1)     | Foundations                    | Phase 1        | ✅ Done        |
+| [2](#step-2)     | i18n — English + Bangla        | Phase 1        | ✅ Done        |
+| [3](#step-3)     | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
+| [4](#step-4)     | Data model                     | Phase 2        | ✅ Done        |
+| [5](#step-5)     | Authentication                 | Phase 2        | ✅ Done        |
+| [6](#step-6)     | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
+| [7](#step-7)     | Admin — user management        | Phase 3        | ✅ Done        |
+| [7b](#step-7b)   | Admin — courses                | Phase 3        | ✅ Done        |
+| [8](#step-8)     | Scheduling system              | Phase 4        | ✅ Done        |
+| [9](#step-9)     | Teacher — materials            | Phase 4        | ✅ Done        |
+| [10](#step-10)   | Student dashboard              | Phase 5        | ✅ Done        |
+| [10b](#step-10b) | Roles, registration & profiles | Phase 5        | ⬜ Not started |
+| [11](#step-11)   | Notices & announcements        | Phase 5        | ⬜ Not started |
+| [12](#step-12)   | Polish & hardening             | Phase 6        | ⬜ Not started |
+| [13](#step-13)   | Testing & deployment           | Phase 6        | ⬜ Not started |
 
 ## Decisions
 
@@ -968,6 +969,133 @@ field now accepts a number as well as a string, and the suite asserts the round 
 **Known limit, worth writing down:** a student retaking a course from an earlier semester sees neither its
 classes nor its files — both follow the single number on their account. Fixing it properly needs per-student
 enrolment, which is a new collection rather than a new field. Logged in [Backlog](#backlog).
+
+---
+
+<a id="step-10b"></a>
+
+### Step 10b — Roles, registration and profiles
+
+**Goal.** Close the account model. One permanent super administrator above a bounded set of administrators,
+teachers and students who sign themselves up and wait to be let in, and a profile each of them owns.
+
+**Why here, before notices.** This changes the role enum, and step 11 filters every notice by role. Written
+in the other order, the audience rules would be built against a role set that is about to change and then
+revisited. It also removes the sharpest edge in the app today: an administrator can currently deactivate
+themselves, and the only thing standing between the department and a locked-out installation is the
+`LAST_ADMIN_CANNOT_BE_REMOVED` guard.
+
+**Deliverables.**
+
+```
+Part 1 — the super administrator and the ceiling
+constants/roles.const.ts                     SUPER_ADMIN added to USER_ROLES and the labels
+types/user-role.ts · types/user-filters.ts   the widened union
+models/user.model.ts                         partial unique index pinning super-admin to one row
+lib/auth/guards.ts                           requireAdminArea() — admits admin and super administrator
+lib/services/user.service.ts                 the ceiling, the self-action guard, the immutable account
+constants/codes-users.const.ts               31001 ceiling · 31002 own access · 31003 super administrator
+lib/utils/role.utils.ts                      the fourth literal l10n branch
+scripts/seed-super-admin.ts                  the one account no screen can create
+
+Part 2 — self-registration
+app/[locale]/(auth)/register/page.tsx
+components/auth/register.form.tsx · actions.ts
+lib/schemas/registration.schema.ts           role narrowed to teacher | student at the schema
+lib/services/auth.service.ts                 register(), returning a Result like everything else
+app/[locale]/(auth)/registration-received/page.tsx
+
+Part 3 — profiles
+app/[locale]/(dashboard)/profile/page.tsx    one route, role-aware content
+components/profile/  profile-summary · profile-edit.form · actions.ts · profile.types.ts · index.ts
+lib/schemas/profile-update.schema.ts
+lib/services/user.service.ts                 updateOwnProfile()
+constants/routes.const.ts                    PROFILE + /profile added to PROTECTED_SEGMENTS
+```
+
+**Notes.**
+
+- **The super administrator is enforced by the database, not only by the service.** A partial unique index —
+  `{ role: 1 }` unique, `partialFilterExpression: { role: 'super-admin' }` — makes a second one impossible
+  even from a script or a shell. A service check alone is a rule the next caller can forget.
+- **It cannot be created, edited, demoted, deactivated, revoked or deleted by anyone, including itself.**
+  Every mutating path in `UserService` refuses when the target carries that role, and the role select on the
+  create and edit screens never offers it. Seeded once by `npm run seed:super-admin`, the same way the first
+  administrator is.
+- **The ceiling is three _active_ administrators.** Checked on create and on promotion. A deactivated
+  administrator frees its seat — the alternative is a department that cannot replace someone who left,
+  because accounts are deactivated rather than deleted and the seat would never come back.
+- **Nobody may deactivate, revoke or demote themselves.** Written as a rule about the actor rather than about
+  the role, so it protects every row rather than only the administrators. This needs the signed-in user
+  threaded into `setActive`, `setApproval` and `update`, which take only their input today.
+- **The super administrator's extra power over an administrator is deactivate and revoke.** Administrators
+  keep creating accounts of any role up to the ceiling, exactly as they do now — see the open question below,
+  because this is the reading of the requirement and not the only one.
+- **`LAST_ADMIN_CANNOT_BE_REMOVED` stops being load-bearing.** With a permanent super administrator there is
+  always somebody who can manage accounts, which is the lockout that guard exists to prevent. Retiring it is
+  a decision for the step rather than a foregone one; keeping a redundant rule costs nothing but a stale
+  comment, and removing it means one less refusal to explain.
+- **Registration is the first unauthenticated write in the application.** Everything else sits behind a
+  session. The role field is narrowed to `teacher | student` in the schema so an `admin` value is _refused_
+  rather than quietly coerced, and the account is created unapproved. Sign-in already turns away an
+  unapproved account with its own message, so the gate is the one that already exists.
+- **Rate limiting is step 12's, and that is a real gap in the meantime.** An open sign-up endpoint with no
+  throttle can be used to fill the users table. Worth pulling forward into this step if it is quick.
+- **One `/profile` route rather than one per role.** A student's profile and a teacher's differ by two fields;
+  two screens would be two copies of the same form drifting apart. `/profile` has to be added to
+  `PROTECTED_SEGMENTS` — it sits outside `/admin`, `/teacher` and `/student`, so the guard does not cover it
+  by accident.
+- **A profile edits name and phone, nothing else.** Email moves the account's identity, and role, semester and
+  approval are the administrator's to set — a profile that could change them would be a privilege escalation
+  with a friendly form around it.
+- **Deactivating an administrator does not end their current session.** The session token is self-contained
+  and only re-read at sign-in, so a switched-off administrator keeps working until their token expires. That
+  was a footnote while the only people affected were teachers and students; it is the point of the feature
+  once the super administrator's job is to stop an administrator. Already in [Backlog](#backlog) as a token
+  version on the user record — this step is the reason to bring it forward.
+- **The landing page needs a way in.** Registration is worthless if nothing links to it: the marketing header
+  offers only sign-in today, and the three role cards describe roles nobody can take. The super administrator
+  stays off that page — it is an internal role, not one the department signs up for.
+
+**Acceptance.**
+
+| Check                                                 | Expected                                       |
+| ----------------------------------------------------- | ---------------------------------------------- |
+| Administrator deactivates or revokes themselves       | Refused, naming the reason                     |
+| Administrator demotes themselves                      | Refused                                        |
+| Creating a fourth active administrator                | Refused, and the ceiling is named              |
+| Deactivating one, then creating another               | Allowed — the seat came back                   |
+| Administrator deactivates another administrator       | Refused; only the super administrator may      |
+| Any edit, demotion or deactivation of the super admin | Refused, from every role including itself      |
+| A second super administrator, inserted directly       | **Rejected by the unique index**               |
+| Registering as `admin` through a hand-built request   | Refused by the schema, not coerced             |
+| Registering as a student                              | Created unapproved; sign-in refused until then |
+| Approved, then signing in                             | Reaches the student area                       |
+| Profile edit changing role, email or semester         | Ignored — those fields are not in the schema   |
+| A teacher opening `/profile`                          | Their own record, never another's              |
+
+Plus the usual: `npm run verify:users` extended to cover the ceiling, the self-action guard and the immutable
+account; lint, format and build green; every new string in both languages.
+
+**Open questions — worth settling before the step starts.**
+
+1. **Who creates an administrator?** The requirement says the super administrator's power over administrators
+   is "to deactivate or revoke", and that administrators keep the functionality they have — which today
+   includes creating any account. Read literally, an administrator creates administrators up to the ceiling
+   and only the super administrator can switch one off. The tighter alternative is that _only_ the super
+   administrator touches an `admin` account at all. The plan above assumes the literal reading.
+2. **Does the super administrator count toward the three?** Assumed no — three administrators _plus_ the
+   super administrator, since it is a separate role.
+3. **Does a teacher choose their designation at registration, and a student their semester?** Assumed the
+   student picks nothing — an administrator sets the semester when approving, which is also the moment they
+   verify who the person is. A semester chosen by the applicant is unverified data deciding which timetable
+   they see.
+4. **Is there an email step in "verification"?** Assumed not — the project has no SMTP credentials
+   ([Backlog](#backlog)), so verification is an administrator confirming the person out of band.
+
+**Size warning.** This is three steps' worth of work in one entry, and the plan's own rule is that a step
+gets split rather than stretched. Part 3 is the separable one: profiles depend on nothing in parts 1 and 2 and
+could be their own step if this runs long.
 
 ---
 
