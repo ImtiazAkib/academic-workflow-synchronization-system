@@ -296,7 +296,7 @@ Colors, radii and fonts are CSS variables in [app/globals.css](app/globals.css),
 | `primary`                                       | Indigo brand color, used for actions and accents |
 | `accent-violet` / `accent-blue` / `accent-teal` | Admin / teacher / student, in that order         |
 | `success` / `warning` / `destructive`           | Status feedback                                  |
-| `sidebar-*`                                     | Reserved for the dashboard shell (step 5)        |
+| `sidebar-*`                                     | Reserved for the dashboard shell (step 6)        |
 
 Typography helpers (`.tagline`, `.text-medium-normal`, `.text-regular-semibold`), section padding
 (`.section-py`, `.section-px`) and `.surface-card` are defined alongside the tokens.
@@ -590,7 +590,7 @@ Straight from the project proposal, mapped onto the
 | 2     | Database schema design and authentication setup | Week 2   | 4–5   |
 | 3     | Admin dashboard and user management             | Week 3-4 | 6–7   |
 | 4     | Scheduling system and teacher dashboard         | Week 5-6 | 8–9   |
-| 5     | Student dashboard, accounts and notices         | Week 7   | 10–14 |
+| 5     | Student dashboard and material management       | Week 7   | 10–14 |
 | 6     | Testing, bug fixing and final deployment        | Week 8   | 15–16 |
 
 `typedRoutes` is on, so a `<Link>` to a route that does not exist yet is a build error. That is why the
