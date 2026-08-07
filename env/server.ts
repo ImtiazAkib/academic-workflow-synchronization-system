@@ -10,6 +10,26 @@ import { z } from 'zod';
   until the data model lands, and nothing signs a session until authentication does.
   Each becomes required in the step that starts using it.
 */
+/*
+  An unset variable and one that is present but empty mean the same thing.
+
+  This is not a nicety. `.env.example` ships the optional keys blank, so copying it — the
+  documented first step — hands every one of them an empty string. Without this, `min(1)`
+  refuses all of them, and because `proxy.ts` imports this module the failure lands in the
+  middleware: every route in the application returns a 500, on a clean clone, before
+  anybody has typed anything wrong.
+
+  @param schema - The schema to apply once a real value is present.
+
+  @returns The same schema, with an empty string read as absence.
+*/
+function blankAsAbsent<T extends z.ZodType>(schema: T) {
+  return z.preprocess(value => (value === '' ? undefined : value), schema);
+}
+
+/** An optional string that tolerates the blank line `.env.example` ships. */
+const optionalText = blankAsAbsent(z.string().min(1).optional());
+
 export const env = createEnv({
   server: {
     // Logging
@@ -51,12 +71,12 @@ export const env = createEnv({
       per unsent message carrying a link nobody received. That is a visible failure, which
       is the point; making it fatal would mean no local development without a mail server.
     */
-    SMTP_HOST: z.string().min(1).optional(),
-    SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
-    SMTP_USER: z.string().min(1).optional(),
-    SMTP_PASSWORD: z.string().min(1).optional(),
+    SMTP_HOST: optionalText,
+    SMTP_PORT: blankAsAbsent(z.coerce.number().int().min(1).max(65535).default(587)),
+    SMTP_USER: optionalText,
+    SMTP_PASSWORD: optionalText,
     /** The `From` address. Many relays reject a message whose sender they do not own. */
-    SMTP_FROM: z.string().min(1).default('Academic Workflow <no-reply@localhost>'),
+    SMTP_FROM: blankAsAbsent(z.string().min(1).default('Academic Workflow <no-reply@localhost>')),
   },
   experimental__runtimeEnv: process.env,
 });
