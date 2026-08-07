@@ -14,6 +14,30 @@ export const ROUTES = {
     LABEL: 'Not allowed',
     HREF: '/unauthorized',
   },
+  REGISTER: {
+    LABEL: 'Register',
+    HREF: '/register',
+  },
+  REGISTER_STUDENT: {
+    LABEL: 'Register as a student',
+    HREF: '/register/student',
+  },
+  REGISTER_TEACHER: {
+    LABEL: 'Register as a teacher',
+    HREF: '/register/teacher',
+  },
+  REGISTRATION_RECEIVED: {
+    LABEL: 'Check your inbox',
+    HREF: '/registration-received',
+  },
+  RESEND_CONFIRMATION: {
+    LABEL: 'Resend confirmation',
+    HREF: '/resend-confirmation',
+  },
+  VERIFY_EMAIL: {
+    LABEL: 'Confirm your email',
+    HREF: '/verify-email',
+  },
 
   // --- Role dashboards ---
   ADMIN: {

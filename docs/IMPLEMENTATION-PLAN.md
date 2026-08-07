@@ -32,7 +32,7 @@ in a working state.
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
 | [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
 | [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
-| [12](#step-12) | Accounts, registration, email  | Phase 5        | ⬜ Not started |
+| [12](#step-12) | Accounts, registration, email  | Phase 5        | ✅ Done        |
 | [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
 | [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
 | [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
@@ -1146,7 +1146,7 @@ it forward, since it is already rewriting how sign-in resolves an account.
 
 <a id="step-12"></a>
 
-### Step 12 — Accounts: identity, registration and email verification
+### Step 12 — Accounts: identity, registration and email verification ✅ Done
 
 **Goal.** People create their own accounts, prove the address they own, and are then issued the identifier they
 sign in with — delivered to the address they just proved.
@@ -1283,21 +1283,81 @@ be walked without sending anything.
 | A `role` field posted to the registration action    | Ignored — the form decides the role, not the body                     |
 | An unverified registration                          | Absent from the administrator's pending queue                         |
 
-**Open questions.**
+**Result.** ⚠️ Rules proven, screens not. `npm run verify:accounts` runs 42 checks against the real database,
+0 failures, every row it writes prefixed `account-verify` and deleted afterwards. It covers registration,
+what registration refuses, both verification failures, the identifier being issued, and sign-in through every
+gate. The four earlier suites still pass unchanged — users 28, student 37, schedule 14, materials 14. Lint,
+format and build are green; all six new routes register. 54 keys shipped with Bangla alongside the English —
+460 in total, no fallbacks.
 
-1. **Which mail provider?** SMTP needs a host and credentials; an API such as Resend needs a key and a
-   verified sending domain. The interface is the same either way, so this can be answered late — but it must
-   be answered before the step can be finished, and a domain can take a day to verify.
-2. **What does a roll number look like?** Free text, or a pattern the schema enforces? A pattern catches
-   typos at registration, when the account is easiest to fix; free text never rejects a legitimate student.
-3. **Session format** — `2021-22`, `2021-2022`, or free text?
-4. **Can a student change their roll number later?** Assumed an administrator can correct it and the student
-   cannot. It is no longer the login, so a correction is now harmless — which is one of the quieter arguments
-   for issuing an identifier rather than trusting a typed one.
-5. **What happens if the identifier email never arrives?** Assumed a "resend" on the sign-in screen, keyed by
-   email address, that re-sends whichever message the account is waiting on. Without it, a spam-filtered email
-   means an account nobody can ever reach — and the department has no way to look the identifier up for them
-   short of the admin user list, which is worth checking shows it.
+**Verified in the browser — the first step where that was possible.** These routes need no session, so
+unlike the admin and student screens they could actually be driven: `/register` renders its chooser, the
+student form renders all nine fields and all eight semesters, submitting it created an account and landed on
+"check your inbox", the verification link confirmed the address and issued `S-2026-0001`, and signing in with
+that ID was refused with "waiting for administrator approval". No console errors on any of them. The
+throwaway account was deleted afterwards.
+
+Driving it also caught two lines of copy that registration had made false — the sign-in page still said
+"there is no public sign-up", directly above the Register link this step added.
+
+**The Bangla is machine-written and wants your eye.**
+
+**Deviations from the plan, and why.**
+
+- **SMTP through nodemailer, not an HTTP API.** It works with an ordinary mail account and an app password,
+  with no sending domain to verify, which is the difference between a working deploy today and one waiting on
+  DNS. Swapping to Resend is a new file and one line in `lib/mail/index.ts`.
+- **nodemailer is pinned to 9.0.4.** `npm install nodemailer` resolves to 7.x, which carries a high-severity
+  SMTP command-injection advisory; `npm audit` now reports zero vulnerabilities.
+- **The mail transport is optional, and that is a feature.** With no `SMTP_HOST`, every message goes to the
+  log instead — so a clean clone can register, confirm and be issued an identifier with no credentials at
+  all. A deploy that forgets them gets a warning per unsent message rather than a failed build, because
+  making it fatal would mean no local development without a mail server.
+- **The email address stops signing a student in, and that needed its own refusal.** The first version merely
+  preferred the identifier — an account that held one could still sign in by email, which would have made the
+  identifier decorative and contradicted the message delivering it. Now an account holding an identifier is
+  refused by email with code 51006, telling them what to use instead. Refused _after_ the password check, so
+  the answer only ever reaches somebody who already proved the account is theirs.
+- **An administrator creating an account issues an identifier too, and marks it verified.** Not in the plan,
+  and necessary: an unverified account cannot sign in, and the pending queue hides unverified rows, so the
+  first version would have created teachers nobody could use and nobody would see waiting. The administrator
+  vouching for the person is the verification. One shared `issueLoginId()` serves both paths.
+- **The pending queue hides unverified registrations**, so an administrator does not spend attention on
+  somebody who may never confirm. They remain visible under all.
+- **`studentId` was renamed to `roll` across fifteen files.** With a real issued student ID now existing,
+  two fields called almost the same thing is how the wrong one gets read.
+
+**A migration was needed, and finding that out was the closest thing to a near miss in this step.**
+`emailVerified` became a sign-in gate, and a Mongoose `default` only applies to rows it creates — so every
+account written before step 12 had no such field, an absent field is falsy, and **every existing account was
+locked out, the administrator included.** A deploy without the migration would have locked the department out
+of its own installation. Two more silent breaks came with it: students and teachers predating the change hold
+no `loginId` and nothing else would ever give them one, and rows still carrying `studentId` were invisible to
+every screen now reading `roll`.
+
+`npm run migrate:accounts` fixes all three and is idempotent. Run against the real database it marked three
+accounts verified and issued `T-2026-0001` and `S-2026-0001`; a second run reported nothing to do. **Anyone
+issued an identifier by it has to be told what it is** — they sign in with that, not their email.
+
+**What the department still has to supply.**
+
+1. **Mail credentials.** The code and the interface are done; what is missing is a host, a user and a
+   password in `.env.local`. `.env.example` names three free options that need no paid plan and no domain of
+   your own — a Gmail app password is the shortest path. Until they are set, every message goes to the
+   server log, which is enough to walk the whole flow locally.
+2. **A read of the Bangla.** 76 keys were added across this step, all machine-written.
+
+**Deliberately left as they are.**
+
+- **A roll number, a registration number and a session are bounded, not patterned.** Departments write them
+  differently, and a format nobody agreed on would reject legitimate applicants at the one moment they
+  cannot ask anybody for help. An administrator corrects them at approval — which is now possible, because
+  the edit dialog carries all three.
+- **Registration itself has no rate limit.** The resend does, at the database rather than in memory, so it
+  behaves the same on one server or ten. Throttling the registration endpoint belongs with the rest of the
+  hardening in [step 15](#step-15); email uniqueness already bounds what repeating it achieves.
+- **Address is collected by nothing yet.** The field exists on the model for [step 13](#step-13), which owns
+  the profile a person edits themselves.
 
 ---
 

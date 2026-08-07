@@ -18,6 +18,7 @@ import { resolveUserErrorMessage } from '@/lib/utils';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { createUserAction } from './actions';
+import { UserDepartmentFields } from './user-department.fields';
 import { UserSemesterField } from './user-semester.field';
 
 import type { UserCreateFormLabels, UsersViewer } from './users.types';
@@ -51,7 +52,10 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
       password: '',
       role: USER_ROLES.TEACHER,
       designation: '',
-      studentId: '',
+      roll: '',
+      registrationNo: '',
+      session: '',
+      department: '',
       semester: '',
       phone: '',
     },
@@ -152,13 +156,22 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="create-student-id">
-            {labels.fields.studentId} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
+            {labels.fields.roll} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
           </Label>
-          <Input id="create-student-id" aria-invalid={Boolean(errors.studentId)} {...register('studentId')} />
-          {errors.studentId && <p className="text-destructive text-sm">{labels.fieldErrors.studentIdTooLong}</p>}
+          <Input id="create-student-id" aria-invalid={Boolean(errors.roll)} {...register('roll')} />
+          {errors.roll && <p className="text-destructive text-sm">{labels.fieldErrors.rollTooLong}</p>}
         </div>
 
         <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="create" />
+
+        <UserDepartmentFields
+          register={register as never}
+          control={control as never}
+          errors={errors}
+          labels={labels.fields}
+          fieldErrors={labels.fieldErrors}
+          idPrefix="create"
+        />
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="create-phone">

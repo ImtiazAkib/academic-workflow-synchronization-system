@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ACCOUNT_FIELD_LIMITS } from '@/constants/account.const';
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
 import { SEMESTER } from '@/constants/schedule.const';
@@ -40,7 +41,28 @@ export const userFields = {
 
   designation: z.string().trim().max(120, encodeZodMessage(USERS.DESIGNATION_TOO_LONG.CODE, USERS.DESIGNATION_TOO_LONG.MESSAGE)),
 
-  studentId: z.string().trim().max(40, encodeZodMessage(USERS.STUDENT_ID_TOO_LONG.CODE, USERS.STUDENT_ID_TOO_LONG.MESSAGE)),
+  roll: z.string().trim().max(ACCOUNT_FIELD_LIMITS.ROLL, encodeZodMessage(USERS.ROLL_TOO_LONG.CODE, USERS.ROLL_TOO_LONG.MESSAGE)),
+
+  /*
+    The departmental fields registration collects. Bounded rather than patterned: a roll
+    number, a registration number and a session are written differently by different
+    departments, and a format nobody agreed on would reject legitimate applicants at the
+    one moment they cannot ask anybody for help. An administrator corrects them at
+    approval, which is the same moment they are already checking who the person is.
+  */
+  registrationNo: z
+    .string()
+    .trim()
+    .max(ACCOUNT_FIELD_LIMITS.REGISTRATION_NO, encodeZodMessage(USERS.REGISTRATION_NO_TOO_LONG.CODE, USERS.REGISTRATION_NO_TOO_LONG.MESSAGE)),
+
+  session: z.string().trim().max(ACCOUNT_FIELD_LIMITS.SESSION, encodeZodMessage(USERS.SESSION_TOO_LONG.CODE, USERS.SESSION_TOO_LONG.MESSAGE)),
+
+  department: z
+    .string()
+    .trim()
+    .max(ACCOUNT_FIELD_LIMITS.DEPARTMENT, encodeZodMessage(USERS.DEPARTMENT_TOO_LONG.CODE, USERS.DEPARTMENT_TOO_LONG.MESSAGE)),
+
+  address: z.string().trim().max(ACCOUNT_FIELD_LIMITS.ADDRESS, encodeZodMessage(USERS.ADDRESS_TOO_LONG.CODE, USERS.ADDRESS_TOO_LONG.MESSAGE)),
 
   /*
     Arrives as a string because it comes from a `<Select>`, and leaves as a number or

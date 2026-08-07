@@ -22,9 +22,11 @@ const AUTH = CODES.AUTH.USERS;
 const authService = new AuthService();
 
 /**
- * Sign in with an email and password.
+ * Sign in with a login ID or an email address, and a password.
  *
- * The service decides whether the credentials are good and why not; this action only
+ * One field for all three roles: a student types `S-2026-0042`, a teacher
+ * `T-2026-0007`, an administrator their email. The service decides which lookup that
+ * shape calls for, whether the credentials are good, and why not; this action only
  * validates the shape, then turns a successful verification into a session cookie.
  *
  * @param values - Raw form values, validated here rather than trusted.
@@ -38,7 +40,7 @@ export async function signInAction(values: unknown): Promise<SingleResult<UserRo
     return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
   }
 
-  const result = await authService.verifyCredentials(validation.data.email, validation.data.password);
+  const result = await authService.verifyCredentials(validation.data.identifier, validation.data.password);
 
   if (!isSuccess(result) || !result.result) {
     const errors = result.errors.length > 0 ? result.errors : [createError(AUTH.SIGN_IN_FAILED.CODE, AUTH.SIGN_IN_FAILED.MESSAGE)];
