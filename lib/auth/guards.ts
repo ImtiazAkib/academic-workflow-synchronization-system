@@ -3,6 +3,7 @@ import { getLocale } from 'next-intl/server';
 import { redirect } from '@/l10n/navigation';
 import { SessionUser, UserRole } from '@/types';
 
+import { ADMIN_AREA_ROLES } from '@/constants/roles.const';
 import { ROUTES } from '@/constants/routes.const';
 
 import { getSessionUser } from './current-user';
@@ -61,6 +62,31 @@ export async function requireRole(role: UserRole): Promise<SessionUser> {
   const sessionUser = await requireSession();
 
   if (sessionUser.role !== role) {
+    const locale = await getLocale();
+
+    redirectTo(ROUTES.UNAUTHORIZED.HREF, locale);
+  }
+
+  return sessionUser;
+}
+
+/**
+ * Require a signed-in visitor who may enter the admin area.
+ *
+ * A separate guard rather than `requireRole(ADMIN)`, because the admin area has two
+ * legitimate occupants: the administrators and the super administrator who manages
+ * them. Asking "is this account an administrator" would turn the one account that owns
+ * the area away from it.
+ *
+ * The pages underneath still get the session back, so a screen can tell the two apart
+ * where it matters — which role selects to offer, which buttons to render.
+ *
+ * @returns The signed-in user.
+ */
+export async function requireAdminArea(): Promise<SessionUser> {
+  const sessionUser = await requireSession();
+
+  if (!ADMIN_AREA_ROLES.some(role => role === sessionUser.role)) {
     const locale = await getLocale();
 
     redirectTo(ROUTES.UNAUTHORIZED.HREF, locale);

@@ -22,11 +22,12 @@ import { UsersEmpty } from './users-empty';
 import { UsersFilters } from './users-filters';
 import { UsersTable } from './users-table';
 
-import type { UsersLabels } from './users.types';
+import type { UsersLabels, UsersViewer } from './users.types';
 
 type UsersScreenProps = {
   users: UserDto[];
   labels: UsersLabels;
+  viewer: UsersViewer;
 };
 
 /*
@@ -38,7 +39,7 @@ type UsersScreenProps = {
   the server component is what makes the change appear — and it re-applies the current
   URL filters for free.
 */
-export function UsersScreen({ users, labels }: UsersScreenProps) {
+export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
   const router = useRouter();
   const [isWorking, startWorking] = useTransition();
 
@@ -152,11 +153,18 @@ export function UsersScreen({ users, labels }: UsersScreenProps) {
       {users.length === 0 ? (
         <UsersEmpty title={labels.emptyTitle} description={labels.emptyDescription} />
       ) : (
-        <UsersTable users={users} labels={labels} onEdit={handleEdit} onApproval={handleApproval} onActivation={handleActivation} />
+        <UsersTable users={users} labels={labels} viewer={viewer} onEdit={handleEdit} onApproval={handleApproval} onActivation={handleActivation} />
       )}
 
       {editing && (
-        <UserEditDialog key={editing.userId} user={editing} labels={labels} onUpdated={handleUpdated} onOpenChange={handleEditOpenChange} />
+        <UserEditDialog
+          key={editing.userId}
+          user={editing}
+          labels={labels}
+          viewer={viewer}
+          onUpdated={handleUpdated}
+          onOpenChange={handleEditOpenChange}
+        />
       )}
 
       <UserConfirmDialog

@@ -42,7 +42,17 @@ export const USERS_VALIDATION = {
  * Business layer errors for Users (31000-31999).
  */
 export const USERS_BUSINESS = {
-  LAST_ADMIN_CANNOT_BE_REMOVED: createErrorDefinition(31000, 'The last administrator cannot be deactivated.'),
+  /*
+    31000 was `LAST_ADMIN_CANNOT_BE_REMOVED`, retired in step 11. It existed to stop a
+    department locking itself out of the admin area; a permanent super administrator who
+    owns the whole administrator lifecycle makes that impossible, and administrators can
+    no longer deactivate each other or themselves, so nothing could reach it. The number
+    is left unused rather than recycled — a stale code in an old log should decode to
+    nothing, not to somebody else's message.
+  */
+  ADMIN_LIMIT_REACHED: createErrorDefinition(31001, 'The department already has three administrators.'),
+  CANNOT_CHANGE_OWN_ACCESS: createErrorDefinition(31002, 'You cannot change your own role or access.'),
+  SUPER_ADMIN_IS_IMMUTABLE: createErrorDefinition(31003, 'The super administrator account is seeded, and cannot be created or changed here.'),
 } as const;
 
 /**
@@ -57,4 +67,9 @@ export const USERS_AUTH = {
   ACCOUNT_NOT_APPROVED: createErrorDefinition(51001, 'This account is waiting for administrator approval.'),
   ACCOUNT_DEACTIVATED: createErrorDefinition(51002, 'This account has been deactivated.'),
   SIGN_IN_FAILED: createErrorDefinition(51003, 'Sign-in could not be completed. Try again.'),
+  /*
+    An authorization refusal rather than a business one: the operation is legitimate,
+    the caller is not the one allowed to make it.
+  */
+  ADMIN_MANAGED_BY_SUPER_ADMIN: createErrorDefinition(51004, 'Only the super administrator can manage administrator accounts.'),
 } as const;

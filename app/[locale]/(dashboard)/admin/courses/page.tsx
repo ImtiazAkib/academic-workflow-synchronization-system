@@ -6,7 +6,7 @@ import { USER_ROLES } from '@/constants/roles.const';
 import { SEMESTER } from '@/constants/schedule.const';
 import { FILTER_ALL } from '@/constants/users.const';
 
-import { requireRole } from '@/lib/auth';
+import { requireAdminArea } from '@/lib/auth';
 import { CourseService, UserService } from '@/lib/services';
 
 import { CoursesScreen } from '@/components/admin/courses';
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Pick<AdminCoursesPageProps, '
 
 export default async function AdminCoursesPage({ searchParams }: AdminCoursesPageProps) {
   // A teacher or student who reaches this URL is sent to /unauthorized, not sign-in.
-  await requireRole(USER_ROLES.ADMIN);
+  await requireAdminArea();
 
   const filters = await loadCoursesSearchParams(searchParams);
 

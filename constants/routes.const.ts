@@ -82,6 +82,8 @@ export const ROUTES = {
  * Where each role lands after signing in, and the only area it may enter.
  */
 export const ROLE_HOME = {
+  // The super administrator lands in the admin area — it is their area too, with more in it.
+  'super-admin': ROUTES.ADMIN.HREF,
   admin: ROUTES.ADMIN.HREF,
   teacher: ROUTES.TEACHER.HREF,
   student: ROUTES.STUDENT.HREF,

@@ -11,7 +11,7 @@ type Translator = Awaited<ReturnType<typeof getTranslations>>;
 /**
  * The label a role is shown under.
  *
- * Written as three literal `l10n('KEY')` calls rather than a role-to-key map, because
+ * Written as four literal `l10n('KEY')` calls rather than a role-to-key map, because
  * the editor integration only finds keys in their literal call form.
  *
  * @param role - The role to label.
@@ -20,6 +20,10 @@ type Translator = Awaited<ReturnType<typeof getTranslations>>;
  * @returns The translated role name.
  */
 export function resolveRoleLabel(role: UserRole, l10n: Translator): string {
+  if (role === USER_ROLES.SUPER_ADMIN) {
+    return l10n('ROLE_SUPER_ADMIN_LABEL');
+  }
+
   if (role === USER_ROLES.ADMIN) {
     return l10n('ROLE_ADMIN_LABEL');
   }

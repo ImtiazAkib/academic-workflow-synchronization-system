@@ -31,7 +31,7 @@ in a working state.
 | [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
 | [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
-| [11](#step-11) | Roles and access control       | Phase 5        | ⬜ Not started |
+| [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
 | [12](#step-12) | Accounts, registration, email  | Phase 5        | ⬜ Not started |
 | [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
 | [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
@@ -976,7 +976,7 @@ enrolment, which is a new collection rather than a new field. Logged in [Backlog
 
 <a id="step-11"></a>
 
-### Step 11 — Roles and access control
+### Step 11 — Roles and access control ✅ Done
 
 **Goal.** One permanent super administrator above a bounded set of administrators, and an account nobody can
 turn on themselves.
@@ -1054,8 +1054,73 @@ scripts/seed-admin.ts                        retired — the super administrator
 | A second super administrator, inserted directly       | **Rejected by the unique index**             |
 | An `admin` operation from a hand-built action call    | Refused by the service, not only by the form |
 
-Plus the usual: `npm run verify:users` extended; lint, format and build green; every new string in both
-languages.
+**Result.** ⚠️ Rules proven, screens not. `npm run verify:users` was rewritten around them — 28 checks against
+the real database, 0 failures, every row it writes prefixed `user-verify` and deleted afterwards:
+
+| Check                                               | Result                                                 |
+| --------------------------------------------------- | ------------------------------------------------------ |
+| Administrator creates a teacher, edits, deactivates | Allowed, unchanged                                     |
+| Administrator creates an administrator              | Refused                                                |
+| Administrator promotes a teacher into the role      | Refused, **and the teacher was not promoted**          |
+| Administrator edits or deactivates another admin    | Both refused                                           |
+| Super administrator fills the remaining seats       | Allowed up to three active                             |
+| A fourth active administrator                       | Refused, tagged to `role`                              |
+| Deactivate one, create another                      | Allowed — the seat came back                           |
+| Reactivate the deactivated one afterwards           | **Refused** — that would be a fourth                   |
+| Deactivate / revoke / demote yourself               | All three refused                                      |
+| Rename yourself                                     | Allowed — the rule is role and access, not every field |
+| Create a super administrator, or promote into it    | Refused, from every role                               |
+| Edit, demote or deactivate the super administrator  | Refused, and the row is genuinely untouched            |
+| A second super administrator written directly       | **Refused by the unique index**                        |
+
+The other three suites still pass unchanged — student 37, schedule 14, materials 14. Lint, format and build
+green. 6 keys shipped with Bangla alongside the English, 1 retired — 406 in total, no fallbacks.
+
+**Not verified: every screen.** The role select, the hidden action buttons and the refusal messages have not
+rendered — they sit behind the admin guard, and the assistant driving the browser does not sign in. **The
+Bangla is machine-written and wants your eye.**
+
+**Deviations from the plan, and why.**
+
+- **`ADMIN_AREA_ROLES` and `ADMIN_LIMIT` live in `constants/roles.const.ts`**, not spread through the service.
+  The guard, the action gate and the ceiling all read the same two constants, so "who may be here" and "how
+  many" have one home rather than three.
+- **One gate rather than a rule per verb.** `refuseDisallowedRoleChange(target, nextRole, requester)` answers
+  create, edit, promote, demote, approve, revoke, activate and deactivate. A create passes `null` for the
+  target; a state change passes the target's own role on both sides, because nothing is moving. Eight verbs
+  cannot disagree with each other if they ask one question.
+- **The self-rule is split in two, and had to be.** `refuseDisallowedRoleChange` refuses a self _role_ change
+  only — the first version refused every self-operation and would have stopped an administrator fixing a typo
+  in their own name, which is not the rule. Approval and activation carry no role to compare, so their
+  unconditional self-check sits in `applyStateChange` instead. The suite asserts both halves, including that
+  renaming yourself still works.
+- **Reactivating counts against the ceiling.** Not in the plan, and necessary: three active administrators is
+  the rule, and switching a fourth back on is still a fourth. Without it the limit was one `setActive` away
+  from being decorative.
+- **The action gate returns the caller instead of merely approving them.** `gateAdminArea()` is a
+  discriminated union — `{ allowed: true, requester }` or `{ allowed: false, refusal }` — so an action that
+  forgets to check cannot reach the requester; the type will not let it. The gate answers "may you be in this
+  area", and `UserService` answers "may you do this to that account".
+- **The screens got a `viewer`, not a pile of booleans.** `{ userId, isSuperAdmin }` decides which roles a
+  select lists and which buttons a row carries. It is a courtesy, not a control — the service refuses the same
+  operations whatever the browser sends, so a button in the wrong place would be a cosmetic bug rather than a
+  hole. The edit dialog still lists `admin` when the row already holds it, so the select can show what the
+  account _is_ even to a viewer who could not set it.
+- **`LAST_ADMIN_CANNOT_BE_REMOVED` is gone, and its code number is left unused.** A stale code in an old log
+  should decode to nothing rather than to somebody else's message, so 31000 was retired rather than recycled.
+- **`scripts/seed-admin.ts` is deleted, replaced by `seed-super-admin.ts`.** The new script refuses politely
+  when a super administrator already exists, and the partial unique index refuses regardless — two people
+  running it at once would both pass a check but only one would pass the index.
+- **`npm run verify:users` mints a throwaway super administrator when the database has none.** The
+  immutability and unique-index checks are the point of this step; skipping them on a fresh database was the
+  worse trade. It is deleted with everything else.
+
+**Known limit, and it is the sharp one.** Deactivating an administrator does not end their current session —
+the token is self-contained and only re-read at sign-in, so a switched-off administrator keeps working until
+it expires. That was a footnote while it only affected teachers and students. It is now the point of the
+feature: the super administrator's job is to stop an administrator, and today that stop is delayed. Already in
+[Backlog](#backlog) as a token version on the user record; [step 12](#step-12) is the natural place to bring
+it forward, since it is already rewriting how sign-in resolves an account.
 
 ---
 

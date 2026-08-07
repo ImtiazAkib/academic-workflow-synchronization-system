@@ -132,7 +132,7 @@ import { env } from '@/env/server';
 | `npm run format`           | Prettier check                                             |
 | `npm run format:write`     | Prettier write                                             |
 | `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
-| `npm run seed:admin`       | Create the first administrator (see below)                 |
+| `npm run seed:super-admin` | Create the super administrator (see below)                 |
 | `npm run verify:users`     | Exercise UserService against the database, then clean up   |
 | `npm run verify:schedule`  | Exercise conflict detection the same way                   |
 | `npm run verify:materials` | Exercise upload, download, delete and the access rules     |
@@ -491,12 +491,14 @@ and `.lean()` results. `toId()` renders a reference as a string whether or not t
 
 ### Seeding the first administrator
 
-Every account is created by an administrator who is already signed in, which leaves the first one with no way
-in. That is what the seed script is for. Pass the credentials in the environment rather than on the command
+Every account is created by somebody already signed in, which leaves the first one with no way in. That is
+what the seed script is for — and it seeds the **super administrator**, not an administrator: there is exactly
+one, it cannot be created or changed through any screen, and it is the account that creates the first
+administrator. Pass the credentials in the environment rather than on the command
 line, so the password stays out of shell history:
 
 ```bash
-SEED_ADMIN_NAME="Department Head" SEED_ADMIN_EMAIL="head@dept.edu" SEED_ADMIN_PASSWORD="…" npm run seed:admin
+SEED_SUPER_ADMIN_NAME="Department Head" SEED_SUPER_ADMIN_EMAIL="head@dept.edu" SEED_SUPER_ADMIN_PASSWORD="…" npm run seed:super-admin
 ```
 
 Re-running it never resets an existing password — if the email is already registered it reports and stops.
