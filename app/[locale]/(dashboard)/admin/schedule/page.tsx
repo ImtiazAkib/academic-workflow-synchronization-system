@@ -6,7 +6,7 @@ import { USER_ROLES } from '@/constants/roles.const';
 import { SEMESTER } from '@/constants/schedule.const';
 import { FILTER_ALL } from '@/constants/users.const';
 
-import { requireRole } from '@/lib/auth';
+import { requireAdminArea } from '@/lib/auth';
 import { ClassSessionService, CourseService, UserService } from '@/lib/services';
 import { buildScheduleLabels, resolveDepartmentToday } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Pick<AdminSchedulePageProps, 
 
 export default async function AdminSchedulePage({ searchParams }: AdminSchedulePageProps) {
   // A teacher or student who reaches this URL is sent to /unauthorized, not sign-in.
-  await requireRole(USER_ROLES.ADMIN);
+  await requireAdminArea();
 
   const filters = await loadScheduleSearchParams(searchParams);
 

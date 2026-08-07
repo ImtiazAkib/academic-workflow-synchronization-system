@@ -5,7 +5,7 @@ import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Users } from 'luci
 import { Link, usePathname } from '@/l10n/navigation';
 import { UserRole } from '@/types';
 
-import { USER_ROLES } from '@/constants/roles.const';
+import { ADMIN_AREA_ROLES, USER_ROLES } from '@/constants/roles.const';
 import { ROLE_HOME, ROUTES } from '@/constants/routes.const';
 
 import { cn } from '@/lib/utils';
@@ -43,13 +43,20 @@ export function DashboardNav({
   const usersHref = ROUTES.ADMIN_USERS.HREF;
   const coursesHref = ROUTES.ADMIN_COURSES.HREF;
 
-  // The timetable exists for all three roles, at a different route each.
-  const scheduleHref =
-    role === USER_ROLES.ADMIN
-      ? ROUTES.ADMIN_SCHEDULE.HREF
-      : role === USER_ROLES.TEACHER
-        ? ROUTES.TEACHER_SCHEDULE.HREF
-        : ROUTES.STUDENT_SCHEDULE.HREF;
+  /*
+    Every entry below asks whether this account is in the admin area rather than whether
+    it is an administrator. The super administrator holds every administrator power, so
+    a `role === ADMIN` test would take the Users and Courses links away from the one
+    account that needs them most, and route it to the student timetable it cannot open.
+  */
+  const isAdminArea = ADMIN_AREA_ROLES.some(x => x === role);
+
+  // The timetable exists for every role, at a different route each.
+  const scheduleHref = isAdminArea
+    ? ROUTES.ADMIN_SCHEDULE.HREF
+    : role === USER_ROLES.TEACHER
+      ? ROUTES.TEACHER_SCHEDULE.HREF
+      : ROUTES.STUDENT_SCHEDULE.HREF;
 
   /*
     A teacher's repository and a student's reading list are the same files from opposite
@@ -73,7 +80,7 @@ export function DashboardNav({
       </Link>
 
       {/* Accounts are the administrator's alone — nobody else may list the department. */}
-      {role === USER_ROLES.ADMIN && (
+      {isAdminArea && (
         <Link
           href={usersHref}
           aria-current={pathname === usersHref ? 'page' : undefined}
@@ -88,7 +95,7 @@ export function DashboardNav({
         </Link>
       )}
 
-      {role === USER_ROLES.ADMIN && (
+      {isAdminArea && (
         <Link
           href={coursesHref}
           aria-current={pathname.startsWith(coursesHref) ? 'page' : undefined}
@@ -116,7 +123,7 @@ export function DashboardNav({
         {scheduleLabel}
       </Link>
 
-      {role !== USER_ROLES.ADMIN && (
+      {!isAdminArea && (
         <Link
           href={materialsHref}
           aria-current={pathname.startsWith(materialsHref) ? 'page' : undefined}

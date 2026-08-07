@@ -110,6 +110,7 @@
   "DASHBOARD_NAV_LABEL": "ড্যাশবোর্ডের অংশসমূহ",
   "DASHBOARD_SIGN_OUT": "সাইন আউট",
   "DASHBOARD_WELCOME": "স্বাগতম, {name}",
+  "ROLE_SUPER_ADMIN_LABEL": "প্রধান প্রশাসক",
   "ROLE_ADMIN_LABEL": "প্রশাসক",
   "ROLE_TEACHER_LABEL": "শিক্ষক",
   "ROLE_STUDENT_LABEL": "শিক্ষার্থী",
@@ -198,7 +199,6 @@
   "USERS_TOAST_REACTIVATED": "অ্যাকাউন্ট পুনরায় সক্রিয় করা হয়েছে।",
   "USERS_ERROR_GENERIC": "কাজটি সম্পন্ন হয়নি। আবার চেষ্টা করুন।",
   "USERS_ERROR_EMAIL_TAKEN": "এই ইমেইল ঠিকানাটি ইতিমধ্যে নিবন্ধিত।",
-  "USERS_ERROR_LAST_ADMIN": "শেষ প্রশাসককে নিষ্ক্রিয় বা পদাবনত করা যাবে না।",
   "USERS_ERROR_NOT_FOUND": "এই অ্যাকাউন্টটি আর নেই।",
   "DASHBOARD_NAV_COURSES": "কোর্স",
   "COURSES_METADATA_TITLE": "কোর্স",
@@ -399,5 +399,10 @@
   "STUDENT_TEACHERS_EMAIL_LABEL": "ইমেইল",
   "STUDENT_TEACHERS_COURSES_LABEL": "কোর্স",
   "STUDENT_TEACHERS_NO_COURSES": "কোনো কোর্স নির্ধারিত নেই",
-  "STUDENT_ROUTINE_TIME_LABEL": "সময়"
+  "STUDENT_ROUTINE_TIME_LABEL": "সময়",
+  "USERS_ACTION_UNAVAILABLE": "কোনো কাজ নেই",
+  "USERS_ERROR_ADMIN_LIMIT": "বিভাগে ইতিমধ্যে তিনজন প্রশাসক আছেন। নতুন কাউকে যোগ করার আগে একজনকে নিষ্ক্রিয় করুন।",
+  "USERS_ERROR_OWN_ACCESS": "আপনি নিজের ভূমিকা বা প্রবেশাধিকার পরিবর্তন করতে পারবেন না।",
+  "USERS_ERROR_SUPER_ADMIN": "প্রধান প্রশাসকের অ্যাকাউন্ট এখান থেকে তৈরি বা পরিবর্তন করা যায় না।",
+  "USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN": "কেবল প্রধান প্রশাসক প্রশাসকের অ্যাকাউন্ট পরিচালনা করতে পারেন।"
 }

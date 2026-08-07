@@ -1,6 +1,19 @@
 import type { UserErrorLabels } from '@/lib/utils';
 
 /**
+ * Who is looking at the screen, and therefore what it may offer them.
+ *
+ * The screens use this to decide which roles a select lists and which buttons a row
+ * carries. It is a courtesy, not a control — `UserService` refuses the same operations
+ * whatever the browser sends, so a button that should not be there is a cosmetic bug
+ * rather than a hole.
+ */
+export type UsersViewer = {
+  userId: string;
+  isSuperAdmin: boolean;
+};
+
+/**
  * Every string the users screen renders.
  *
  * One bundle rather than three dozen individual props: the screen is a client tree and
@@ -39,6 +52,7 @@ export type UsersFieldErrorLabels = {
 export type UserCreateFormLabels = {
   fields: UsersFieldLabels;
   fieldErrors: UsersFieldErrorLabels;
+  roleSuperAdmin: string;
   roleAdmin: string;
   roleTeacher: string;
   roleStudent: string;
@@ -68,6 +82,7 @@ export type UsersLabels = {
   statusPending: string;
   statusActive: string;
   statusInactive: string;
+  roleSuperAdmin: string;
   roleAdmin: string;
   roleTeacher: string;
   roleStudent: string;
@@ -85,6 +100,7 @@ export type UsersLabels = {
   revoke: string;
   deactivate: string;
   reactivate: string;
+  actionsUnavailable: string;
   fields: UsersFieldLabels;
   fieldErrors: UsersFieldErrorLabels;
   createTitle: string;

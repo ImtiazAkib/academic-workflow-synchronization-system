@@ -8,7 +8,7 @@ import { Link } from '@/l10n/navigation';
 import { USER_ROLES } from '@/constants/roles.const';
 import { ROUTES } from '@/constants/routes.const';
 
-import { requireRole } from '@/lib/auth';
+import { requireAdminArea } from '@/lib/auth';
 
 import { UserCreateForm } from '@/components/admin/users';
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: AdminUserCreatePageProps): Pr
 
 export default async function AdminUserCreatePage() {
   // A teacher or student who reaches this URL is sent to /unauthorized, not sign-in.
-  await requireRole(USER_ROLES.ADMIN);
+  const sessionUser = await requireAdminArea();
 
   const l10n = await getTranslations();
 
@@ -50,6 +50,7 @@ export default async function AdminUserCreatePage() {
 
       <div className="surface-card p-4 sm:p-6">
         <UserCreateForm
+          viewer={{ userId: sessionUser.userId, isSuperAdmin: sessionUser.role === USER_ROLES.SUPER_ADMIN }}
           labels={{
             fields: {
               name: l10n('USERS_FIELD_NAME_LABEL'),
@@ -74,6 +75,7 @@ export default async function AdminUserCreatePage() {
               semesterInvalid: l10n('USERS_FIELD_SEMESTER_INVALID'),
               phoneTooLong: l10n('USERS_FIELD_PHONE_TOO_LONG'),
             },
+            roleSuperAdmin: l10n('ROLE_SUPER_ADMIN_LABEL'),
             roleAdmin: l10n('ROLE_ADMIN_LABEL'),
             roleTeacher: l10n('ROLE_TEACHER_LABEL'),
             roleStudent: l10n('ROLE_STUDENT_LABEL'),
@@ -83,7 +85,10 @@ export default async function AdminUserCreatePage() {
             created: l10n('USERS_TOAST_CREATED'),
             errors: {
               emailTaken: l10n('USERS_ERROR_EMAIL_TAKEN'),
-              lastAdministrator: l10n('USERS_ERROR_LAST_ADMIN'),
+              adminLimit: l10n('USERS_ERROR_ADMIN_LIMIT'),
+              ownAccess: l10n('USERS_ERROR_OWN_ACCESS'),
+              superAdmin: l10n('USERS_ERROR_SUPER_ADMIN'),
+              adminOnlySuperAdmin: l10n('USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN'),
               notFound: l10n('USERS_ERROR_NOT_FOUND'),
               generic: l10n('USERS_ERROR_GENERIC'),
             },

@@ -5,7 +5,7 @@ import { ClassSessionDto } from '@/types';
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { getSessionUser } from '@/lib/auth';
+import { gateAdminArea, getSessionUser } from '@/lib/auth';
 import { EmptyResult, SingleResult, createError, emptyFailureWithError, singleFailure, singleFailureWithErrors } from '@/lib/result';
 import { ClassSessionCreateSchema, ClassSessionUpdateSchema, objectIdField } from '@/lib/schemas';
 import { ClassSessionService } from '@/lib/services';
@@ -15,26 +15,6 @@ const AUTH = CODES.AUTH.COMMON;
 
 const classSessionService = new ClassSessionService();
 
-/*
-  Every action re-checks the session itself — a Server Action is a public endpoint, and
-  the page guard that hid the button proves nothing about who is calling it. It returns
-  a Result rather than redirecting, because `getLocale()` reads `next/root-params`,
-  which is unavailable inside a Server Action.
-*/
-async function refuseNonAdministrator(): Promise<SingleResult<ClassSessionDto> | null> {
-  const sessionUser = await getSessionUser();
-
-  if (!sessionUser) {
-    return singleFailure(createError(AUTH.NOT_AUTHENTICATED.CODE, AUTH.NOT_AUTHENTICATED.MESSAGE));
-  }
-
-  if (sessionUser.role !== USER_ROLES.ADMIN) {
-    return singleFailure(createError(AUTH.NOT_AUTHORIZED.CODE, AUTH.NOT_AUTHORIZED.MESSAGE));
-  }
-
-  return null;
-}
-
 /**
  * Put a class on the timetable.
  *
@@ -43,10 +23,10 @@ async function refuseNonAdministrator(): Promise<SingleResult<ClassSessionDto> |
  * @returns The created session, or a failure naming every clash it hit.
  */
 export async function createClassSessionAction(values: unknown): Promise<SingleResult<ClassSessionDto>> {
-  const refusal = await refuseNonAdministrator();
+  const gate = await gateAdminArea<ClassSessionDto>();
 
-  if (refusal) {
-    return refusal;
+  if (!gate.allowed) {
+    return gate.refusal;
   }
 
   const validation = ClassSessionCreateSchema.safeParse(values);
@@ -66,10 +46,10 @@ export async function createClassSessionAction(values: unknown): Promise<SingleR
  * @returns The updated session, or a failure naming every clash it hit.
  */
 export async function updateClassSessionAction(values: unknown): Promise<SingleResult<ClassSessionDto>> {
-  const refusal = await refuseNonAdministrator();
+  const gate = await gateAdminArea<ClassSessionDto>();
 
-  if (refusal) {
-    return refusal;
+  if (!gate.allowed) {
+    return gate.refusal;
   }
 
   const validation = ClassSessionUpdateSchema.safeParse(values);
@@ -124,10 +104,11 @@ export async function setClassSessionCancelledAction(classSessionId: unknown, is
  * @returns Empty success, or a failure.
  */
 export async function deleteClassSessionAction(classSessionId: unknown): Promise<EmptyResult> {
-  const refusal = await refuseNonAdministrator();
+  // Returns an `EmptyResult`, so the gate's refusal is unwrapped into one.
+  const gate = await gateAdminArea<ClassSessionDto>();
 
-  if (refusal) {
-    return emptyFailureWithError(refusal.errors[0]);
+  if (!gate.allowed) {
+    return emptyFailureWithError(gate.refusal.errors[0]);
   }
 
   const validation = objectIdField.safeParse(classSessionId);

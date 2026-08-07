@@ -12,7 +12,7 @@ import { UserCreateSchema } from '@/lib/schemas';
 import { StudentService } from '@/lib/services/student.service';
 import { UserService } from '@/lib/services/user.service';
 
-import type { DayOfWeek } from '@/types';
+import type { DayOfWeek, SessionUser } from '@/types';
 
 /*
   Exercises the rules behind the student area, which no screen can be driven to from
@@ -29,6 +29,19 @@ const TEMP_CODE_PREFIX = '^ZZS';
 const MINE = 7;
 const OTHER = 8;
 const MONDAY: DayOfWeek = 1;
+
+/*
+  Step 11 made every mutating UserService method take the account making the request.
+  These three calls are about the semester rather than about authorization, so they act
+  as a plain administrator — which is exactly who edits a student in practice.
+*/
+const asAdmin: SessionUser = {
+  userId: String(new mongoose.Types.ObjectId()),
+  email: `${TEMP}-admin@department.edu`,
+  name: 'Verify Admin',
+  role: USER_ROLES.ADMIN,
+  isApproved: true,
+};
 
 const students = new StudentService();
 const users = new UserService();
@@ -227,13 +240,16 @@ async function run(): Promise<void> {
   // The same second pass must still refuse a hand-built request carrying a bad number.
   check('a raw out-of-range number is refused', !parseSemester(9).success);
 
-  const createdTeacher = await users.create({
-    name: 'Verify Teacher Two',
-    email: `${TEMP}-teacher-two@department.edu`,
-    password: 'temp-password-123',
-    role: USER_ROLES.TEACHER,
-    semester: 4,
-  });
+  const createdTeacher = await users.create(
+    {
+      name: 'Verify Teacher Two',
+      email: `${TEMP}-teacher-two@department.edu`,
+      password: 'temp-password-123',
+      role: USER_ROLES.TEACHER,
+      semester: 4,
+    },
+    asAdmin
+  );
   check('a semester on a teacher is dropped', createdTeacher.success && !createdTeacher.result?.semester, JSON.stringify(createdTeacher.result));
 
   console.log('\n7. clearing a field actually clears it');
@@ -242,27 +258,33 @@ async function run(): Promise<void> {
     before `toUpdateDocument()` this promotion left the year on the record — gone from
     every screen and still in the database.
   */
-  const promoted = await users.update({
-    userId: String(student._id),
-    name: 'Verify Student',
-    role: USER_ROLES.TEACHER,
-    designation: '',
-    studentId: '',
-    phone: '',
-  });
+  const promoted = await users.update(
+    {
+      userId: String(student._id),
+      name: 'Verify Student',
+      role: USER_ROLES.TEACHER,
+      designation: '',
+      studentId: '',
+      phone: '',
+    },
+    asAdmin
+  );
   check('promoting a student to a teacher succeeds', promoted.success, JSON.stringify(promoted.errors));
 
   const afterPromotion = await User.findById(student._id).lean();
   check('the semester is gone from the record', afterPromotion?.semester === undefined, JSON.stringify(afterPromotion?.semester));
 
-  const clearedDesignation = await users.update({
-    userId: String(teacher._id),
-    name: 'Verify Teacher',
-    role: USER_ROLES.TEACHER,
-    designation: '',
-    studentId: '',
-    phone: '',
-  });
+  const clearedDesignation = await users.update(
+    {
+      userId: String(teacher._id),
+      name: 'Verify Teacher',
+      role: USER_ROLES.TEACHER,
+      designation: '',
+      studentId: '',
+      phone: '',
+    },
+    asAdmin
+  );
   check('emptying a designation succeeds', clearedDesignation.success, JSON.stringify(clearedDesignation.errors));
 
   const afterClear = await User.findById(teacher._id).lean();

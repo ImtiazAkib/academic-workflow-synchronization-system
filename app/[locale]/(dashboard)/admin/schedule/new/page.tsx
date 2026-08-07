@@ -8,7 +8,7 @@ import { Link } from '@/l10n/navigation';
 import { USER_ROLES } from '@/constants/roles.const';
 import { ROUTES } from '@/constants/routes.const';
 
-import { requireRole } from '@/lib/auth';
+import { requireAdminArea } from '@/lib/auth';
 import { CourseService, UserService } from '@/lib/services';
 import { buildDayLabels } from '@/lib/utils';
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: AdminSessionCreatePageProps):
 }
 
 export default async function AdminSessionCreatePage() {
-  await requireRole(USER_ROLES.ADMIN);
+  await requireAdminArea();
 
   const l10n = await getTranslations();
 
