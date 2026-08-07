@@ -30,6 +30,10 @@ export const ROUTES = {
     LABEL: 'Check your inbox',
     HREF: '/registration-received',
   },
+  RESEND_CONFIRMATION: {
+    LABEL: 'Resend confirmation',
+    HREF: '/resend-confirmation',
+  },
   VERIFY_EMAIL: {
     LABEL: 'Confirm your email',
     HREF: '/verify-email',

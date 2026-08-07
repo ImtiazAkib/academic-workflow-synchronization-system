@@ -1,5 +1,7 @@
 'use server';
 
+import { z } from 'zod';
+
 import { env } from '@/env/server';
 
 import { ROUTES } from '@/constants/routes.const';
@@ -141,4 +143,37 @@ export async function verifyEmailAction(token: unknown): Promise<SingleResult<st
   await mail.send(buildLoginIdMail(user.email, user.name, loginId, new URL(ROUTES.SIGN_IN.HREF, env.APP_BASE_URL).toString()));
 
   return { success: true, result: loginId, errors: [], messages: [] };
+}
+
+/**
+ * Send a fresh confirmation link to an address that has not confirmed one.
+ *
+ * Always reports success. Whether the address is registered, already confirmed, or
+ * nothing at all, the screen says the same thing — otherwise this becomes a way for
+ * anybody to test which addresses have accounts here, which is exactly what sign-in
+ * refuses to disclose.
+ *
+ * There is no throttle, and that is a real gap until step 15 adds rate limiting: it sends a
+ * message per request to any address somebody names. The blast radius is bounded — the
+ * address has to already hold an unverified account, so it cannot be aimed at a stranger
+ * — but it is worth closing.
+ *
+ * @param email - Address as typed.
+ *
+ * @returns Empty success, always.
+ */
+export async function resendVerificationAction(email: unknown): Promise<EmptyResult> {
+  const parsed = z.string().trim().toLowerCase().safeParse(email);
+
+  if (!parsed.success) {
+    return emptySuccess();
+  }
+
+  const reissued = await authService.reissueVerification(parsed.data);
+
+  if (reissued) {
+    await mail.send(buildVerifyAddressMail(reissued.user.email, reissued.user.name, buildVerifyUrl(reissued.verificationToken)));
+  }
+
+  return emptySuccess();
 }

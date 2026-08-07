@@ -291,6 +291,54 @@ export class AuthService {
     }
   }
 
+  /**
+   * Issue a fresh confirmation token for an address that has not been confirmed.
+   *
+   * The remedy for the link that never arrived. Without it a spam-filtered email means
+   * an account nobody can ever reach: the token is single-use, the identifier is only
+   * delivered once, and there is no other way in.
+   *
+   * Returns null for every case that is not "an unverified account exists here" —
+   * unknown address, already confirmed, deactivated. The caller reports the same thing
+   * either way, so this cannot be used to discover which addresses are registered. That
+   * is also why it returns a bare token rather than a Result: there is no refusal to
+   * report, only a message to send or not send.
+   *
+   * The previous token stops working, because a new one replaces the stored hash. Asking
+   * for a second link invalidates the first, which is what makes a leaked old email
+   * harmless.
+   *
+   * @param email - Address as typed.
+   *
+   * @returns The account and its new token, or null when there is nothing to send.
+   */
+  public async reissueVerification(email: string): Promise<{ user: UserDto; verificationToken: string } | null> {
+    try {
+      await connectToDatabase();
+
+      const user = await User.findOne({ email: email.trim().toLowerCase() });
+
+      if (!user || user.emailVerified || !user.isActive) {
+        return null;
+      }
+
+      const token = randomBytes(EMAIL_VERIFICATION.TOKEN_BYTES).toString('hex');
+
+      user.set({
+        emailVerificationTokenHash: this.hashToken(token),
+        emailVerificationExpiresAt: new Date(Date.now() + EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000),
+      });
+
+      await user.save();
+
+      return { user: userFromEntity(user), verificationToken: token };
+    } catch (error) {
+      log.error({ err: error }, 'Reissuing a verification token failed');
+
+      return null;
+    }
+  }
+
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }

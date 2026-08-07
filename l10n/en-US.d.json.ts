@@ -95,7 +95,7 @@ declare const messages: {
   "NAV_SIGN_IN": "Sign in",
   "SIGN_IN_METADATA_TITLE": "Sign in",
   "SIGN_IN_TITLE": "Sign in",
-  "SIGN_IN_SUBTITLE": "Use the account your department administrator created for you.",
+  "SIGN_IN_SUBTITLE": "Sign in with your login ID, or your email address if you are an administrator.",
   "SIGN_IN_EMAIL_LABEL": "Email",
   "SIGN_IN_EMAIL_PLACEHOLDER": "you@department.edu",
   "SIGN_IN_EMAIL_INVALID": "Enter a valid email address.",
@@ -107,7 +107,7 @@ declare const messages: {
   "SIGN_IN_ERROR_NOT_APPROVED": "This account is waiting for administrator approval.",
   "SIGN_IN_ERROR_DEACTIVATED": "This account has been deactivated.",
   "SIGN_IN_ERROR_UNEXPECTED": "Sign-in could not be completed. Try again.",
-  "SIGN_IN_NO_ACCOUNT": "Accounts are created by the department administrator — there is no public sign-up.",
+  "SIGN_IN_NO_ACCOUNT": "Students and teachers register themselves; an administrator approves the account before it works.",
   "DASHBOARD_METADATA_TITLE": "Dashboard",
   "DASHBOARD_NAV_OVERVIEW": "Overview",
   "DASHBOARD_NAV_LABEL": "Dashboard sections",
@@ -461,6 +461,16 @@ declare const messages: {
   "VERIFY_EMAIL_COPY": "Copy",
   "VERIFY_EMAIL_COPIED": "Copied",
   "REGISTRATION_RECEIVED_NO_MAIL": "No mail server is configured, so the confirmation link was written to the server log instead of sent.",
-  "SIGN_IN_ERROR_USE_LOGIN_ID": "Sign in with your login ID, not your email address. It was emailed to you when you confirmed your address."
+  "SIGN_IN_ERROR_USE_LOGIN_ID": "Sign in with your login ID, not your email address. It was emailed to you when you confirmed your address.",
+  "RESEND_METADATA_TITLE": "Resend confirmation",
+  "RESEND_TITLE": "Resend the confirmation link",
+  "RESEND_INTRO": "If the first email never arrived, we can send another. The previous link stops working.",
+  "RESEND_EMAIL_LABEL": "Email address",
+  "RESEND_SUBMIT": "Send a new link",
+  "RESEND_SUBMITTING": "Sending…",
+  "RESEND_SENT_TITLE": "Check your inbox",
+  "RESEND_SENT_DESCRIPTION": "If that address has an account waiting to be confirmed, a new link is on its way.",
+  "RESEND_BACK": "Back to sign in",
+  "SIGN_IN_RESEND_LINK": "Never got the confirmation email?"
 };
 export default messages;

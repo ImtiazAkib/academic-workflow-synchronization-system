@@ -1290,8 +1290,17 @@ gate. The four earlier suites still pass unchanged — users 28, student 37, sch
 format and build are green; all six new routes register. 54 keys shipped with Bangla alongside the English —
 460 in total, no fallbacks.
 
-**Not verified: every screen.** Registration, the confirmation page and the verification landing page have
-not rendered once. **The Bangla is machine-written and wants your eye.**
+**Verified in the browser — the first step where that was possible.** These routes need no session, so
+unlike the admin and student screens they could actually be driven: `/register` renders its chooser, the
+student form renders all nine fields and all eight semesters, submitting it created an account and landed on
+"check your inbox", the verification link confirmed the address and issued `S-2026-0001`, and signing in with
+that ID was refused with "waiting for administrator approval". No console errors on any of them. The
+throwaway account was deleted afterwards.
+
+Driving it also caught two lines of copy that registration had made false — the sign-in page still said
+"there is no public sign-up", directly above the Register link this step added.
+
+**The Bangla is machine-written and wants your eye.**
 
 **Deviations from the plan, and why.**
 
@@ -1325,9 +1334,11 @@ not rendered once. **The Bangla is machine-written and wants your eye.**
 2. **What does a roll number look like?** Left as free text — bounded, not patterned. A format nobody agreed
    on would reject legitimate applicants at the one moment they cannot ask anybody for help.
 3. **Session format** — free text, same reasoning. `2021-22` is only a placeholder.
-4. **No resend.** A spam-filtered confirmation email currently means an account nobody can reach, because the
-   token is single-use and there is no way to ask for another. The identifier is at least readable from the
-   admin user list, which now shows it. This is the sharpest gap in the step.
+4. **Resend is built, throttling is not.** `/resend-confirmation` mints a fresh token and invalidates the
+   old one, and says the same thing whether or not the address is registered — otherwise it would be a way
+   to discover which addresses have accounts. It has no rate limit until [step 15](#step-15), so it sends one
+   message per request; the blast radius is bounded, since the address must already hold an unverified
+   account.
 5. **Profiles, and the admin screens for the new fields.** Registration number, session and department are
    collected and stored but appear on no screen yet; the login ID and roll do. [Step 13](#step-13) owns the
    profile half.
