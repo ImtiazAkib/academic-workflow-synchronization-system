@@ -84,5 +84,15 @@ userSchema.method('comparePassword', async function comparePassword(candidate: s
   return bcrypt.compare(candidate, this.password);
 });
 
+/*
+  There is exactly one super administrator, and this is what makes that true rather than
+  merely intended. A partial unique index applies the constraint only to rows carrying
+  that role, so the three administrators and every teacher and student are untouched —
+  but a second super administrator cannot be written by a service, a seed script, or
+  somebody at a Mongo shell. A check in `UserService` is a rule the next caller can
+  forget; an index is not.
+*/
+userSchema.index({ role: 1 }, { unique: true, partialFilterExpression: { role: USER_ROLES.SUPER_ADMIN } });
+
 // Guarded so hot reload re-uses the compiled model instead of redefining it.
 export const User = (mongoose.models.User as UserModel) ?? mongoose.model<UserAttributes, UserModel>('User', userSchema);

@@ -113,6 +113,7 @@ declare const messages: {
   "DASHBOARD_NAV_LABEL": "Dashboard sections",
   "DASHBOARD_SIGN_OUT": "Sign out",
   "DASHBOARD_WELCOME": "Welcome, {name}",
+  "ROLE_SUPER_ADMIN_LABEL": "Super administrator",
   "ROLE_ADMIN_LABEL": "Administrator",
   "ROLE_TEACHER_LABEL": "Teacher",
   "ROLE_STUDENT_LABEL": "Student",
@@ -201,7 +202,6 @@ declare const messages: {
   "USERS_TOAST_REACTIVATED": "Account reactivated.",
   "USERS_ERROR_GENERIC": "That did not work. Try again.",
   "USERS_ERROR_EMAIL_TAKEN": "That email address is already registered.",
-  "USERS_ERROR_LAST_ADMIN": "The last administrator cannot be deactivated or demoted.",
   "USERS_ERROR_NOT_FOUND": "That account no longer exists.",
   "DASHBOARD_NAV_COURSES": "Courses",
   "COURSES_METADATA_TITLE": "Courses",
@@ -402,6 +402,11 @@ declare const messages: {
   "STUDENT_TEACHERS_EMAIL_LABEL": "Email",
   "STUDENT_TEACHERS_COURSES_LABEL": "Courses",
   "STUDENT_TEACHERS_NO_COURSES": "No courses assigned",
-  "STUDENT_ROUTINE_TIME_LABEL": "Time"
+  "STUDENT_ROUTINE_TIME_LABEL": "Time",
+  "USERS_ACTION_UNAVAILABLE": "No actions",
+  "USERS_ERROR_ADMIN_LIMIT": "The department already has three administrators. Deactivate one before adding another.",
+  "USERS_ERROR_OWN_ACCESS": "You cannot change your own role or access.",
+  "USERS_ERROR_SUPER_ADMIN": "The super administrator account cannot be created or changed here.",
+  "USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN": "Only the super administrator can manage administrator accounts."
 };
 export default messages;

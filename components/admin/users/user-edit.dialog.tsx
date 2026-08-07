@@ -33,11 +33,12 @@ import {
 import { updateUserAction } from './actions';
 import { UserSemesterField } from './user-semester.field';
 
-import type { UsersLabels } from './users.types';
+import type { UsersLabels, UsersViewer } from './users.types';
 
 type UserEditDialogProps = {
   user: UserDto;
   labels: UsersLabels;
+  viewer: UsersViewer;
   onUpdated: () => void;
   onOpenChange: (open: boolean) => void;
 };
@@ -48,7 +49,7 @@ type UserEditDialogProps = {
   the effect that would otherwise have to copy the user into the form — and it clears a
   stale error from the previous attempt for free.
 */
-export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEditDialogProps) {
+export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }: UserEditDialogProps) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -70,8 +71,17 @@ export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEd
     },
   });
 
+  /*
+    Same rule as the create form: only the super administrator is offered the
+    administrator option, and nobody is offered super administrator.
+
+    The row's current role is always included even when the viewer could not set it, so
+    the select can render what the account actually is rather than falling back to a
+    blank — a display concern, not a permission one. The service still refuses a move
+    the viewer may not make.
+  */
   const roleItems: Record<string, string> = {
-    [USER_ROLES.ADMIN]: labels.roleAdmin,
+    ...(viewer.isSuperAdmin || user.role === USER_ROLES.ADMIN ? { [USER_ROLES.ADMIN]: labels.roleAdmin } : {}),
     [USER_ROLES.TEACHER]: labels.roleTeacher,
     [USER_ROLES.STUDENT]: labels.roleStudent,
   };

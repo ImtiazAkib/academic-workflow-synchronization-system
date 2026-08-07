@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { requireRole } from '@/lib/auth';
+import { requireAdminArea } from '@/lib/auth';
 import { UserFiltersSchema } from '@/lib/schemas';
 import { UserService } from '@/lib/services';
 
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Pick<AdminUsersPageProps, 'pa
 
 export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
   // A teacher or student who reaches this URL is sent to /unauthorized, not sign-in.
-  await requireRole(USER_ROLES.ADMIN);
+  const sessionUser = await requireAdminArea();
 
   /*
     The URL is parsed, then validated. `UserFiltersSchema` catches rather than throws on
@@ -54,6 +54,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   return (
     <UsersScreen
       users={users}
+      viewer={{ userId: sessionUser.userId, isSuperAdmin: sessionUser.role === USER_ROLES.SUPER_ADMIN }}
       labels={{
         title: l10n('USERS_TITLE'),
         intro: l10n('USERS_INTRO'),
@@ -67,6 +68,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         statusPending: l10n('USERS_STATUS_PENDING'),
         statusActive: l10n('USERS_STATUS_ACTIVE'),
         statusInactive: l10n('USERS_STATUS_INACTIVE'),
+        roleSuperAdmin: l10n('ROLE_SUPER_ADMIN_LABEL'),
         roleAdmin: l10n('ROLE_ADMIN_LABEL'),
         roleTeacher: l10n('ROLE_TEACHER_LABEL'),
         roleStudent: l10n('ROLE_STUDENT_LABEL'),
@@ -84,6 +86,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         revoke: l10n('USERS_ACTION_REVOKE'),
         deactivate: l10n('USERS_ACTION_DEACTIVATE'),
         reactivate: l10n('USERS_ACTION_REACTIVATE'),
+        actionsUnavailable: l10n('USERS_ACTION_UNAVAILABLE'),
         fields: {
           name: l10n('USERS_FIELD_NAME_LABEL'),
           email: l10n('USERS_FIELD_EMAIL_LABEL'),
@@ -143,7 +146,10 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         toastReactivated: l10n('USERS_TOAST_REACTIVATED'),
         errors: {
           emailTaken: l10n('USERS_ERROR_EMAIL_TAKEN'),
-          lastAdministrator: l10n('USERS_ERROR_LAST_ADMIN'),
+          adminLimit: l10n('USERS_ERROR_ADMIN_LIMIT'),
+          ownAccess: l10n('USERS_ERROR_OWN_ACCESS'),
+          superAdmin: l10n('USERS_ERROR_SUPER_ADMIN'),
+          adminOnlySuperAdmin: l10n('USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN'),
           notFound: l10n('USERS_ERROR_NOT_FOUND'),
           generic: l10n('USERS_ERROR_GENERIC'),
         },

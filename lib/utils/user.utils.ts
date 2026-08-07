@@ -5,6 +5,7 @@ import type { UserDto, UserRole, UserStatusFilter } from '@/types';
 
 const VALIDATION = CODES.VALIDATION.USERS;
 const BUSINESS = CODES.BUSINESS.USERS;
+const AUTH = CODES.AUTH.USERS;
 
 /**
  * One of the three account states, with "no filter" excluded — a row is always in
@@ -13,6 +14,7 @@ const BUSINESS = CODES.BUSINESS.USERS;
 export type UserStatus = Exclude<UserStatusFilter, 'all'>;
 
 export type UserRoleLabels = {
+  superAdmin: string;
   admin: string;
   teacher: string;
   student: string;
@@ -26,7 +28,10 @@ export type UserStatusLabels = {
 
 export type UserErrorLabels = {
   emailTaken: string;
-  lastAdministrator: string;
+  adminLimit: string;
+  ownAccess: string;
+  superAdmin: string;
+  adminOnlySuperAdmin: string;
   notFound: string;
   generic: string;
 };
@@ -47,8 +52,20 @@ export function resolveUserErrorMessage(code: number, labels: UserErrorLabels): 
     return labels.emailTaken;
   }
 
-  if (code === BUSINESS.LAST_ADMIN_CANNOT_BE_REMOVED.CODE) {
-    return labels.lastAdministrator;
+  if (code === BUSINESS.ADMIN_LIMIT_REACHED.CODE) {
+    return labels.adminLimit;
+  }
+
+  if (code === BUSINESS.CANNOT_CHANGE_OWN_ACCESS.CODE) {
+    return labels.ownAccess;
+  }
+
+  if (code === BUSINESS.SUPER_ADMIN_IS_IMMUTABLE.CODE) {
+    return labels.superAdmin;
+  }
+
+  if (code === AUTH.ADMIN_MANAGED_BY_SUPER_ADMIN.CODE) {
+    return labels.adminOnlySuperAdmin;
   }
 
   if (code === VALIDATION.USER_NOT_FOUND.CODE) {
@@ -93,6 +110,10 @@ export function resolveUserStatus(user: Pick<UserDto, 'isApproved' | 'isActive'>
  * @returns The label to render.
  */
 export function resolveUserRoleLabel(role: UserRole, labels: UserRoleLabels): string {
+  if (role === USER_ROLES.SUPER_ADMIN) {
+    return labels.superAdmin;
+  }
+
   if (role === USER_ROLES.ADMIN) {
     return labels.admin;
   }

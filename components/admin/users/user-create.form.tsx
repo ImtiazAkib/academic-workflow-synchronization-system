@@ -20,10 +20,11 @@ import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger,
 import { createUserAction } from './actions';
 import { UserSemesterField } from './user-semester.field';
 
-import type { UserCreateFormLabels } from './users.types';
+import type { UserCreateFormLabels, UsersViewer } from './users.types';
 
 type UserCreateFormProps = {
   labels: UserCreateFormLabels;
+  viewer: UsersViewer;
 };
 
 /*
@@ -33,7 +34,7 @@ type UserCreateFormProps = {
   refresh.
 
 */
-export function UserCreateForm({ labels }: UserCreateFormProps) {
+export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -56,8 +57,13 @@ export function UserCreateForm({ labels }: UserCreateFormProps) {
     },
   });
 
+  /*
+    An administrator account is the super administrator's to create, so only they are
+    offered the option. Super administrator is offered to nobody — that account is
+    seeded, and `UserService` refuses the role whoever asks.
+  */
   const roleItems: Record<string, string> = {
-    [USER_ROLES.ADMIN]: labels.roleAdmin,
+    ...(viewer.isSuperAdmin ? { [USER_ROLES.ADMIN]: labels.roleAdmin } : {}),
     [USER_ROLES.TEACHER]: labels.roleTeacher,
     [USER_ROLES.STUDENT]: labels.roleStudent,
   };

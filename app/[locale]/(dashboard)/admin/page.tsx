@@ -1,12 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 
-import { USER_ROLES } from '@/constants';
-
-import { requireRole } from '@/lib/auth';
+import { requireAdminArea } from '@/lib/auth';
 
 export default async function AdminDashboardPage() {
   // A teacher or student who reaches this URL is sent to /unauthorized, not sign-in.
-  await requireRole(USER_ROLES.ADMIN);
+  await requireAdminArea();
 
   const l10n = await getTranslations();
 
