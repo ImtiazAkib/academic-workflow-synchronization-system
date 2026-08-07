@@ -458,3 +458,4 @@ VERIFY_EMAIL_WORKING,"Confirming your address…","আপনার ঠিকা�
 VERIFY_EMAIL_COPY,"Copy","কপি করুন"
 VERIFY_EMAIL_COPIED,"Copied","কপি হয়েছে"
 REGISTRATION_RECEIVED_NO_MAIL,"No mail server is configured, so the confirmation link was written to the server log instead of sent.","কোনো মেইল সার্ভার কনফিগার করা নেই, তাই নিশ্চিতকরণ লিংকটি পাঠানোর বদলে সার্ভার লগে লেখা হয়েছে।"
+SIGN_IN_ERROR_USE_LOGIN_ID,"Sign in with your login ID, not your email address. It was emailed to you when you confirmed your address.","আপনার ইমেইল ঠিকানা নয়, লগইন আইডি দিয়ে সাইন ইন করুন। ঠিকানা নিশ্চিত করার সময় এটি আপনাকে ইমেইলে পাঠানো হয়েছিল।"

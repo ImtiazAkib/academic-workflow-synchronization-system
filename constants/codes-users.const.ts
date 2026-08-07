@@ -95,4 +95,9 @@ export const USERS_AUTH = {
     one message for both leaves the visitor with nothing to act on.
   */
   EMAIL_NOT_VERIFIED: createErrorDefinition(51005, 'Confirm your email address before signing in.'),
+  /*
+    Raised only after the password matched, so it tells somebody who already owns the
+    account how to get in — rather than telling a stranger which addresses exist.
+  */
+  SIGN_IN_WITH_LOGIN_ID: createErrorDefinition(51006, 'Sign in with your login ID rather than your email address.'),
 } as const;

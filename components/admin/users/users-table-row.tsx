@@ -65,6 +65,12 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
       <TableCell className="font-medium">
         <span className="block">{user.name}</span>
         {user.designation && <span className="text-muted-foreground block text-xs">{user.designation}</span>}
+        {/*
+          The identifier the account signs in with. It reaches its owner once, by email,
+          and the department needs somewhere to read it back from when that message is
+          lost — this is that somewhere.
+        */}
+        {user.loginId && <span className="text-muted-foreground block font-mono text-xs">{user.loginId}</span>}
         {user.roll && <span className="text-muted-foreground block text-xs">{user.roll}</span>}
         {/* The year a student's routine is filtered by — worth seeing without opening the dialog. */}
         {user.semester && <span className="text-muted-foreground block text-xs">{resolveSemesterLabel(user.semester)}</span>}

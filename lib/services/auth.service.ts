@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { User } from '@/models/user.model';
 import { UserDto, userFromEntity } from '@/types';
 
-import { EMAIL_VERIFICATION, LOGIN_ID } from '@/constants/account.const';
+import { EMAIL_VERIFICATION } from '@/constants/account.const';
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
@@ -11,8 +11,10 @@ import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
 import { SingleResult, createError, singleFailure, singleSuccess } from '@/lib/result';
 import type { StudentRegistrationOutput, TeacherRegistrationOutput } from '@/lib/schemas';
-import { formatLoginId, looksLikeLoginId } from '@/lib/utils';
+import { looksLikeLoginId } from '@/lib/utils';
 import type { IssuableRole } from '@/lib/utils';
+
+import { issueLoginId } from './login-id.issuer';
 
 import type { UserEntity } from '@/models/user.model';
 
@@ -64,6 +66,7 @@ export class AuthService {
     try {
       await connectToDatabase();
 
+      const matchedByLoginId = looksLikeLoginId(identifier);
       const user = await this.resolveByIdentifier(identifier);
 
       if (!user) {
@@ -74,6 +77,21 @@ export class AuthService {
 
       if (!matches) {
         return this.invalidCredentials();
+      }
+
+      /*
+        An account that has been issued an identifier signs in with it, and only with it.
+        Letting the email address work too would make the identifier decorative — nobody
+        would ever learn theirs — and would contradict the message that delivered it,
+        which says in as many words to use this and not your email.
+
+        Refused *after* the password check, so the answer is only ever given to somebody
+        who already proved the account is theirs. Before that point it is
+        indistinguishable from a wrong password, which is what stops it being a way to
+        discover which addresses are registered.
+      */
+      if (!matchedByLoginId && user.loginId) {
+        return singleFailure(createError(AUTH.SIGN_IN_WITH_LOGIN_ID.CODE, AUTH.SIGN_IN_WITH_LOGIN_ID.MESSAGE));
       }
 
       if (!user.isActive) {
@@ -178,7 +196,7 @@ export class AuthService {
         return singleSuccess({ user: userFromEntity(user), loginId: user.loginId });
       }
 
-      const loginId = await this.issueLoginId(user.role as IssuableRole);
+      const loginId = await issueLoginId(user.role as IssuableRole);
 
       if (!loginId) {
         return singleFailure(createError(BUSINESS.LOGIN_ID_NOT_ISSUED.CODE, BUSINESS.LOGIN_ID_NOT_ISSUED.MESSAGE));
@@ -271,36 +289,6 @@ export class AuthService {
 
       return singleFailure(createError(DATABASE.CREATE_FAILED.CODE, DATABASE.CREATE_FAILED.MESSAGE));
     }
-  }
-
-  /**
-   * Mint the next identifier for a role.
-   *
-   * The sequence comes from a count and the write is a separate round trip, so two
-   * verifications landing together can pick the same number. The unique index refuses
-   * the loser rather than letting two accounts share a login, and this retries — which
-   * is why the retry is here and not left to the caller.
-   *
-   * @param role - Student or teacher.
-   *
-   * @returns The identifier, or null when it could not be issued.
-   */
-  private async issueLoginId(role: IssuableRole): Promise<string | null> {
-    const year = new Date().getFullYear();
-    const issuedThisYear = await User.countDocuments({ role, loginId: { $exists: true } });
-
-    for (let attempt = 0; attempt < LOGIN_ID.MAX_ATTEMPTS; attempt++) {
-      const candidate = formatLoginId(role, year, issuedThisYear + 1 + attempt);
-      const taken = await User.exists({ loginId: candidate });
-
-      if (!taken) {
-        return candidate;
-      }
-    }
-
-    log.error({ role, year }, 'Could not find a free login ID after every attempt');
-
-    return null;
   }
 
   private hashToken(token: string): string {

@@ -5,6 +5,7 @@ const VALIDATION = CODES.VALIDATION.USERS;
 
 export type SignInErrorLabels = {
   invalidCredentials: string;
+  useLoginId: string;
   notVerified: string;
   notApproved: string;
   deactivated: string;
@@ -27,6 +28,9 @@ export function resolveSignInErrorMessage(code: number, labels: SignInErrorLabel
     return labels.invalidCredentials;
   }
 
+  if (code === AUTH.SIGN_IN_WITH_LOGIN_ID.CODE) {
+    return labels.useLoginId;
+  }
   /*
     Kept distinct from "not approved". One is the visitor's to fix — the link is in
     their inbox — and the other is the department's. A single message for both would

@@ -32,7 +32,7 @@ in a working state.
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
 | [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
 | [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
-| [12](#step-12) | Accounts, registration, email  | Phase 5        | ⬜ Not started |
+| [12](#step-12) | Accounts, registration, email  | Phase 5        | 🚧 Core done   |
 | [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
 | [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
 | [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
@@ -1146,7 +1146,7 @@ it forward, since it is already rewriting how sign-in resolves an account.
 
 <a id="step-12"></a>
 
-### Step 12 — Accounts: identity, registration and email verification
+### Step 12 — Accounts: identity, registration and email verification 🚧 Core done
 
 **Goal.** People create their own accounts, prove the address they own, and are then issued the identifier they
 sign in with — delivered to the address they just proved.
@@ -1283,21 +1283,54 @@ be walked without sending anything.
 | A `role` field posted to the registration action    | Ignored — the form decides the role, not the body                     |
 | An unverified registration                          | Absent from the administrator's pending queue                         |
 
-**Open questions.**
+**Result.** ⚠️ Rules proven, screens not. `npm run verify:accounts` runs 35 checks against the real database,
+0 failures, every row it writes prefixed `account-verify` and deleted afterwards. It covers registration,
+what registration refuses, both verification failures, the identifier being issued, and sign-in through every
+gate. The four earlier suites still pass unchanged — users 28, student 37, schedule 14, materials 14. Lint,
+format and build are green; all six new routes register. 54 keys shipped with Bangla alongside the English —
+460 in total, no fallbacks.
 
-1. **Which mail provider?** SMTP needs a host and credentials; an API such as Resend needs a key and a
-   verified sending domain. The interface is the same either way, so this can be answered late — but it must
-   be answered before the step can be finished, and a domain can take a day to verify.
-2. **What does a roll number look like?** Free text, or a pattern the schema enforces? A pattern catches
-   typos at registration, when the account is easiest to fix; free text never rejects a legitimate student.
-3. **Session format** — `2021-22`, `2021-2022`, or free text?
-4. **Can a student change their roll number later?** Assumed an administrator can correct it and the student
-   cannot. It is no longer the login, so a correction is now harmless — which is one of the quieter arguments
-   for issuing an identifier rather than trusting a typed one.
-5. **What happens if the identifier email never arrives?** Assumed a "resend" on the sign-in screen, keyed by
-   email address, that re-sends whichever message the account is waiting on. Without it, a spam-filtered email
-   means an account nobody can ever reach — and the department has no way to look the identifier up for them
-   short of the admin user list, which is worth checking shows it.
+**Not verified: every screen.** Registration, the confirmation page and the verification landing page have
+not rendered once. **The Bangla is machine-written and wants your eye.**
+
+**Deviations from the plan, and why.**
+
+- **SMTP through nodemailer, not an HTTP API.** It works with an ordinary mail account and an app password,
+  with no sending domain to verify, which is the difference between a working deploy today and one waiting on
+  DNS. Swapping to Resend is a new file and one line in `lib/mail/index.ts`.
+- **nodemailer is pinned to 9.0.4.** `npm install nodemailer` resolves to 7.x, which carries a high-severity
+  SMTP command-injection advisory; `npm audit` now reports zero vulnerabilities.
+- **The mail transport is optional, and that is a feature.** With no `SMTP_HOST`, every message goes to the
+  log instead — so a clean clone can register, confirm and be issued an identifier with no credentials at
+  all. A deploy that forgets them gets a warning per unsent message rather than a failed build, because
+  making it fatal would mean no local development without a mail server.
+- **The email address stops signing a student in, and that needed its own refusal.** The first version merely
+  preferred the identifier — an account that held one could still sign in by email, which would have made the
+  identifier decorative and contradicted the message delivering it. Now an account holding an identifier is
+  refused by email with code 51006, telling them what to use instead. Refused _after_ the password check, so
+  the answer only ever reaches somebody who already proved the account is theirs.
+- **An administrator creating an account issues an identifier too, and marks it verified.** Not in the plan,
+  and necessary: an unverified account cannot sign in, and the pending queue hides unverified rows, so the
+  first version would have created teachers nobody could use and nobody would see waiting. The administrator
+  vouching for the person is the verification. One shared `issueLoginId()` serves both paths.
+- **The pending queue hides unverified registrations**, so an administrator does not spend attention on
+  somebody who may never confirm. They remain visible under all.
+- **`studentId` was renamed to `roll` across fifteen files.** With a real issued student ID now existing,
+  two fields called almost the same thing is how the wrong one gets read.
+
+**Still open, and the step is not finished without them.**
+
+1. **Which mail provider, and its credentials.** The code is done and the interface is settled; what is
+   missing is a host, a user and a password in `.env.local`. Until then every message goes to the log.
+2. **What does a roll number look like?** Left as free text — bounded, not patterned. A format nobody agreed
+   on would reject legitimate applicants at the one moment they cannot ask anybody for help.
+3. **Session format** — free text, same reasoning. `2021-22` is only a placeholder.
+4. **No resend.** A spam-filtered confirmation email currently means an account nobody can reach, because the
+   token is single-use and there is no way to ask for another. The identifier is at least readable from the
+   admin user list, which now shows it. This is the sharpest gap in the step.
+5. **Profiles, and the admin screens for the new fields.** Registration number, session and department are
+   collected and stored but appear on no screen yet; the login ID and roll do. [Step 13](#step-13) owns the
+   profile half.
 
 ---
 

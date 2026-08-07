@@ -59,6 +59,7 @@ export default async function SignInPage({ params }: SignInPageProps) {
               submitting: l10n('SIGN_IN_SUBMITTING'),
               errors: {
                 invalidCredentials: l10n('SIGN_IN_ERROR_INVALID_CREDENTIALS'),
+                useLoginId: l10n('SIGN_IN_ERROR_USE_LOGIN_ID'),
                 notVerified: l10n('SIGN_IN_ERROR_NOT_VERIFIED'),
                 notApproved: l10n('SIGN_IN_ERROR_NOT_APPROVED'),
                 deactivated: l10n('SIGN_IN_ERROR_DEACTIVATED'),
