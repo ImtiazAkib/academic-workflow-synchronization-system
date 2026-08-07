@@ -184,14 +184,22 @@ async function run(): Promise<void> {
   check('cannot move your own role', !selfDemote.success, JSON.stringify(selfDemote.errors));
 
   /*
-    Deliberately allowed. The rule is about role and access, not about every field —
-    somebody has to be able to fix a typo in their own name.
+    The self-rule permits a rename — it is about role and access, not every field — but
+    that carve-out is unreachable for anyone who can actually reach this screen. An
+    administrator's own row is an administrator row, so the "administrators are the super
+    administrator's alone" rule answers first; the super administrator's own row is
+    immutable. Asserted as it really behaves rather than as the carve-out reads, because
+    an earlier version of this check passed only by using a requester that cannot exist:
+    a session claiming `admin` carrying a teacher's id.
+
+    Step 13's `/profile` is where an account edits itself. Until then, nobody in the
+    admin area renames themselves through this screen.
   */
-  const selfRename = await service.update(
-    { userId: teacherId, name: 'Verify Self Renamed', role: USER_ROLES.TEACHER, designation: '', studentId: '', semester: undefined, phone: '' },
-    requester(USER_ROLES.ADMIN, teacherId)
+  const adminRenamesSelf = await service.update(
+    { userId: madeAdmins[0] ?? teacherId, name: 'Renamed', role: USER_ROLES.ADMIN, designation: '', studentId: '', semester: undefined, phone: '' },
+    requester(USER_ROLES.ADMIN, madeAdmins[0] ?? teacherId)
   );
-  check('but can still correct your own name', selfRename.success, JSON.stringify(selfRename.errors));
+  check('an administrator cannot rename themselves here either', !adminRenamesSelf.success, JSON.stringify(adminRenamesSelf.errors));
 
   console.log('\n7. the super administrator');
   const createSuper = await service.create(createInput({ email: `${TEMP}-super@department.edu`, role: USER_ROLES.SUPER_ADMIN }), asSuperAdmin);

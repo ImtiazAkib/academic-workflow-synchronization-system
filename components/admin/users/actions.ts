@@ -1,54 +1,14 @@
 'use server';
 
-import { SessionUser, UserDto } from '@/types';
+import { UserDto } from '@/types';
 
-import { CODES } from '@/constants/codes.const';
-import { ADMIN_AREA_ROLES } from '@/constants/roles.const';
-
-import { getSessionUser } from '@/lib/auth';
-import { SingleResult, createError, singleFailure, singleFailureWithErrors } from '@/lib/result';
+import { gateAdminArea } from '@/lib/auth';
+import { SingleResult, singleFailureWithErrors } from '@/lib/result';
 import { UserActivateSchema, UserApproveSchema, UserCreateSchema, UserUpdateSchema } from '@/lib/schemas';
 import { UserService } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
-const AUTH = CODES.AUTH.COMMON;
-
 const userService = new UserService();
-
-/**
- * Either the account making the request, or the refusal to return instead.
- *
- * A discriminated union rather than a nullable pair, so a caller that forgets to check
- * cannot reach the requester — the type will not let it.
- */
-type AdminAreaGate = { allowed: true; requester: SessionUser } | { allowed: false; refusal: SingleResult<UserDto> };
-
-/*
-  Every action re-checks the session itself. A Server Action is a public endpoint — the
-  page guard that hid the button proves nothing about who is calling it.
-
-  It returns a Result rather than redirecting the way `requireAdminArea` does:
-  `getLocale()` reads `next/root-params`, which is unavailable inside a Server Action,
-  and a refusal the dialog can render beats a redirect it cannot follow.
-
-  The gate admits both administrators and the super administrator, and hands the caller
-  back rather than merely approving them: which of the two is asking decides what they
-  may do, and that decision belongs to `UserService`, not here. This layer answers "may
-  you be in this area at all".
-*/
-async function gateAdminArea(): Promise<AdminAreaGate> {
-  const sessionUser = await getSessionUser();
-
-  if (!sessionUser) {
-    return { allowed: false, refusal: singleFailure(createError(AUTH.NOT_AUTHENTICATED.CODE, AUTH.NOT_AUTHENTICATED.MESSAGE)) };
-  }
-
-  if (!ADMIN_AREA_ROLES.some(role => role === sessionUser.role)) {
-    return { allowed: false, refusal: singleFailure(createError(AUTH.NOT_AUTHORIZED.CODE, AUTH.NOT_AUTHORIZED.MESSAGE)) };
-  }
-
-  return { allowed: true, requester: sessionUser };
-}
 
 /**
  * Create an account.
@@ -58,7 +18,7 @@ async function gateAdminArea(): Promise<AdminAreaGate> {
  * @returns The created account, or a failure carrying field-level reasons.
  */
 export async function createUserAction(values: unknown): Promise<SingleResult<UserDto>> {
-  const gate = await gateAdminArea();
+  const gate = await gateAdminArea<UserDto>();
 
   if (!gate.allowed) {
     return gate.refusal;
@@ -81,7 +41,7 @@ export async function createUserAction(values: unknown): Promise<SingleResult<Us
  * @returns The updated account, or a failure.
  */
 export async function updateUserAction(values: unknown): Promise<SingleResult<UserDto>> {
-  const gate = await gateAdminArea();
+  const gate = await gateAdminArea<UserDto>();
 
   if (!gate.allowed) {
     return gate.refusal;
@@ -104,7 +64,7 @@ export async function updateUserAction(values: unknown): Promise<SingleResult<Us
  * @returns The updated account, or a failure.
  */
 export async function approveUserAction(values: unknown): Promise<SingleResult<UserDto>> {
-  const gate = await gateAdminArea();
+  const gate = await gateAdminArea<UserDto>();
 
   if (!gate.allowed) {
     return gate.refusal;
@@ -129,7 +89,7 @@ export async function approveUserAction(values: unknown): Promise<SingleResult<U
  * @returns The updated account, or a failure.
  */
 export async function deactivateUserAction(values: unknown): Promise<SingleResult<UserDto>> {
-  const gate = await gateAdminArea();
+  const gate = await gateAdminArea<UserDto>();
 
   if (!gate.allowed) {
     return gate.refusal;

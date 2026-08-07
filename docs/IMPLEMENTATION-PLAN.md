@@ -1057,21 +1057,21 @@ scripts/seed-admin.ts                        retired — the super administrator
 **Result.** ⚠️ Rules proven, screens not. `npm run verify:users` was rewritten around them — 28 checks against
 the real database, 0 failures, every row it writes prefixed `user-verify` and deleted afterwards:
 
-| Check                                               | Result                                                 |
-| --------------------------------------------------- | ------------------------------------------------------ |
-| Administrator creates a teacher, edits, deactivates | Allowed, unchanged                                     |
-| Administrator creates an administrator              | Refused                                                |
-| Administrator promotes a teacher into the role      | Refused, **and the teacher was not promoted**          |
-| Administrator edits or deactivates another admin    | Both refused                                           |
-| Super administrator fills the remaining seats       | Allowed up to three active                             |
-| A fourth active administrator                       | Refused, tagged to `role`                              |
-| Deactivate one, create another                      | Allowed — the seat came back                           |
-| Reactivate the deactivated one afterwards           | **Refused** — that would be a fourth                   |
-| Deactivate / revoke / demote yourself               | All three refused                                      |
-| Rename yourself                                     | Allowed — the rule is role and access, not every field |
-| Create a super administrator, or promote into it    | Refused, from every role                               |
-| Edit, demote or deactivate the super administrator  | Refused, and the row is genuinely untouched            |
-| A second super administrator written directly       | **Refused by the unique index**                        |
+| Check                                               | Result                                        |
+| --------------------------------------------------- | --------------------------------------------- |
+| Administrator creates a teacher, edits, deactivates | Allowed, unchanged                            |
+| Administrator creates an administrator              | Refused                                       |
+| Administrator promotes a teacher into the role      | Refused, **and the teacher was not promoted** |
+| Administrator edits or deactivates another admin    | Both refused                                  |
+| Super administrator fills the remaining seats       | Allowed up to three active                    |
+| A fourth active administrator                       | Refused, tagged to `role`                     |
+| Deactivate one, create another                      | Allowed — the seat came back                  |
+| Reactivate the deactivated one afterwards           | **Refused** — that would be a fourth          |
+| Deactivate / revoke / demote yourself               | All three refused                             |
+| Rename yourself                                     | Refused — see the note below                  |
+| Create a super administrator, or promote into it    | Refused, from every role                      |
+| Edit, demote or deactivate the super administrator  | Refused, and the row is genuinely untouched   |
+| A second super administrator written directly       | **Refused by the unique index**               |
 
 The other three suites still pass unchanged — student 37, schedule 14, materials 14. Lint, format and build
 green. 6 keys shipped with Bangla alongside the English, 1 retired — 406 in total, no fallbacks.
@@ -1090,14 +1090,26 @@ Bangla is machine-written and wants your eye.**
   target; a state change passes the target's own role on both sides, because nothing is moving. Eight verbs
   cannot disagree with each other if they ask one question.
 - **The self-rule is split in two, and had to be.** `refuseDisallowedRoleChange` refuses a self _role_ change
-  only — the first version refused every self-operation and would have stopped an administrator fixing a typo
-  in their own name, which is not the rule. Approval and activation carry no role to compare, so their
-  unconditional self-check sits in `applyStateChange` instead. The suite asserts both halves, including that
-  renaming yourself still works.
+  only; approval and activation carry no role to compare, so their unconditional self-check sits in
+  `applyStateChange` instead.
+- **Its rename carve-out is unreachable, and the first version of the suite hid that.** The rule permits
+  renaming yourself — it is about role and access, not every field — but nobody who can reach this screen can
+  use it: an administrator's own row _is_ an administrator row, so "administrators are the super
+  administrator's alone" answers first, and the super administrator's row is immutable. The suite originally
+  asserted the rename succeeded, and passed only because it used a requester that cannot exist — a session
+  claiming `admin` carrying a teacher's id. It now asserts the refusal that really happens. The carve-out
+  stays because it is the correct rule and becomes reachable the moment anything else calls `update()`;
+  [step 13](#step-13)'s `/profile` is where an account edits itself.
 - **Reactivating counts against the ceiling.** Not in the plan, and necessary: three active administrators is
   the rule, and switching a fourth back on is still a fourth. Without it the limit was one `setActive` away
   from being decorative.
-- **The action gate returns the caller instead of merely approving them.** `gateAdminArea()` is a
+- **The action gate moved into `lib/auth/admin-area.gate.ts`, and that was a bug fix, not tidying.** Three
+  action files each carried their own `refuseNonAdministrator()` testing `role === 'admin'`. Widening the
+  pages to `requireAdminArea()` while updating only one of the three left the super administrator able to
+  open the course and schedule screens with every write refused — a screen the account is authorized to see
+  and cannot use. Caught by review, reproduced by minting a real session token and calling the actions. Three
+  copies of an authorization rule is three chances to update two.
+- **The action gate returns the caller instead of merely approving them.** `gateAdminArea<T>()` is a
   discriminated union — `{ allowed: true, requester }` or `{ allowed: false, refusal }` — so an action that
   forgets to check cannot reach the requester; the type will not let it. The gate answers "may you be in this
   area", and `UserService` answers "may you do this to that account".
@@ -1114,6 +1126,14 @@ Bangla is machine-written and wants your eye.**
 - **`npm run verify:users` mints a throwaway super administrator when the database has none.** The
   immutability and unique-index checks are the point of this step; skipping them on a fresh database was the
   worse trade. It is deleted with everything else.
+
+**Known limit: the ceiling is a check, not a constraint.** `isAdminCeilingReached()` counts, and the write is
+a separate round trip, so two overlapping requests can both see two seats and both take one. The single super
+administrator got a partial unique index precisely because a service check is forgettable — and an index
+cannot express "at most three", so the ceiling did not get the same backing. In practice the only actor is
+one super administrator working a form, so the race needs two browser tabs and precise timing, and its worst
+outcome is a fourth administrator who can be deactivated. Closing it properly needs a transaction or a
+counter document. Logged in [Backlog](#backlog).
 
 **Known limit, and it is the sharp one.** Deactivating an administrator does not end their current session —
 the token is self-contained and only re-read at sign-in, so a switched-off administrator keeps working until
@@ -1400,17 +1420,18 @@ test passes against it.
 
 Real, out of scope for now, and here so they are not lost:
 
-| Item                                    | Why it is parked                                                                                                                                                                                              |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                 |
-| Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                         |
-| Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones |
-| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                         |
-| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                       |
-| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                       |
-| Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                     |
-| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                           |
-| Revoking a live session                 | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list                       |
-| Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                   |
-| Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                |
-| E2E tests (Playwright)                  | Smoke tests first; full E2E once the flows settle                                                                                                                                                             |
+| Item                                    | Why it is parked                                                                                                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                       |
+| Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                               |
+| Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones       |
+| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                               |
+| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                             |
+| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                             |
+| Administrator ceiling is check-then-act | `isAdminCeilingReached()` counts and the write is a separate round trip, so two concurrent requests can both take the last seat. Needs a transaction or a counter document; an index cannot express "at most three" |
+| Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                           |
+| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                                 |
+| Revoking a live session                 | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list                             |
+| Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                         |
+| Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                      |
+| E2E tests (Playwright)                  | Smoke tests first; full E2E once the flows settle                                                                                                                                                                   |
