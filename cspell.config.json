@@ -33,6 +33,7 @@
     "autorestart",
     "backdrop",
     "commitlint",
+    "cooldown",
     "inlines",
     "katastarx",
     "latn",

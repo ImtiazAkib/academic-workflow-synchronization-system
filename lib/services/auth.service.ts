@@ -322,6 +322,23 @@ export class AuthService {
         return null;
       }
 
+      /*
+        The throttle, and it needs no shared store: the live token already records when
+        it was minted — expiry minus its lifetime — so "you asked a moment ago" is a
+        question the row can answer. An in-memory counter would reset on deploy and count
+        separately per instance; this behaves the same however many are running.
+
+        Refused as a null, the same as every other case, so a caller cannot tell a
+        throttled address from an unregistered one by timing the answer.
+      */
+      const issuedAt = user.emailVerificationExpiresAt
+        ? user.emailVerificationExpiresAt.getTime() - EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000
+        : null;
+
+      if (issuedAt !== null && Date.now() - issuedAt < EMAIL_VERIFICATION.RESEND_COOLDOWN_MINUTES * 60 * 1000) {
+        return null;
+      }
+
       const token = randomBytes(EMAIL_VERIFICATION.TOKEN_BYTES).toString('hex');
 
       user.set({

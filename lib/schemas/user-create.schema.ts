@@ -14,6 +14,9 @@ export const UserCreateSchema = z.object({
   role: userFields.role,
   designation: userFields.designation.optional().or(z.literal('')),
   roll: userFields.roll.optional().or(z.literal('')),
+  registrationNo: userFields.registrationNo.optional().or(z.literal('')),
+  session: userFields.session.optional().or(z.literal('')),
+  department: userFields.department.optional().or(z.literal('')),
   semester: userFields.semester.optional(),
   phone: userFields.phone.optional().or(z.literal('')),
 });

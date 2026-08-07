@@ -1,6 +1,7 @@
 export * from './actions';
 export * from './user-confirm.dialog';
 export * from './user-create.form';
+export * from './user-department.fields';
 export * from './user-edit.dialog';
 export * from './user-semester.field';
 export * from './users-empty';

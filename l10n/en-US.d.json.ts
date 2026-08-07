@@ -471,6 +471,12 @@ declare const messages: {
   "RESEND_SENT_TITLE": "Check your inbox",
   "RESEND_SENT_DESCRIPTION": "If that address has an account waiting to be confirmed, a new link is on its way.",
   "RESEND_BACK": "Back to sign in",
-  "SIGN_IN_RESEND_LINK": "Never got the confirmation email?"
+  "SIGN_IN_RESEND_LINK": "Never got the confirmation email?",
+  "USERS_FIELD_REGISTRATION_NO_LABEL": "Registration number",
+  "USERS_FIELD_REGISTRATION_NO_TOO_LONG": "Registration number cannot exceed 40 characters.",
+  "USERS_FIELD_SESSION_LABEL": "Session",
+  "USERS_FIELD_SESSION_TOO_LONG": "Session cannot exceed 20 characters.",
+  "USERS_FIELD_DEPARTMENT_LABEL": "Department",
+  "USERS_FIELD_DEPARTMENT_TOO_LONG": "Department cannot exceed 120 characters."
 };
 export default messages;

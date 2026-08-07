@@ -32,7 +32,7 @@ in a working state.
 | [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
 | [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
 | [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
-| [12](#step-12) | Accounts, registration, email  | Phase 5        | 🚧 Core done   |
+| [12](#step-12) | Accounts, registration, email  | Phase 5        | ✅ Done        |
 | [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
 | [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
 | [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
@@ -1146,7 +1146,7 @@ it forward, since it is already rewriting how sign-in resolves an account.
 
 <a id="step-12"></a>
 
-### Step 12 — Accounts: identity, registration and email verification 🚧 Core done
+### Step 12 — Accounts: identity, registration and email verification ✅ Done
 
 **Goal.** People create their own accounts, prove the address they own, and are then issued the identifier they
 sign in with — delivered to the address they just proved.
@@ -1283,7 +1283,7 @@ be walked without sending anything.
 | A `role` field posted to the registration action    | Ignored — the form decides the role, not the body                     |
 | An unverified registration                          | Absent from the administrator's pending queue                         |
 
-**Result.** ⚠️ Rules proven, screens not. `npm run verify:accounts` runs 35 checks against the real database,
+**Result.** ⚠️ Rules proven, screens not. `npm run verify:accounts` runs 42 checks against the real database,
 0 failures, every row it writes prefixed `account-verify` and deleted afterwards. It covers registration,
 what registration refuses, both verification failures, the identifier being issued, and sign-in through every
 gate. The four earlier suites still pass unchanged — users 28, student 37, schedule 14, materials 14. Lint,
@@ -1327,21 +1327,37 @@ Driving it also caught two lines of copy that registration had made false — th
 - **`studentId` was renamed to `roll` across fifteen files.** With a real issued student ID now existing,
   two fields called almost the same thing is how the wrong one gets read.
 
-**Still open, and the step is not finished without them.**
+**A migration was needed, and finding that out was the closest thing to a near miss in this step.**
+`emailVerified` became a sign-in gate, and a Mongoose `default` only applies to rows it creates — so every
+account written before step 12 had no such field, an absent field is falsy, and **every existing account was
+locked out, the administrator included.** A deploy without the migration would have locked the department out
+of its own installation. Two more silent breaks came with it: students and teachers predating the change hold
+no `loginId` and nothing else would ever give them one, and rows still carrying `studentId` were invisible to
+every screen now reading `roll`.
 
-1. **Which mail provider, and its credentials.** The code is done and the interface is settled; what is
-   missing is a host, a user and a password in `.env.local`. Until then every message goes to the log.
-2. **What does a roll number look like?** Left as free text — bounded, not patterned. A format nobody agreed
-   on would reject legitimate applicants at the one moment they cannot ask anybody for help.
-3. **Session format** — free text, same reasoning. `2021-22` is only a placeholder.
-4. **Resend is built, throttling is not.** `/resend-confirmation` mints a fresh token and invalidates the
-   old one, and says the same thing whether or not the address is registered — otherwise it would be a way
-   to discover which addresses have accounts. It has no rate limit until [step 15](#step-15), so it sends one
-   message per request; the blast radius is bounded, since the address must already hold an unverified
-   account.
-5. **Profiles, and the admin screens for the new fields.** Registration number, session and department are
-   collected and stored but appear on no screen yet; the login ID and roll do. [Step 13](#step-13) owns the
-   profile half.
+`npm run migrate:accounts` fixes all three and is idempotent. Run against the real database it marked three
+accounts verified and issued `T-2026-0001` and `S-2026-0001`; a second run reported nothing to do. **Anyone
+issued an identifier by it has to be told what it is** — they sign in with that, not their email.
+
+**What the department still has to supply.**
+
+1. **Mail credentials.** The code and the interface are done; what is missing is a host, a user and a
+   password in `.env.local`. `.env.example` names three free options that need no paid plan and no domain of
+   your own — a Gmail app password is the shortest path. Until they are set, every message goes to the
+   server log, which is enough to walk the whole flow locally.
+2. **A read of the Bangla.** 76 keys were added across this step, all machine-written.
+
+**Deliberately left as they are.**
+
+- **A roll number, a registration number and a session are bounded, not patterned.** Departments write them
+  differently, and a format nobody agreed on would reject legitimate applicants at the one moment they
+  cannot ask anybody for help. An administrator corrects them at approval — which is now possible, because
+  the edit dialog carries all three.
+- **Registration itself has no rate limit.** The resend does, at the database rather than in memory, so it
+  behaves the same on one server or ten. Throttling the registration endpoint belongs with the rest of the
+  hardening in [step 15](#step-15); email uniqueness already bounds what repeating it achieves.
+- **Address is collected by nothing yet.** The field exists on the model for [step 13](#step-13), which owns
+  the profile a person edits themselves.
 
 ---
 

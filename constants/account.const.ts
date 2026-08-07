@@ -51,6 +51,18 @@ export const EMAIL_VERIFICATION = {
    * overnight, short enough that a leaked inbox from last month is not an account.
    */
   LIFETIME_HOURS: 24,
+  /**
+   * How long after issuing a link before another may be asked for.
+   *
+   * A throttle that needs no memory and no shared store: the existing token already
+   * records when it was minted, so "you asked a moment ago" is a question the database
+   * can answer. An in-memory counter would reset on every deploy and count separately
+   * per instance; this behaves the same on one server or ten.
+   *
+   * Short enough that somebody who genuinely mistyped their address is not stuck, long
+   * enough that the endpoint cannot be used to send somebody a message per second.
+   */
+  RESEND_COOLDOWN_MINUTES: 2,
 } as const;
 
 /**

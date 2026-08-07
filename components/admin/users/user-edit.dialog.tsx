@@ -31,6 +31,7 @@ import {
 } from '@/components/ui';
 
 import { updateUserAction } from './actions';
+import { UserDepartmentFields } from './user-department.fields';
 import { UserSemesterField } from './user-semester.field';
 
 import type { UsersLabels, UsersViewer } from './users.types';
@@ -65,6 +66,9 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
       role: user.role,
       designation: user.designation ?? '',
       roll: user.roll ?? '',
+      registrationNo: user.registrationNo ?? '',
+      session: user.session ?? '',
+      department: user.department ?? '',
       // Back to the string the select speaks; the schema turns it into a number again.
       semester: user.semester ? String(user.semester) : '',
       phone: user.phone ?? '',
@@ -185,6 +189,15 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
             </div>
 
             <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="edit" />
+
+            <UserDepartmentFields
+              register={register as never}
+              control={control as never}
+              errors={errors}
+              labels={labels.fields}
+              fieldErrors={labels.fieldErrors}
+              idPrefix="edit"
+            />
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-phone">

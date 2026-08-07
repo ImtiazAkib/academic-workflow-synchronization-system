@@ -12,6 +12,7 @@
     "format": "prettier **/*.{ts,tsx,js,mjs,html,scss,json,md} --check",
     "format:write": "prettier **/*.{ts,tsx,js,mjs,html,scss,json,md} --write",
     "i18n:generate": "node scripts/csv-to-json.mjs ./l10n/l10n.csv ./l10n",
+    "migrate:accounts": "tsx --env-file-if-exists=.env.local scripts/migrate-accounts.ts",
     "seed:super-admin": "tsx --env-file-if-exists=.env.local scripts/seed-super-admin.ts",
     "verify:accounts": "tsx --env-file-if-exists=.env.local scripts/verify-accounts.ts",
     "verify:users": "tsx --env-file-if-exists=.env.local scripts/verify-user-service.ts",

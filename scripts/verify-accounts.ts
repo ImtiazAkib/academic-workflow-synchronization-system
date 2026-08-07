@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 import { User } from '@/models/user.model';
 
-import { LOGIN_ID_PATTERN } from '@/constants/account.const';
+import { EMAIL_VERIFICATION, LOGIN_ID_PATTERN } from '@/constants/account.const';
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
@@ -184,6 +184,43 @@ async function run(): Promise<void> {
     JSON.stringify(byEmail.errors)
   );
   check('and the refusal tells them what to use instead', byEmail.errors[0]?.code === AUTH.SIGN_IN_WITH_LOGIN_ID.CODE);
+
+  console.log('\n6b. asking for another confirmation link');
+  const pending = await auth.registerStudent(studentInput({ email: `${TEMP}-resend@department.edu`, roll: 'RESEND-1' }));
+  check('a second account registers', pending.success, JSON.stringify(pending.errors));
+
+  const firstResend = await auth.reissueVerification(`${TEMP}-resend@department.edu`);
+
+  /*
+    Straight after registering the token is seconds old, and the cooldown is what stops
+    this endpoint being used to send somebody a message per second.
+  */
+  check('is throttled while the last one is fresh', firstResend === null);
+
+  // Age the live token past the cooldown rather than waiting it out.
+  await User.updateOne(
+    { email: `${TEMP}-resend@department.edu` },
+    {
+      emailVerificationExpiresAt: new Date(
+        Date.now() + (EMAIL_VERIFICATION.LIFETIME_HOURS * 60 - EMAIL_VERIFICATION.RESEND_COOLDOWN_MINUTES - 1) * 60 * 1000
+      ),
+    }
+  );
+
+  const secondResend = await auth.reissueVerification(`${TEMP}-resend@department.edu`);
+  check('but allowed once the cooldown passes', secondResend !== null);
+  check('and the new token differs from the first', secondResend?.verificationToken !== pending.result?.verificationToken);
+
+  /*
+    A fresh link invalidates the old one, so an earlier email leaking afterwards opens
+    nothing.
+  */
+  const supersededLink = await auth.verifyEmail(pending.result?.verificationToken ?? '');
+  check('the superseded link no longer works', !supersededLink.success);
+
+  // Every other case yields nothing to send, so the endpoint discloses no addresses.
+  check('an unknown address yields nothing', (await auth.reissueVerification(`${TEMP}-nobody@department.edu`)) === null);
+  check('an already-confirmed address yields nothing', (await auth.reissueVerification(`${TEMP}-student@department.edu`)) === null);
 
   console.log('\n7. teachers get their own prefix');
   const teacher = await auth.registerTeacher(

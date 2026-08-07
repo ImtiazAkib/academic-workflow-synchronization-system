@@ -468,5 +468,11 @@
   "RESEND_SENT_TITLE": "আপনার ইনবক্স দেখুন",
   "RESEND_SENT_DESCRIPTION": "যদি সেই ঠিকানায় নিশ্চিতকরণের অপেক্ষায় থাকা কোনো অ্যাকাউন্ট থাকে, নতুন লিংক পাঠানো হয়েছে।",
   "RESEND_BACK": "সাইন ইনে ফিরে যান",
-  "SIGN_IN_RESEND_LINK": "নিশ্চিতকরণ ইমেইল পাননি?"
+  "SIGN_IN_RESEND_LINK": "নিশ্চিতকরণ ইমেইল পাননি?",
+  "USERS_FIELD_REGISTRATION_NO_LABEL": "রেজিস্ট্রেশন নম্বর",
+  "USERS_FIELD_REGISTRATION_NO_TOO_LONG": "রেজিস্ট্রেশন নম্বর 40 অক্ষরের বেশি হতে পারবে না।",
+  "USERS_FIELD_SESSION_LABEL": "সেশন",
+  "USERS_FIELD_SESSION_TOO_LONG": "সেশন 20 অক্ষরের বেশি হতে পারবে না।",
+  "USERS_FIELD_DEPARTMENT_LABEL": "বিভাগ",
+  "USERS_FIELD_DEPARTMENT_TOO_LONG": "বিভাগ 120 অক্ষরের বেশি হতে পারবে না।"
 }
