@@ -276,6 +276,40 @@ async function run(): Promise<void> {
   check('an administrator still signs in with their email', adminSignIn.success, JSON.stringify(adminSignIn.errors));
   check('and holds no identifier', !admin.loginId);
 
+  console.log('\n10. a seeded super administrator can actually sign in');
+  /*
+    The regression this guards is a bootstrap that reports success and locks everybody
+    out: `emailVerified` is a sign-in gate and the model defaults it to false, so a seed
+    script that forgets to set it produces a super administrator nobody can sign in as.
+
+    Asserted against whichever account exists rather than by minting one — the partial
+    unique index allows exactly one super administrator, so on a seeded database creating
+    a rival is not a test, it is a duplicate-key error. Which is the index working, but
+    tells us nothing about the seed.
+  */
+  const seeded = await User.findOne({ role: USER_ROLES.SUPER_ADMIN }).lean();
+
+  if (seeded) {
+    check('the seeded account is verified, so the gate lets it through', seeded.emailVerified === true, 'false here locks the department out');
+    check('it is approved and active', seeded.isApproved === true && seeded.isActive === true);
+    check('and holds no identifier — it signs in by email', !seeded.loginId);
+  } else {
+    const throwaway = await User.create({
+      name: 'Verify Seeded Super',
+      email: `${TEMP}-seeded-super@department.edu`,
+      password: PASSWORD,
+      role: USER_ROLES.SUPER_ADMIN,
+      isApproved: true,
+      isActive: true,
+      emailVerified: true,
+    });
+
+    const signIn = await auth.verifyCredentials(`${TEMP}-seeded-super@department.edu`, PASSWORD);
+
+    check('a seeded-shape account signs in with its email', signIn.success, JSON.stringify(signIn.errors));
+    check('and holds no identifier', !throwaway.loginId);
+  }
+
   await cleanup();
   console.log('\ncleaned up.');
   console.log(`\npassed ${passed}, failed ${failed}`);
