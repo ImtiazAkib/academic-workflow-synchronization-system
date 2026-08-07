@@ -61,7 +61,7 @@ function createInput(overrides: { name?: string; email: string; role: SessionUse
     password: 'temp-password-123',
     role: overrides.role,
     designation: '',
-    studentId: '',
+    roll: '',
     semester: undefined,
     phone: '',
   };
@@ -95,14 +95,14 @@ async function run(): Promise<void> {
       name: 'Verify Renamed',
       role: USER_ROLES.TEACHER,
       designation: 'Lecturer',
-      studentId: '',
+      roll: '',
       semester: undefined,
       phone: '01700000000',
     },
     asAdmin
   );
   check('saves the new name', updated.result?.name === 'Verify Renamed', `name=${updated.result?.name}`);
-  check('blank optional becomes null', updated.result?.studentId === null, `studentId=${String(updated.result?.studentId)}`);
+  check('blank optional becomes null', updated.result?.roll === null, `roll=${String(updated.result?.roll)}`);
 
   const deactivated = await service.setActive({ userId: teacherId, isActive: false }, asAdmin);
   check('deactivates', deactivated.result?.isActive === false);
@@ -114,7 +114,7 @@ async function run(): Promise<void> {
   check('an administrator cannot create an administrator', !adminByAdmin.success, JSON.stringify(adminByAdmin.errors));
 
   const promoteByAdmin = await service.update(
-    { userId: teacherId, name: 'Verify Renamed', role: USER_ROLES.ADMIN, designation: '', studentId: '', semester: undefined, phone: '' },
+    { userId: teacherId, name: 'Verify Renamed', role: USER_ROLES.ADMIN, designation: '', roll: '', semester: undefined, phone: '' },
     asAdmin
   );
   check('an administrator cannot promote into the role', !promoteByAdmin.success, JSON.stringify(promoteByAdmin.errors));
@@ -159,7 +159,7 @@ async function run(): Promise<void> {
     console.log('\n5. one administrator may not touch another');
     const target = afterFreeing.result?.userId ?? '';
     const editByPeer = await service.update(
-      { userId: target, name: 'Renamed by a peer', role: USER_ROLES.ADMIN, designation: '', studentId: '', semester: undefined, phone: '' },
+      { userId: target, name: 'Renamed by a peer', role: USER_ROLES.ADMIN, designation: '', roll: '', semester: undefined, phone: '' },
       asAdmin
     );
     check('an administrator cannot edit another administrator', !editByPeer.success, JSON.stringify(editByPeer.errors));
@@ -178,7 +178,7 @@ async function run(): Promise<void> {
   check('cannot revoke your own approval', !selfRevoke.success, JSON.stringify(selfRevoke.errors));
 
   const selfDemote = await service.update(
-    { userId: teacherId, name: 'Verify Renamed', role: USER_ROLES.STUDENT, designation: '', studentId: '', semester: undefined, phone: '' },
+    { userId: teacherId, name: 'Verify Renamed', role: USER_ROLES.STUDENT, designation: '', roll: '', semester: undefined, phone: '' },
     requester(USER_ROLES.ADMIN, teacherId)
   );
   check('cannot move your own role', !selfDemote.success, JSON.stringify(selfDemote.errors));
@@ -196,7 +196,7 @@ async function run(): Promise<void> {
     admin area renames themselves through this screen.
   */
   const adminRenamesSelf = await service.update(
-    { userId: madeAdmins[0] ?? teacherId, name: 'Renamed', role: USER_ROLES.ADMIN, designation: '', studentId: '', semester: undefined, phone: '' },
+    { userId: madeAdmins[0] ?? teacherId, name: 'Renamed', role: USER_ROLES.ADMIN, designation: '', roll: '', semester: undefined, phone: '' },
     requester(USER_ROLES.ADMIN, madeAdmins[0] ?? teacherId)
   );
   check('an administrator cannot rename themselves here either', !adminRenamesSelf.success, JSON.stringify(adminRenamesSelf.errors));
@@ -206,7 +206,7 @@ async function run(): Promise<void> {
   check('nobody can create a super administrator, not even one', !createSuper.success, JSON.stringify(createSuper.errors));
 
   const promoteToSuper = await service.update(
-    { userId: teacherId, name: 'Verify Self Renamed', role: USER_ROLES.SUPER_ADMIN, designation: '', studentId: '', semester: undefined, phone: '' },
+    { userId: teacherId, name: 'Verify Self Renamed', role: USER_ROLES.SUPER_ADMIN, designation: '', roll: '', semester: undefined, phone: '' },
     asSuperAdmin
   );
   check('and nobody can be promoted into the role', !promoteToSuper.success, JSON.stringify(promoteToSuper.errors));
@@ -238,7 +238,7 @@ async function run(): Promise<void> {
     const seededId = String(seeded._id);
 
     const editSeeded = await service.update(
-      { userId: seededId, name: 'Renamed', role: USER_ROLES.ADMIN, designation: '', studentId: '', semester: undefined, phone: '' },
+      { userId: seededId, name: 'Renamed', role: USER_ROLES.ADMIN, designation: '', roll: '', semester: undefined, phone: '' },
       asSuperAdmin
     );
     check('the seeded account cannot be edited or demoted', !editSeeded.success, JSON.stringify(editSeeded.errors));

@@ -5,10 +5,11 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–10 of 17 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–12 of 17 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
-> repository and the read-only student dashboard are in place. Roles and self-registration are next —
+> repository, the read-only student dashboard, the super administrator and self-registration with email
+> verification are in place. Profiles are next —
 > see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
@@ -122,21 +123,22 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                     | Description                                                |
-| -------------------------- | ---------------------------------------------------------- |
-| `npm run dev`              | Start the dev server                                       |
-| `npm run build`            | Production build (`output: 'standalone'`)                  |
-| `npm run start`            | Serve the production build                                 |
-| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier |
-| `npm run lint:fix`         | ESLint with `--fix`                                        |
-| `npm run format`           | Prettier check                                             |
-| `npm run format:write`     | Prettier write                                             |
-| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`    |
-| `npm run seed:super-admin` | Create the super administrator (see below)                 |
-| `npm run verify:users`     | Exercise UserService against the database, then clean up   |
-| `npm run verify:schedule`  | Exercise conflict detection the same way                   |
-| `npm run verify:materials` | Exercise upload, download, delete and the access rules     |
-| `npm run verify:student`   | Exercise semester scoping and what the directory publishes |
+| Script                     | Description                                                   |
+| -------------------------- | ------------------------------------------------------------- |
+| `npm run dev`              | Start the dev server                                          |
+| `npm run build`            | Production build (`output: 'standalone'`)                     |
+| `npm run start`            | Serve the production build                                    |
+| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier    |
+| `npm run lint:fix`         | ESLint with `--fix`                                           |
+| `npm run format`           | Prettier check                                                |
+| `npm run format:write`     | Prettier write                                                |
+| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`       |
+| `npm run seed:super-admin` | Create the super administrator (see below)                    |
+| `npm run verify:users`     | Exercise UserService against the database, then clean up      |
+| `npm run verify:schedule`  | Exercise conflict detection the same way                      |
+| `npm run verify:materials` | Exercise upload, download, delete and the access rules        |
+| `npm run verify:student`   | Exercise semester scoping and what the directory publishes    |
+| `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier |
 
 ## Project structure
 
@@ -144,7 +146,7 @@ import { env } from '@/env/server';
 app/
   [locale]/       layout.tsx — the document and locale, no page chrome
     (marketing)/  Landing page, catch-all, 404 — site header and footer
-    (auth)/       Sign-in — logo and language selector only
+    (auth)/       Sign-in, register, verify-email — logo and language selector only
     (dashboard)/  admin · teacher · student — sidebar, topbar, loading, error
                   admin/users · admin/users/new — account management
                   admin/courses · admin/courses/new — course management

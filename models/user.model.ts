@@ -8,6 +8,7 @@ import { UserRole } from '@/types';
   The barrel re-exports `home.const.ts`, which pulls in `lucide-react` — fine in a
   React tree, dead weight in a seed script and fatal in the middleware bundle.
 */
+import { ACCOUNT_FIELD_LIMITS } from '@/constants/account.const';
 import { USER_ROLES } from '@/constants/roles.const';
 import { SEMESTER } from '@/constants/schedule.const';
 
@@ -24,14 +25,47 @@ export type UserAttributes = {
   role: UserRole;
   isApproved: boolean;
   isActive: boolean;
+  /**
+   * What the account signs in with — `S-2026-0042`, `T-2026-0007`. Issued when email
+   * verification passes, never chosen. Absent on administrators, who sign in with their
+   * email address, which is why the unique index on it is partial.
+   */
+  loginId?: string;
+  /**
+   * Whether the address has been proven. An account is usable only when this and
+   * `isApproved` are both true, and they are different problems with different remedies
+   * — "check your inbox" is not "wait for the department".
+   */
+  emailVerified: boolean;
+  /**
+   * SHA-256 of the token in the verification link, never the token itself, for the same
+   * reason `password` holds a hash: a leaked database read should not hand out accounts.
+   * `select: false`, and cleared the moment it is used.
+   */
+  emailVerificationTokenHash?: string;
+  emailVerificationExpiresAt?: Date;
   designation?: string;
-  studentId?: string;
+  /**
+   * The department's own number for a student. Data, not a login — unique among
+   * students so two people cannot claim the same one, but the account is opened with
+   * `loginId`, which the application controls rather than the applicant.
+   */
+  roll?: string;
+  registrationNo?: string;
+  /** The intake a student belongs to, as the department writes it — `2021-22`. */
+  session?: string;
+  /**
+   * Collected from students and teachers because the form should ask. Nothing scopes
+   * data by it yet — the proposal is explicit that this is one department.
+   */
+  department?: string;
   /**
    * Which semester a student is in, 1 through 8. Absent on everyone else — it is what
    * their routine is filtered by, and a teacher does not sit in one.
    */
   semester?: number;
   phone?: string;
+  address?: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -59,11 +93,20 @@ const userSchema = new Schema<UserAttributes, UserModel, UserMethods>(
     isApproved: { type: Boolean, required: true, default: false },
     // Deactivate rather than delete, so schedules and materials keep a valid author.
     isActive: { type: Boolean, required: true, default: true },
+    loginId: { type: String, trim: true, uppercase: true, maxlength: 20 },
+    // Registration proves the address; an account created by an administrator is trusted.
+    emailVerified: { type: Boolean, required: true, default: false },
+    emailVerificationTokenHash: { type: String, select: false },
+    emailVerificationExpiresAt: { type: Date },
     designation: { type: String, trim: true, maxlength: 120 },
-    studentId: { type: String, trim: true, maxlength: 40 },
+    roll: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.ROLL },
+    registrationNo: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.REGISTRATION_NO },
+    session: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.SESSION },
+    department: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.DEPARTMENT },
     // Bounded here as well as in the schema: the seed script writes straight to the model.
     semester: { type: Number, min: SEMESTER.MIN, max: SEMESTER.MAX },
     phone: { type: String, trim: true, maxlength: 40 },
+    address: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.ADDRESS },
   },
   { timestamps: true }
 );
@@ -93,6 +136,25 @@ userSchema.method('comparePassword', async function comparePassword(candidate: s
   forget; an index is not.
 */
 userSchema.index({ role: 1 }, { unique: true, partialFilterExpression: { role: USER_ROLES.SUPER_ADMIN } });
+
+/*
+  The identifier people sign in with, so two accounts sharing one would be two people
+  behind one login. Partial rather than sparse-unique because administrators never hold
+  one at all: the constraint applies to rows that actually have the field, and ignores
+  the rest.
+
+  It is also what makes the generator safe. The sequence comes from a count and the
+  write is a separate round trip, so two registrations verifying in the same instant can
+  pick the same number — this index refuses the loser, and the generator tries again.
+*/
+userSchema.index({ loginId: 1 }, { unique: true, partialFilterExpression: { loginId: { $type: 'string' } } });
+
+/*
+  A roll number identifies a student to the department, so two students cannot claim the
+  same one. Scoped to students: it is meaningless on a teacher, and a partial index
+  leaves those rows alone rather than colliding them all on "absent".
+*/
+userSchema.index({ roll: 1 }, { unique: true, partialFilterExpression: { role: USER_ROLES.STUDENT, roll: { $type: 'string' } } });
 
 // Guarded so hot reload re-uses the compiled model instead of redefining it.
 export const User = (mongoose.models.User as UserModel) ?? mongoose.model<UserAttributes, UserModel>('User', userSchema);

@@ -81,6 +81,15 @@ async function seedSuperAdmin(): Promise<void> {
     role: USER_ROLES.SUPER_ADMIN,
     isApproved: true,
     isActive: true,
+    /*
+      Step 12 made this a sign-in gate, and the model defaults it to false. Without it
+      the seed produces a super administrator who cannot sign in — a bootstrap that
+      completes, reports success, and leaves nobody able to enter the application.
+
+      True by definition here: whoever ran this command supplied the address, so there
+      is no third party whose ownership needs proving.
+    */
+    emailVerified: true,
   });
 
   const adminCount = await User.countDocuments({ role: USER_ROLES.ADMIN, isActive: true });

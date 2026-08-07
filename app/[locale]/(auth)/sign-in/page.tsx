@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
 import { ROUTES } from '@/constants';
-import { redirect } from '@/l10n/navigation';
+import { Link, redirect } from '@/l10n/navigation';
 
 import { getSessionUser } from '@/lib/auth';
 
@@ -49,15 +49,18 @@ export default async function SignInPage({ params }: SignInPageProps) {
 
           <SignInForm
             labels={{
-              emailLabel: l10n('SIGN_IN_EMAIL_LABEL'),
-              emailPlaceholder: l10n('SIGN_IN_EMAIL_PLACEHOLDER'),
-              emailInvalid: l10n('SIGN_IN_EMAIL_INVALID'),
+              identifierLabel: l10n('SIGN_IN_IDENTIFIER_LABEL'),
+              identifierPlaceholder: l10n('SIGN_IN_IDENTIFIER_PLACEHOLDER'),
+              identifierRequired: l10n('SIGN_IN_IDENTIFIER_REQUIRED'),
+              identifierHint: l10n('SIGN_IN_IDENTIFIER_HINT'),
               passwordLabel: l10n('SIGN_IN_PASSWORD_LABEL'),
               passwordRequired: l10n('SIGN_IN_PASSWORD_REQUIRED'),
               submit: l10n('SIGN_IN_SUBMIT'),
               submitting: l10n('SIGN_IN_SUBMITTING'),
               errors: {
                 invalidCredentials: l10n('SIGN_IN_ERROR_INVALID_CREDENTIALS'),
+                useLoginId: l10n('SIGN_IN_ERROR_USE_LOGIN_ID'),
+                notVerified: l10n('SIGN_IN_ERROR_NOT_VERIFIED'),
                 notApproved: l10n('SIGN_IN_ERROR_NOT_APPROVED'),
                 deactivated: l10n('SIGN_IN_ERROR_DEACTIVATED'),
                 unexpected: l10n('SIGN_IN_ERROR_UNEXPECTED'),
@@ -66,6 +69,18 @@ export default async function SignInPage({ params }: SignInPageProps) {
           />
 
           <p className="text-muted-foreground border-border border-t pt-5 text-center text-xs">{l10n('SIGN_IN_NO_ACCOUNT')}</p>
+
+          <div className="flex flex-col gap-1 text-center text-sm">
+            <p className="text-muted-foreground">
+              {l10n('SIGN_IN_REGISTER_PROMPT')}{' '}
+              <Link href={ROUTES.REGISTER.HREF} className="text-primary hover:underline">
+                {l10n('SIGN_IN_REGISTER_LINK')}
+              </Link>
+            </p>
+            <Link href={ROUTES.RESEND_CONFIRMATION.HREF} className="text-muted-foreground hover:text-foreground text-xs transition-colors">
+              {l10n('SIGN_IN_RESEND_LINK')}
+            </Link>
+          </div>
         </div>
       </Container>
     </section>

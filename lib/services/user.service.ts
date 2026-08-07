@@ -9,7 +9,9 @@ import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ListResult, SingleResult, createError, listFailure, listSuccess, singleFailure, singleSuccess } from '@/lib/result';
 import type { UserActivateOutput, UserApproveOutput, UserCreateOutput, UserUpdateOutput } from '@/lib/schemas';
-import { escapeRegExp, toId } from '@/lib/utils';
+import { escapeRegExp, isIssuableRole, toId } from '@/lib/utils';
+
+import { issueLoginId } from './login-id.issuer';
 
 import type { UserAttributes, UserEntity } from '@/models/user.model';
 // Mongoose 9 renamed `FilterQuery` to `QueryFilter`. `UpdateQuery` kept its name.
@@ -89,13 +91,31 @@ export class UserService {
         return singleFailure(createError(VALIDATION.EMAIL_ALREADY_USED.CODE, VALIDATION.EMAIL_ALREADY_USED.MESSAGE, 'email'));
       }
 
+      /*
+        An administrator vouching for somebody is the verification — there is no address
+        to prove when the account is being made by the department itself. Marking it
+        verified matters twice over: an unverified account cannot sign in at all, and the
+        pending queue deliberately hides unverified rows, so leaving it false would
+        create an account nobody could use and nobody would see waiting.
+      */
+      const loginId = isIssuableRole(input.role) ? await issueLoginId(input.role) : null;
+
+      if (isIssuableRole(input.role) && !loginId) {
+        return singleFailure(createError(BUSINESS.LOGIN_ID_NOT_ISSUED.CODE, BUSINESS.LOGIN_ID_NOT_ISSUED.MESSAGE));
+      }
+
       const created = await User.create({
         name: input.name,
         email: input.email,
         password: input.password,
         role: input.role,
+        loginId: loginId ?? undefined,
+        emailVerified: true,
         designation: this.optionalText(input.designation),
-        studentId: this.optionalText(input.studentId),
+        roll: this.optionalText(input.roll),
+        registrationNo: this.optionalText(input.registrationNo),
+        session: this.optionalText(input.session),
+        department: this.optionalText(input.department),
         semester: this.semesterFor(input.role, input.semester),
         phone: this.optionalText(input.phone),
       });
@@ -142,7 +162,10 @@ export class UserService {
           name: input.name,
           role: input.role,
           designation: this.optionalText(input.designation),
-          studentId: this.optionalText(input.studentId),
+          roll: this.optionalText(input.roll),
+          registrationNo: this.optionalText(input.registrationNo),
+          session: this.optionalText(input.session),
+          department: this.optionalText(input.department),
           semester: this.semesterFor(input.role, input.semester),
           phone: this.optionalText(input.phone),
         }),
@@ -273,9 +296,19 @@ export class UserService {
       conditions.role = filters.role;
     }
 
+    /*
+      Waiting for approval means waiting for a *person*, so an application whose address
+      has not been proven does not belong in the queue — an administrator should not
+      spend attention on somebody who may never come back and confirm. Unverified rows
+      are still visible under "all"; they are just not presented as work.
+
+      Accounts an administrator created carry `emailVerified: true` from the start, so
+      this narrows the self-registered ones only.
+    */
     if (filters.status === USER_STATUS_FILTERS.PENDING) {
       conditions.isApproved = false;
       conditions.isActive = true;
+      conditions.emailVerified = true;
     }
 
     if (filters.status === USER_STATUS_FILTERS.ACTIVE) {

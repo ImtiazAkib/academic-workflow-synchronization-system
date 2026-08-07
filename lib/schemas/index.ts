@@ -6,6 +6,7 @@ export * from './user-approve.schema';
 export * from './user-activate.schema';
 export * from './user-filters.schema';
 export * from './sign-in.schema';
+export * from './registration.schema';
 export * from './course-create.schema';
 export * from './course-update.schema';
 export * from './class-session-create.schema';
