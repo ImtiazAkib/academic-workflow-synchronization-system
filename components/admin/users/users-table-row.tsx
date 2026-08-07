@@ -65,7 +65,7 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
       <TableCell className="font-medium">
         <span className="block">{user.name}</span>
         {user.designation && <span className="text-muted-foreground block text-xs">{user.designation}</span>}
-        {user.studentId && <span className="text-muted-foreground block text-xs">{user.studentId}</span>}
+        {user.roll && <span className="text-muted-foreground block text-xs">{user.roll}</span>}
         {/* The year a student's routine is filtered by — worth seeing without opening the dialog. */}
         {user.semester && <span className="text-muted-foreground block text-xs">{resolveSemesterLabel(user.semester)}</span>}
       </TableCell>

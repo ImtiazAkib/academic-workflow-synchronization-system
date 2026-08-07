@@ -15,10 +15,20 @@ export type UserDto = {
   role: UserRole;
   isApproved: boolean;
   isActive: boolean;
+  /**
+   * Present for students and teachers once verified, absent for administrators. Safe on
+   * the client: it is a username, not a secret — the password is the secret.
+   */
+  loginId?: string | null;
+  emailVerified: boolean;
   designation?: string | null;
-  studentId?: string | null;
+  roll?: string | null;
+  registrationNo?: string | null;
+  session?: string | null;
+  department?: string | null;
   semester?: number | null;
   phone?: string | null;
+  address?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -42,10 +52,16 @@ export function userFromEntity(entity: UserEntity): UserDto {
     role: entity.role,
     isApproved: entity.isApproved,
     isActive: entity.isActive,
+    loginId: entity.loginId ?? null,
+    emailVerified: entity.emailVerified,
     designation: entity.designation ?? null,
-    studentId: entity.studentId ?? null,
+    roll: entity.roll ?? null,
+    registrationNo: entity.registrationNo ?? null,
+    session: entity.session ?? null,
+    department: entity.department ?? null,
     semester: entity.semester ?? null,
     phone: entity.phone ?? null,
+    address: entity.address ?? null,
     createdAt: entity.createdAt.toISOString(),
     updatedAt: entity.updatedAt.toISOString(),
   };

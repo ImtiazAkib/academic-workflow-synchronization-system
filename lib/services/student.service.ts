@@ -63,15 +63,15 @@ export class StudentService {
    * backlog already records for deactivation. One indexed lookup per page is the cheaper
    * side of that trade.
    *
-   * @param studentId - The signed-in student.
+   * @param studentUserId - The signed-in student.
    *
    * @returns Their account, or a failure.
    */
-  public async getProfile(studentId: string): Promise<SingleResult<UserDto>> {
+  public async getProfile(studentUserId: string): Promise<SingleResult<UserDto>> {
     try {
       await connectToDatabase();
 
-      const student = await User.findById(studentId).lean<UserEntity | null>();
+      const student = await User.findById(studentUserId).lean<UserEntity | null>();
 
       if (!student) {
         return singleFailure(createError(USERS_VALIDATION.USER_NOT_FOUND.CODE, USERS_VALIDATION.USER_NOT_FOUND.MESSAGE));
@@ -94,12 +94,12 @@ export class StudentService {
    * answer: it would send a student chasing their department over a database blip. The
    * dashboard error boundary offers a retry, which is what a failed read deserves.
    *
-   * @param studentId - The signed-in student.
+   * @param studentUserId - The signed-in student.
    *
    * @returns Their semester, or null when it has not been assigned.
    */
-  public async resolveSemester(studentId: string): Promise<number | null> {
-    const profile = await this.getProfile(studentId);
+  public async resolveSemester(studentUserId: string): Promise<number | null> {
+    const profile = await this.getProfile(studentUserId);
 
     if (!profile.success) {
       throw new Error('The student account could not be read');

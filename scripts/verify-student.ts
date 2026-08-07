@@ -264,7 +264,7 @@ async function run(): Promise<void> {
       name: 'Verify Student',
       role: USER_ROLES.TEACHER,
       designation: '',
-      studentId: '',
+      roll: '',
       phone: '',
     },
     asAdmin
@@ -280,7 +280,7 @@ async function run(): Promise<void> {
       name: 'Verify Teacher',
       role: USER_ROLES.TEACHER,
       designation: '',
-      studentId: '',
+      roll: '',
       phone: '',
     },
     asAdmin

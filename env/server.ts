@@ -39,6 +39,24 @@ export const env = createEnv({
       can be forged, so it fails the build rather than degrading quietly.
     */
     AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
+
+    /*
+      Mail, from step 12. Deliberately optional, and the only place in this file where
+      that is a feature rather than a leftover: with `SMTP_HOST` unset the mail layer
+      falls back to a driver that writes every message to the log, so a clean clone can
+      register an account, follow the verification link and receive an identifier without
+      any credentials at all.
+
+      A production deploy that forgets these does not fail the build — it logs a warning
+      per unsent message carrying a link nobody received. That is a visible failure, which
+      is the point; making it fatal would mean no local development without a mail server.
+    */
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+    SMTP_USER: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    /** The `From` address. Many relays reject a message whose sender they do not own. */
+    SMTP_FROM: z.string().min(1).default('Academic Workflow <no-reply@localhost>'),
   },
   experimental__runtimeEnv: process.env,
 });

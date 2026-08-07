@@ -64,7 +64,7 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
       name: user.name,
       role: user.role,
       designation: user.designation ?? '',
-      studentId: user.studentId ?? '',
+      roll: user.roll ?? '',
       // Back to the string the select speaks; the schema turns it into a number again.
       semester: user.semester ? String(user.semester) : '',
       phone: user.phone ?? '',
@@ -178,10 +178,10 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-student-id">
-                {labels.fields.studentId} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
+                {labels.fields.roll} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
               </Label>
-              <Input id="edit-student-id" aria-invalid={Boolean(errors.studentId)} {...register('studentId')} />
-              {errors.studentId && <p className="text-destructive text-sm">{labels.fieldErrors.studentIdTooLong}</p>}
+              <Input id="edit-student-id" aria-invalid={Boolean(errors.roll)} {...register('roll')} />
+              {errors.roll && <p className="text-destructive text-sm">{labels.fieldErrors.rollTooLong}</p>}
             </div>
 
             <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="edit" />

@@ -95,7 +95,7 @@ export class UserService {
         password: input.password,
         role: input.role,
         designation: this.optionalText(input.designation),
-        studentId: this.optionalText(input.studentId),
+        roll: this.optionalText(input.roll),
         semester: this.semesterFor(input.role, input.semester),
         phone: this.optionalText(input.phone),
       });
@@ -142,7 +142,7 @@ export class UserService {
           name: input.name,
           role: input.role,
           designation: this.optionalText(input.designation),
-          studentId: this.optionalText(input.studentId),
+          roll: this.optionalText(input.roll),
           semester: this.semesterFor(input.role, input.semester),
           phone: this.optionalText(input.phone),
         }),

@@ -18,9 +18,10 @@ import { Button, Input, Label } from '@/components/ui';
 import { signInAction } from './actions';
 
 type SignInFormLabels = {
-  emailLabel: string;
-  emailPlaceholder: string;
-  emailInvalid: string;
+  identifierLabel: string;
+  identifierPlaceholder: string;
+  identifierRequired: string;
+  identifierHint: string;
   passwordLabel: string;
   passwordRequired: string;
   submit: string;
@@ -70,16 +71,22 @@ export function SignInForm({ labels }: SignInFormProps) {
       )}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">{labels.emailLabel}</Label>
+        <Label htmlFor="identifier">{labels.identifierLabel}</Label>
+        {/*
+          `type="text"`, not `email`. A student types `S-2026-0042` here, and a browser
+          validating this as an email would refuse to submit the form before the server
+          ever saw it. `autoComplete="username"` because that is what this now is.
+        */}
         <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          placeholder={labels.emailPlaceholder}
-          aria-invalid={Boolean(errors.email)}
-          {...register('email')}
+          id="identifier"
+          type="text"
+          autoComplete="username"
+          placeholder={labels.identifierPlaceholder}
+          aria-invalid={Boolean(errors.identifier)}
+          {...register('identifier')}
         />
-        {errors.email && <p className="text-destructive text-sm">{labels.emailInvalid}</p>}
+        {errors.identifier && <p className="text-destructive text-sm">{labels.identifierRequired}</p>}
+        <p className="text-muted-foreground text-xs">{labels.identifierHint}</p>
       </div>
 
       <div className="flex flex-col gap-2">

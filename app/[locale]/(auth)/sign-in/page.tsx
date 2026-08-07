@@ -49,15 +49,17 @@ export default async function SignInPage({ params }: SignInPageProps) {
 
           <SignInForm
             labels={{
-              emailLabel: l10n('SIGN_IN_EMAIL_LABEL'),
-              emailPlaceholder: l10n('SIGN_IN_EMAIL_PLACEHOLDER'),
-              emailInvalid: l10n('SIGN_IN_EMAIL_INVALID'),
+              identifierLabel: l10n('SIGN_IN_IDENTIFIER_LABEL'),
+              identifierPlaceholder: l10n('SIGN_IN_IDENTIFIER_PLACEHOLDER'),
+              identifierRequired: l10n('SIGN_IN_IDENTIFIER_REQUIRED'),
+              identifierHint: l10n('SIGN_IN_IDENTIFIER_HINT'),
               passwordLabel: l10n('SIGN_IN_PASSWORD_LABEL'),
               passwordRequired: l10n('SIGN_IN_PASSWORD_REQUIRED'),
               submit: l10n('SIGN_IN_SUBMIT'),
               submitting: l10n('SIGN_IN_SUBMITTING'),
               errors: {
                 invalidCredentials: l10n('SIGN_IN_ERROR_INVALID_CREDENTIALS'),
+                notVerified: l10n('SIGN_IN_ERROR_NOT_VERIFIED'),
                 notApproved: l10n('SIGN_IN_ERROR_NOT_APPROVED'),
                 deactivated: l10n('SIGN_IN_ERROR_DEACTIVATED'),
                 unexpected: l10n('SIGN_IN_ERROR_UNEXPECTED'),
