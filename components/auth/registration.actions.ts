@@ -1,18 +1,26 @@
 'use server';
 
+import { headers } from 'next/headers';
+
 import { z } from 'zod';
 
 import { env } from '@/env/server';
 
+import { CODES } from '@/constants/codes.const';
+import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { ROUTES } from '@/constants/routes.const';
 
 import { mail, buildLoginIdMail, buildVerifyAddressMail } from '@/lib/mail';
-import { EmptyResult, emptyFailureWithError, emptySuccess, isSuccess, singleFailureWithErrors } from '@/lib/result';
+import { EmptyResult, createError, emptyFailureWithError, emptySuccess, isSuccess, singleFailureWithErrors, singleSuccess } from '@/lib/result';
 import type { SingleResult } from '@/lib/result';
-import { StudentRegistrationSchema, TeacherRegistrationSchema } from '@/lib/schemas';
-import { AuthService } from '@/lib/services';
+import { StudentRegistrationSchema, TeacherRegistrationSchema, VerificationTokenSchema } from '@/lib/schemas';
+import { AuthService, consumeRateLimit } from '@/lib/services';
+import type { RateLimitBudget } from '@/lib/services';
 import type { Registration } from '@/lib/services';
-import { mapZodErrorsToErrorDto } from '@/lib/utils';
+import { mapZodErrorsToErrorDto, resolveCallerKey } from '@/lib/utils';
+
+const DATABASE = CODES.DATABASE.USERS;
+const BUSINESS_COMMON = CODES.BUSINESS.COMMON;
 
 const authService = new AuthService();
 
@@ -61,7 +69,39 @@ async function sendVerification(registration: Registration): Promise<EmptyResult
 }
 
 /**
+ * Refuse a caller who has used up a budget, or let them through.
+ *
+ * Keyed on the caller rather than on what they submitted, because the abuse these two
+ * endpoints enable is volume from one source rather than repetition of one value: email
+ * uniqueness already bounds registering the same address twice, and the resend has a
+ * per-account cooldown. Neither says anything about ten thousand different addresses.
+ *
+ * How much a caller key can be trusted depends on the deployment — see `resolveCallerKey`.
+ *
+ * @param scope - Which budget to count against.
+ * @param budget - How many attempts, and over how long.
+ *
+ * @returns The refusal to return, or null when the request may proceed.
+ */
+async function refuseFloodedCaller(scope: string, budget: RateLimitBudget): Promise<EmptyResult | null> {
+  const requestHeaders = await headers();
+
+  if (await consumeRateLimit(scope, resolveCallerKey(requestHeaders), budget)) {
+    return null;
+  }
+
+  return emptyFailureWithError(createError(BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE, BUSINESS_COMMON.TOO_MANY_REQUESTS.MESSAGE));
+}
+
+/**
  * Turn a service refusal into the action's own result shape.
+ *
+ * The fallback used to be `singleFailureWithErrors([]).errors[0]`, which reads as a way
+ * to conjure an error and is in fact a throw: that constructor refuses an empty list. So
+ * the branch written to handle "a failure that carries no reason" was the one branch that
+ * could not return a Result at all. Unreachable today, because every `AuthService` failure
+ * supplies an error — but a throw on the failure path of a Result-returning function is
+ * the kind of thing that stays unreachable right up until it is not.
  *
  * @param result - The failed registration.
  *
@@ -70,7 +110,7 @@ async function sendVerification(registration: Registration): Promise<EmptyResult
 function refusal(result: SingleResult<Registration>): EmptyResult {
   const [first] = result.errors;
 
-  return first ? emptyFailureWithError(first) : emptyFailureWithError(singleFailureWithErrors([]).errors[0]);
+  return emptyFailureWithError(first ?? createError(DATABASE.CREATE_FAILED.CODE, DATABASE.CREATE_FAILED.MESSAGE));
 }
 
 /**
@@ -81,6 +121,12 @@ function refusal(result: SingleResult<Registration>): EmptyResult {
  * @returns Empty success, or a failure carrying the reason's code.
  */
 export async function registerStudentAction(values: unknown): Promise<EmptyResult> {
+  const refused = await refuseFloodedCaller('register', RATE_LIMIT.REGISTER);
+
+  if (refused) {
+    return refused;
+  }
+
   const validation = StudentRegistrationSchema.safeParse(values);
 
   if (!validation.success) {
@@ -104,6 +150,12 @@ export async function registerStudentAction(values: unknown): Promise<EmptyResul
  * @returns Empty success, or a failure carrying the reason's code.
  */
 export async function registerTeacherAction(values: unknown): Promise<EmptyResult> {
+  const refused = await refuseFloodedCaller('register', RATE_LIMIT.REGISTER);
+
+  if (refused) {
+    return refused;
+  }
+
   const validation = TeacherRegistrationSchema.safeParse(values);
 
   if (!validation.success) {
@@ -132,17 +184,23 @@ export async function registerTeacherAction(values: unknown): Promise<EmptyResul
  * @returns The issued identifier, or a failure carrying the reason's code.
  */
 export async function verifyEmailAction(token: unknown): Promise<SingleResult<string>> {
-  const result = await authService.verifyEmail(typeof token === 'string' ? token : '');
+  const validation = VerificationTokenSchema.safeParse(token);
+
+  if (!validation.success) {
+    return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
+  }
+
+  const result = await authService.verifyEmail(validation.data);
 
   if (!isSuccess(result) || !result.result) {
-    return { success: false, result: null, errors: result.errors, messages: [] };
+    return singleFailureWithErrors(result.errors);
   }
 
   const { user, loginId } = result.result;
 
   await mail.send(buildLoginIdMail(user.email, user.name, loginId, new URL(ROUTES.SIGN_IN.HREF, env.APP_BASE_URL).toString()));
 
-  return { success: true, result: loginId, errors: [], messages: [] };
+  return singleSuccess(loginId);
 }
 
 /**
@@ -161,13 +219,19 @@ export async function verifyEmailAction(token: unknown): Promise<SingleResult<st
  * @returns The confirmed address, or a failure carrying the reason's code.
  */
 export async function confirmEmailChangeAction(token: unknown): Promise<SingleResult<string>> {
-  const result = await authService.confirmEmailChange(typeof token === 'string' ? token : '');
+  const validation = VerificationTokenSchema.safeParse(token);
 
-  if (!isSuccess(result) || !result.result) {
-    return { success: false, result: null, errors: result.errors, messages: [] };
+  if (!validation.success) {
+    return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
   }
 
-  return { success: true, result: result.result.email, errors: [], messages: [] };
+  const result = await authService.confirmEmailChange(validation.data);
+
+  if (!isSuccess(result) || !result.result) {
+    return singleFailureWithErrors(result.errors);
+  }
+
+  return singleSuccess(result.result.email);
 }
 
 /**
@@ -178,16 +242,24 @@ export async function confirmEmailChangeAction(token: unknown): Promise<SingleRe
  * anybody to test which addresses have accounts here, which is exactly what sign-in
  * refuses to disclose.
  *
- * There is no throttle, and that is a real gap until step 15 adds rate limiting: it sends a
- * message per request to any address somebody names. The blast radius is bounded — the
- * address has to already hold an unverified account, so it cannot be aimed at a stranger
- * — but it is worth closing.
+ * Throttled in two dimensions, because one endpoint can be abused two ways. The account
+ * cooldown lives in `AuthService.reissueVerification` and stops one address being mailed
+ * over and over; the caller budget here stops one script walking five hundred addresses,
+ * each of which is individually within its cooldown.
+ *
+ * The caller refusal is still reported as success, like every other outcome. A limit that
+ * announced itself would be the disclosure this endpoint is built to avoid — it would say
+ * "that address exists and I would have mailed it" one message earlier.
  *
  * @param email - Address as typed.
  *
  * @returns Empty success, always.
  */
 export async function resendVerificationAction(email: unknown): Promise<EmptyResult> {
+  if (await refuseFloodedCaller('resend', RATE_LIMIT.RESEND)) {
+    return emptySuccess();
+  }
+
   const parsed = z.string().trim().toLowerCase().safeParse(email);
 
   if (!parsed.success) {

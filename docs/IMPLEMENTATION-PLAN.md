@@ -17,26 +17,27 @@ in a working state.
 
 ## Status at a glance
 
-| #              | Step                           | Proposal phase | Status         |
-| -------------- | ------------------------------ | -------------- | -------------- |
-| [0](#step-0)   | Project scaffold               | Phase 1        | ✅ Done        |
-| [1](#step-1)   | Foundations                    | Phase 1        | ✅ Done        |
-| [2](#step-2)   | i18n — English + Bangla        | Phase 1        | ✅ Done        |
-| [3](#step-3)   | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
-| [4](#step-4)   | Data model                     | Phase 2        | ✅ Done        |
-| [5](#step-5)   | Authentication                 | Phase 2        | ✅ Done        |
-| [6](#step-6)   | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
-| [7](#step-7)   | Admin — user management        | Phase 3        | ✅ Done        |
-| [7b](#step-7b) | Admin — courses                | Phase 3        | ✅ Done        |
-| [8](#step-8)   | Scheduling system              | Phase 4        | ✅ Done        |
-| [9](#step-9)   | Teacher — materials            | Phase 4        | ✅ Done        |
-| [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
-| [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
-| [12](#step-12) | Accounts, registration, email  | Phase 5        | ✅ Done        |
-| [13](#step-13) | Profiles                       | Phase 5        | ✅ Done        |
-| [14](#step-14) | Notices & announcements        | Phase 5        | ✅ Done        |
-| [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
-| [16](#step-16) | Testing & deployment           | Phase 6        | ⬜ Not started |
+| #                | Step                           | Proposal phase | Status         |
+| ---------------- | ------------------------------ | -------------- | -------------- |
+| [0](#step-0)     | Project scaffold               | Phase 1        | ✅ Done        |
+| [1](#step-1)     | Foundations                    | Phase 1        | ✅ Done        |
+| [2](#step-2)     | i18n — English + Bangla        | Phase 1        | ✅ Done        |
+| [3](#step-3)     | SEO, structured data, llms.txt | Phase 1        | ✅ Done        |
+| [4](#step-4)     | Data model                     | Phase 2        | ✅ Done        |
+| [5](#step-5)     | Authentication                 | Phase 2        | ✅ Done        |
+| [6](#step-6)     | Dashboard shell & RBAC         | Phase 3        | ✅ Done        |
+| [7](#step-7)     | Admin — user management        | Phase 3        | ✅ Done        |
+| [7b](#step-7b)   | Admin — courses                | Phase 3        | ✅ Done        |
+| [8](#step-8)     | Scheduling system              | Phase 4        | ✅ Done        |
+| [9](#step-9)     | Teacher — materials            | Phase 4        | ✅ Done        |
+| [10](#step-10)   | Student dashboard              | Phase 5        | ✅ Done        |
+| [11](#step-11)   | Roles and access control       | Phase 5        | ✅ Done        |
+| [12](#step-12)   | Accounts, registration, email  | Phase 5        | ✅ Done        |
+| [13](#step-13)   | Profiles                       | Phase 5        | ✅ Done        |
+| [14](#step-14)   | Notices & announcements        | Phase 5        | ✅ Done        |
+| [15a](#step-15a) | Hardening                      | Phase 6        | ✅ Done        |
+| [15b](#step-15b) | Polish                         | Phase 6        | ⬜ Not started |
+| [16](#step-16)   | Testing & deployment           | Phase 6        | ⬜ Not started |
 
 ## Decisions
 
@@ -1595,24 +1596,140 @@ directly instead, so what is unverified is the picker and its preview, not the p
 
 ---
 
-<a id="step-15"></a>
+<a id="step-15a"></a>
 
-### Step 15 — Polish & hardening
+### Step 15a — Hardening ✅ Done
 
-**Goal.** Turn a working app into one that behaves under real use.
+**Split from one step into two, before any of it was built.** The original step 15 carried six workstreams —
+loading states, responsive, accessibility, rate limiting, the action audit and dark mode — and a survey put it
+at roughly four times the size of any step so far. The plan's own rule decided it: "if a step turns out to be
+bigger than it looks, it gets split rather than stretched." The seam is the step's own title. Hardening is
+what nobody can see and what is dangerous to get wrong; polish is what everybody sees and is safe to iterate
+on.
+
+**Goal.** Close what an audit of every action and endpoint turns up, and bound what an anonymous caller can
+spend.
 
 **Scope.**
 
-- Loading, empty and error states for every list and dialog — `loading.tsx` per route segment.
-- Responsive audit at 360, 768, 1024, 1440; no horizontal overflow anywhere.
-- Accessibility pass: focus order, labels on every control, contrast against the tokens, keyboard paths
-  through the dialogs.
-- Rate limiting on the sign-in and upload endpoints.
 - Security review of every server action: authenticated, authorized, validated, and returning a Result.
-- Dark mode wired to a real toggle (`next-themes`) — the palette already exists.
+- Rate limiting on sign-in, registration, the confirmation resend and both upload endpoints.
 
-**Acceptance.** A slow-network pass shows a skeleton on every route; the a11y and responsive checks are clean;
-no action is reachable without both an authentication and an authorization check.
+**Acceptance.** No action is reachable without both an authentication and an authorization check; every action
+parses its input rather than trusting a type annotation; a password cannot be guessed at machine speed.
+
+**Result.** ✅ Rules proven. `npm run verify:rate-limit` runs 17 checks against the real database, 0 failures,
+every key it writes scoped `rate-verify` and deleted afterwards. It covers a budget being spent and refilling,
+scopes and identities not bleeding into one another, the identity being stored hashed, a reset restoring the
+allowance, sign-in counting failures rather than attempts, and — the one that matters most — an address nobody
+owns throttling exactly like a real one. The seven earlier suites still pass unchanged: notices 53, profile 51,
+accounts 45, student 37, users 28, schedule 14, materials 14. Lint, format and build are green. One key shipped
+with Bangla alongside the English — 554 in total, no fallbacks.
+
+**The audit found eight gaps. Seven are closed here; the eighth is the one that is not a bug fix.**
+
+| #   | What                                                                                                                                                                | Now                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1   | `deleteMaterialAction` never parsed its id — `{ $ne: null }` casts into a query matching **every** material                                                         | Parsed with `objectIdField`; the parameter is `unknown`, because an annotation is erased at runtime |
+| 2   | `refusal()` in the registration actions called `singleFailureWithErrors([])`, which **throws** — a raw exception on the failure path of a Result-returning function | Falls back to a real error from `CODES`                                                             |
+| 3   | Four hand-written `{ success, result, errors, messages }` literals in one file                                                                                      | The constructors every other action uses                                                            |
+| 4   | Both confirmation actions coerced their token with `typeof x === 'string' ? x : ''`, so junk became an empty string and cost a lookup                               | `VerificationTokenSchema` — the exact shape `randomBytes().toString('hex')` produces                |
+| 5   | `setCancelled` took an optional teacher id and checked `if (requestedBy && …)`, so **omitting an argument turned the rule off**                                     | Takes the whole `SessionUser` and decides inside the service, like every other row-level check      |
+| 6   | `setCourseActiveAction` and `setClassSessionCancelledAction` validated the id and not the boolean — the one value they exist to write                               | Object schemas, matching `UserApproveSchema`                                                        |
+| 7   | `POST /api/notices` answered 403 to a signed-out caller                                                                                                             | 401 then 403, matching the materials upload                                                         |
+| 8   | `gateAdminArea` reads the role from the JWT, so a demoted administrator keeps admin for up to seven days                                                            | **Still open** — see below                                                                          |
+
+**The eighth is deliberately still open.** Closing it means a `sessionVersion` on the user row, checked on
+every guarded request — which reverses step 5's deliberate "self-contained JWT, no database round trip"
+decision and adds a read to every page. That is an architecture change with its own trade-off, not a hardening
+fix, and it was already logged in [Backlog](#backlog) as "Revoking a live session". It stays there, with the
+audit's detail added. **This step's acceptance line is therefore true of the code as written and not of a live
+session whose role has since changed**, and saying so is better than quietly reading the criterion loosely.
+
+**The limiter, and why it looks like this.**
+
+- **Counts live in the database, not in memory.** The argument was already written down in
+  `EMAIL_VERIFICATION`: "an in-memory counter would reset on every deploy and count separately per instance."
+  A `Map` on `globalThis` would even be correct on the PM2 box, which runs one forked process — and close to
+  worthless on Vercel, where every function is its own isolate. A limiter that holds on one of two shipped
+  targets is a bug that passes every local test.
+- **Not in `proxy.ts`**, and that is a hard constraint before a preference: the proxy runs in the middleware
+  runtime, where Mongoose does not load. It also cannot see the targets — sign-in, registration and the resend
+  are Server Actions, which POST to the same URL as the page that rendered them. The proxy's own comment
+  already draws the line: "This is a perimeter, not the control."
+- **One round trip.** `findOneAndUpdate` with `$inc` and `$setOnInsert` is atomic at the document, so two
+  requests arriving together increment one counter instead of each reading zero.
+- **It fails open.** A limiter sits on top of a control and is never the control — refusing everybody because
+  a counter could not be read turns a database blip into an outage.
+- **Sign-in is keyed on the identifier as typed, hashed.** An identifier nobody owns throttles identically to
+  a real one, so the refusal cannot be used to discover which accounts exist — the rule the shared
+  invalid-credentials message already follows, and one a limiter counting only real accounts would undo.
+- **The profile email change needed no new storage.** `pendingEmailExpiresAt` minus the lifetime is when the
+  token was minted, so the row answers "did I just send this" itself — the same trick the resend cooldown uses.
+
+**Deviations from the plan, and why.**
+
+- **The step was split.** Written up above; the status table now carries 15a and 15b, following the 7 / 7b
+  precedent.
+- **More endpoints than the plan named.** It asked for "sign-in and upload". Registration and the confirmation
+  resend are the application's only unauthenticated writes and each one spends an outbound message from the
+  department's own relay, so leaving them open would have been limiting the cheap endpoints and not the
+  expensive ones.
+- **`withBadRequest` was not adopted for the notices route**, though the audit suggested it. It returns
+  `{ error: string }` and the publish form reads `errors[0].code` to choose its message — switching would have
+  cost the form the ability to tell an oversized image from a missing body.
+
+**What the department still has to supply.**
+
+1. **A reverse proxy that sets `x-forwarded-for`.** The registration and resend limits are keyed on the
+   caller, and that header is only trustworthy if nginx sets it. On Vercel the platform does it; on the PM2
+   box it is a real setup step, and unconfigured it is whatever the client typed. Recorded in the README's
+   deployment notes and in `resolveCallerKey`'s own comment rather than implied.
+2. **A read of the Bangla.** One key was added, machine-written.
+
+**Deliberately left as they are.**
+
+- **The two streaming routes are unlimited.** A notice feed renders many `<img>` tags at one endpoint, so a
+  per-minute request cap would break the feed for real readers and look like a bug in it. The dimension that
+  would actually matter is bytes per session per hour, which is a different mechanism; considered and deferred
+  rather than skipped.
+- **The admin CRUD actions are unlimited.** At most four accounts can reach them, each individually
+  accountable, and the ceiling is enforced elsewhere.
+- **`isApproved` is still minted into the session token and read by nothing.** Noted by the audit. It belongs
+  with the revocation work, not beside it.
+
+---
+
+<a id="step-15b"></a>
+
+### Step 15b — Polish
+
+**Goal.** Turn a working app into one that is comfortable to use.
+
+**Scope.**
+
+- Loading, empty and error states for every list and dialog — `loading.tsx` per route segment. There is one
+  today, at `(dashboard)`, standing in for eighteen pages of four different shapes; and no `error.tsx` between
+  `global-error.tsx` and the dashboard, so a throw in `(auth)` loses the shell and the language.
+- Responsive audit at 360, 768, 1024, 1440; no horizontal overflow anywhere. A survey found two cases that
+  scroll the page — an unbounded notice image and an unbroken notice body — and a filename that escapes its
+  dialog at every width.
+- Accessibility pass: focus order, labels on every control, contrast against the tokens, keyboard paths
+  through the dialogs. Includes the `<dl>` without `<dt>` on `schedule-grid-cell.tsx` already in
+  [Backlog](#backlog).
+- Dark mode wired to a real toggle (`next-themes`) — the palette already exists, keyed on `.dark`, and
+  nothing puts that class on `<html>`.
+- The nav highlight on `/admin/users/new`, from [Backlog](#backlog).
+
+**Notes.**
+
+- **One decision needs making before the responsive work.** The five-column week engages at `lg`, and at
+  exactly 1024 the two action buttons in each cell overflow their track — worse in Bangla, where the labels
+  run 20–45% wider. Three ways out: let five columns wait for `xl`, stack the action row below `xl`, or accept
+  a slight overflow at that one width. It is a product choice, not a bug fix.
+
+**Acceptance.** A slow-network pass shows a skeleton shaped like the page that is coming; the a11y and
+responsive checks are clean at all four widths; the theme toggle survives a reload with no flash.
 
 ---
 
@@ -1641,19 +1758,19 @@ test passes against it.
 
 Real, out of scope for now, and here so they are not lost:
 
-| Item                                    | Why it is parked                                                                                                                                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                       |
-| Withdrawing a published notice          | [Step 14](#step-14) publishes but never unpublishes. An edit or a delete after people have read it is a different message, not a correction — it needs a decision about what readers see, not just a button         |
-| Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                               |
-| Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones       |
-| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                               |
-| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                             |
-| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                             |
-| Administrator ceiling is check-then-act | `isAdminCeilingReached()` counts and the write is a separate round trip, so two concurrent requests can both take the last seat. Needs a transaction or a counter document; an index cannot express "at most three" |
-| Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                           |
-| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                                 |
-| Revoking a live session                 | The JWT is self-contained — deleting or deactivating a user does not end their current session, only their next sign-in. Needs a token version on the user record, or a revocation list                             |
-| Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                         |
-| Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                      |
-| E2E tests (Playwright)                  | Smoke tests first; full E2E once the flows settle                                                                                                                                                                   |
+| Item                                    | Why it is parked                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                                                                                                                                                                                                             |
+| Withdrawing a published notice          | [Step 14](#step-14) publishes but never unpublishes. An edit or a delete after people have read it is a different message, not a correction — it needs a decision about what readers see, not just a button                                                                                                                                                                                               |
+| Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                                                                                                                                                                                                                     |
+| Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones                                                                                                                                                                                             |
+| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                                                                                                                                                                                                                     |
+| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                                                                                                                                                                                                                   |
+| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                                                                                                                                                                                                                   |
+| Administrator ceiling is check-then-act | `isAdminCeilingReached()` counts and the write is a separate round trip, so two concurrent requests can both take the last seat. Needs a transaction or a counter document; an index cannot express "at most three"                                                                                                                                                                                       |
+| Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                                                                                                                                                                                                                 |
+| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                                                                                                                                                                                                                       |
+| Revoking a live session                 | The JWT is self-contained, so `gateAdminArea` decides on a claim rather than the row: a demoted or deactivated administrator keeps admin rights for up to seven days, and `isApproved` is minted into the token and read by nothing. [Step 15a](#step-15a)'s audit confirmed it and left it here — a `sessionVersion` checked per request reverses step 5's no-round-trip decision, which is its own step |
+| Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                                                                                                                                                                                                               |
+| Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                                                                                                                                                                                                            |
+| E2E tests (Playwright)                  | Smoke tests first; full E2E once the flows settle                                                                                                                                                                                                                                                                                                                                                         |

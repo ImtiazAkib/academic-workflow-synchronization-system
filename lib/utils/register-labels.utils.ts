@@ -41,6 +41,7 @@ export function buildRegisterLabels(l10n: Translator): RegisterFormLabels {
     errors: {
       emailTaken: l10n('REGISTER_ERROR_EMAIL_TAKEN'),
       rollTaken: l10n('REGISTER_ERROR_ROLL_TAKEN'),
+      tooManyAttempts: l10n('ERROR_TOO_MANY_ATTEMPTS'),
       generic: l10n('REGISTER_ERROR_GENERIC'),
     },
   };

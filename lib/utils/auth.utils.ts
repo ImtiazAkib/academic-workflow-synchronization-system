@@ -1,6 +1,7 @@
 import { CODES } from '@/constants/codes.const';
 
 const AUTH = CODES.AUTH.USERS;
+const BUSINESS_COMMON = CODES.BUSINESS.COMMON;
 const VALIDATION = CODES.VALIDATION.USERS;
 
 export type SignInErrorLabels = {
@@ -9,6 +10,7 @@ export type SignInErrorLabels = {
   notVerified: string;
   notApproved: string;
   deactivated: string;
+  tooManyAttempts: string;
   unexpected: string;
 };
 
@@ -26,6 +28,15 @@ export type SignInErrorLabels = {
 export function resolveSignInErrorMessage(code: number, labels: SignInErrorLabels): string {
   if (code === AUTH.INVALID_CREDENTIALS.CODE) {
     return labels.invalidCredentials;
+  }
+
+  /*
+    Named rather than collapsed into "unexpected", because it is the one refusal here that
+    somebody can act on by doing nothing. Told they are throttled, a person waits; told
+    something went wrong, they keep trying — and every retry pushes the window out.
+  */
+  if (code === BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE) {
+    return labels.tooManyAttempts;
   }
 
   if (code === AUTH.SIGN_IN_WITH_LOGIN_ID.CODE) {
@@ -54,6 +65,7 @@ export function resolveSignInErrorMessage(code: number, labels: SignInErrorLabel
 export type RegistrationErrorLabels = {
   emailTaken: string;
   rollTaken: string;
+  tooManyAttempts: string;
   generic: string;
 };
 
@@ -77,6 +89,10 @@ export function resolveRegistrationErrorMessage(code: number, labels: Registrati
 
   if (code === VALIDATION.ROLL_ALREADY_USED.CODE) {
     return labels.rollTaken;
+  }
+
+  if (code === BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE) {
+    return labels.tooManyAttempts;
   }
 
   return labels.generic;

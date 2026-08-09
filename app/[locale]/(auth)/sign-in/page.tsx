@@ -63,6 +63,7 @@ export default async function SignInPage({ params }: SignInPageProps) {
                 notVerified: l10n('SIGN_IN_ERROR_NOT_VERIFIED'),
                 notApproved: l10n('SIGN_IN_ERROR_NOT_APPROVED'),
                 deactivated: l10n('SIGN_IN_ERROR_DEACTIVATED'),
+                tooManyAttempts: l10n('ERROR_TOO_MANY_ATTEMPTS'),
                 unexpected: l10n('SIGN_IN_ERROR_UNEXPECTED'),
               },
             }}

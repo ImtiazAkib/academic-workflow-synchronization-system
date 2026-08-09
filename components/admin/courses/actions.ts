@@ -4,7 +4,7 @@ import { CourseDto } from '@/types';
 
 import { gateAdminArea } from '@/lib/auth';
 import { SingleResult, singleFailureWithErrors } from '@/lib/result';
-import { CourseCreateSchema, CourseUpdateSchema, objectIdField } from '@/lib/schemas';
+import { CourseActivateSchema, CourseCreateSchema, CourseUpdateSchema } from '@/lib/schemas';
 import { CourseService } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
@@ -59,23 +59,26 @@ export async function updateCourseAction(values: unknown): Promise<SingleResult<
 /**
  * Switch a course on or off — the boolean decides which.
  *
- * @param courseId - Course to change.
- * @param isActive - The new state.
+ * Takes one object and parses all of it. It used to take the flag as a second argument
+ * typed `boolean`, which stops nothing at runtime: the annotation is erased, and the flag
+ * is the one value this action exists to write.
+ *
+ * @param values - Raw values carrying the course id and the new active flag.
  *
  * @returns The updated course, or a failure.
  */
-export async function setCourseActiveAction(courseId: unknown, isActive: boolean): Promise<SingleResult<CourseDto>> {
+export async function setCourseActiveAction(values: unknown): Promise<SingleResult<CourseDto>> {
   const gate = await gateAdminArea<CourseDto>();
 
   if (!gate.allowed) {
     return gate.refusal;
   }
 
-  const validation = objectIdField.safeParse(courseId);
+  const validation = CourseActivateSchema.safeParse(values);
 
   if (!validation.success) {
     return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
   }
 
-  return courseService.setActive(validation.data, isActive);
+  return courseService.setActive(validation.data.courseId, validation.data.isActive);
 }

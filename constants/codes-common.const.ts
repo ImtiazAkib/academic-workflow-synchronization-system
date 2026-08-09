@@ -32,6 +32,13 @@ export const COMMON_VALIDATION = {
 export const COMMON_BUSINESS = {
   OPERATION_NOT_ALLOWED: createErrorDefinition(30000, 'Operation is not allowed'),
   UNEXPECTED_FAILURE: createErrorDefinition(30001, 'An unexpected error occurred'),
+  /*
+    A refusal rather than a fault: the request was legitimate and the caller is allowed to
+    make it, just not this many times. It carries no count and no remaining time — an
+    endpoint that reported those would be telling anybody probing it how the budget is
+    tuned.
+  */
+  TOO_MANY_REQUESTS: createErrorDefinition(30002, 'Too many attempts. Wait a moment and try again.'),
 } as const;
 
 /**

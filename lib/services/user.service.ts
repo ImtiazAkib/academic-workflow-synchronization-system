@@ -295,6 +295,25 @@ export class UserService {
 
       const isAddressChanging = input.email !== target.email;
 
+      /*
+        A change to the address already pending, asked for again inside the cooldown.
+
+        Without this, one signed-in account is an unbounded mailer aimed at any inbox on
+        earth, sending from the department's own relay — `pendingEmail` is deliberately not
+        unique, so the address need not be one the sender owns. The victim is a third party
+        and the damage is to the sender's reputation.
+
+        Deliberately narrow. Somebody who mistyped must be able to correct it immediately,
+        so a change to a *different* address is never throttled, and the name and phone
+        alongside it always save. Only asking for the same link twice in quick succession
+        is refused — and it is refused by not sending, not by failing: the save succeeded,
+        and the link they already have is still valid.
+
+        The row answers this with no new storage, exactly as `reissueVerification` does:
+        `pendingEmailExpiresAt` minus the lifetime is when the token was minted.
+      */
+      const isRepeatOfPending = isAddressChanging && target.pendingEmail === input.email && this.isPendingEmailFresh(target);
+
       if (isAddressChanging) {
         const taken = await User.findOne({ email: input.email, _id: { $ne: target._id } }).lean<UserEntity | null>();
 
@@ -310,7 +329,13 @@ export class UserService {
         own, because putting the old address back is exactly what somebody in that
         position would try.
       */
-      const pending = isAddressChanging ? this.mintPendingEmail(input.email) : this.clearedPendingEmail();
+      const pending = isAddressChanging && !isRepeatOfPending ? this.mintPendingEmail(input.email) : null;
+
+      /*
+        A throttled repeat leaves the pending fields exactly as they are — clearing them
+        would retire a link that is still in somebody's inbox and still expected to work.
+      */
+      const pendingFields = isRepeatOfPending ? {} : (pending?.fields ?? this.clearedPendingEmail().fields);
 
       const updated = await User.findByIdAndUpdate(
         target._id,
@@ -318,7 +343,7 @@ export class UserService {
           name: input.name,
           phone: this.optionalText(input.phone),
           address: this.optionalText(input.address),
-          ...pending.fields,
+          ...pendingFields,
         }),
         { returnDocument: 'after' }
       ).lean<UserEntity | null>();
@@ -327,7 +352,7 @@ export class UserService {
         return singleFailure(createError(VALIDATION.USER_NOT_FOUND.CODE, VALIDATION.USER_NOT_FOUND.MESSAGE));
       }
 
-      return singleSuccess({ user: userFromEntity(updated), pendingEmailToken: pending.token });
+      return singleSuccess({ user: userFromEntity(updated), pendingEmailToken: pending?.token ?? null });
     } catch (error) {
       log.error({ err: error }, 'Updating an own profile failed');
 
@@ -357,6 +382,28 @@ export class UserService {
         pendingEmailExpiresAt: new Date(Date.now() + EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000),
       },
     };
+  }
+
+  /**
+   * Whether the pending-email token on this row was minted recently enough that another
+   * message would be a duplicate rather than a correction.
+   *
+   * Derived from the expiry rather than stored separately: expiry minus lifetime is when
+   * it was issued. The same arithmetic `reissueVerification` does, and for the same reason
+   * — it needs no new column and behaves identically on one server or ten.
+   *
+   * @param target - The account as it stands.
+   *
+   * @returns True when a fresh link was already sent inside the cooldown.
+   */
+  private isPendingEmailFresh(target: UserEntity): boolean {
+    if (!target.pendingEmailExpiresAt) {
+      return false;
+    }
+
+    const issuedAt = target.pendingEmailExpiresAt.getTime() - EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000;
+
+    return Date.now() - issuedAt < EMAIL_VERIFICATION.RESEND_COOLDOWN_MINUTES * 60 * 1000;
   }
 
   /**

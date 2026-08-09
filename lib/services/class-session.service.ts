@@ -1,7 +1,7 @@
 import { ClassSession } from '@/models/class-session.model';
 import { Course } from '@/models/course.model';
 import { User } from '@/models/user.model';
-import { ClassSessionDto, DayOfWeek, classSessionFromEntity } from '@/types';
+import { ClassSessionDto, DayOfWeek, SessionUser, classSessionFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
@@ -182,18 +182,20 @@ export class ClassSessionService {
    * The row stays and the slot stays blocked — a cancelled class is off, not given
    * away — so students see it struck through rather than silently missing.
    *
-   * `requestedBy` is the signed-in teacher when a teacher is acting, and undefined when
-   * an administrator is. A teacher may only touch a class they are teaching, and that
-   * is checked here rather than in the action: the rule belongs with the data, not with
-   * one of the callers.
+   * A teacher may only touch a class they are teaching; an administrator may touch any.
+   * Both halves of that are decided here, from the whole `requester`, rather than from a
+   * scope the caller worked out first — this took an optional teacher id until step 15a,
+   * and the check read `if (requestedBy && ...)`, so any caller that omitted the argument
+   * silently turned the rule off. Taking the session itself is what every other row-level
+   * check in the app does, and it cannot be under-supplied.
    *
    * @param classSessionId - Session to change.
    * @param isCancelled - The new state.
-   * @param requestedBy - Teacher making the request, if it is not an administrator.
+   * @param requester - The signed-in account making the request.
    *
    * @returns The updated session, or a failure.
    */
-  public async setCancelled(classSessionId: string, isCancelled: boolean, requestedBy?: string): Promise<SingleResult<ClassSessionDto>> {
+  public async setCancelled(classSessionId: string, isCancelled: boolean, requester: SessionUser): Promise<SingleResult<ClassSessionDto>> {
     try {
       await connectToDatabase();
 
@@ -203,7 +205,7 @@ export class ClassSessionService {
         return singleFailure(createError(VALIDATION.SESSION_NOT_FOUND.CODE, VALIDATION.SESSION_NOT_FOUND.MESSAGE));
       }
 
-      if (requestedBy && toId(target.teacher) !== requestedBy) {
+      if (requester.role === USER_ROLES.TEACHER && toId(target.teacher) !== requester.userId) {
         return singleFailure(createError(AUTH.NOT_OWN_CLASS.CODE, AUTH.NOT_OWN_CLASS.MESSAGE));
       }
 
