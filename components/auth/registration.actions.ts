@@ -146,6 +146,31 @@ export async function verifyEmailAction(token: unknown): Promise<SingleResult<st
 }
 
 /**
+ * Confirm an address change, and report which address the account now holds.
+ *
+ * Sits beside `verifyEmailAction` rather than with the profile screen that started the
+ * change, because the caller is the same kind of caller: somebody arriving from an inbox
+ * with a token and no session. It takes none and needs none — the token is the proof.
+ *
+ * Nothing is emailed afterwards. Registration mails the identifier because that is the
+ * only way it is ever delivered; here the account already has everything it needs, and a
+ * message to the new address would only repeat what the screen just said.
+ *
+ * @param token - Raw token from the link.
+ *
+ * @returns The confirmed address, or a failure carrying the reason's code.
+ */
+export async function confirmEmailChangeAction(token: unknown): Promise<SingleResult<string>> {
+  const result = await authService.confirmEmailChange(typeof token === 'string' ? token : '');
+
+  if (!isSuccess(result) || !result.result) {
+    return { success: false, result: null, errors: result.errors, messages: [] };
+  }
+
+  return { success: true, result: result.result.email, errors: [], messages: [] };
+}
+
+/**
  * Send a fresh confirmation link to an address that has not confirmed one.
  *
  * Always reports success. Whether the address is registered, already confirmed, or

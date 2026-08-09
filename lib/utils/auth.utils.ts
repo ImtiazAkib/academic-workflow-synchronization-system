@@ -108,3 +108,31 @@ export function resolveVerificationFailure(code: number, labels: VerificationErr
 
   return { title: labels.invalidTitle, description: labels.invalidDescription };
 }
+
+export type EmailChangeErrorLabels = VerificationErrorLabels & {
+  takenTitle: string;
+  takenDescription: string;
+};
+
+/**
+ * Which failure screen a bad email-change link earns.
+ *
+ * The same two link failures as registration, reusing their codes because the sentences
+ * are the same sentences, plus one that only exists here: the address was claimed by
+ * somebody else between asking and confirming. That one needs its own message because it
+ * is the only failure the visitor cannot fix by clicking again — the remedy is a
+ * different address, and a screen that said "not valid" would send them back to their
+ * inbox to re-click a link that will never work.
+ *
+ * @param code - Error code from the failed confirmation.
+ * @param labels - Translated messages.
+ *
+ * @returns The title and description to render.
+ */
+export function resolveEmailChangeFailure(code: number, labels: EmailChangeErrorLabels): { title: string; description: string } {
+  if (code === VALIDATION.EMAIL_ALREADY_USED.CODE) {
+    return { title: labels.takenTitle, description: labels.takenDescription };
+  }
+
+  return resolveVerificationFailure(code, labels);
+}

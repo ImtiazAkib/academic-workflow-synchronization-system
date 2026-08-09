@@ -1,6 +1,9 @@
+import { randomBytes } from 'node:crypto';
+
 import { User } from '@/models/user.model';
 import { SessionUser, UserDto, UserFilters, UserRole, userFromEntity } from '@/types';
 
+import { EMAIL_VERIFICATION } from '@/constants/account.const';
 import { CODES } from '@/constants/codes.const';
 import { ADMIN_LIMIT, USER_ROLES } from '@/constants/roles.const';
 import { FILTER_ALL, USER_STATUS_FILTERS } from '@/constants/users.const';
@@ -8,10 +11,11 @@ import { FILTER_ALL, USER_STATUS_FILTERS } from '@/constants/users.const';
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ListResult, SingleResult, createError, listFailure, listSuccess, singleFailure, singleSuccess } from '@/lib/result';
-import type { UserActivateOutput, UserApproveOutput, UserCreateOutput, UserUpdateOutput } from '@/lib/schemas';
+import type { ProfileUpdateOutput, UserActivateOutput, UserApproveOutput, UserCreateOutput, UserUpdateOutput } from '@/lib/schemas';
 import { escapeRegExp, isIssuableRole, toId } from '@/lib/utils';
 
 import { issueLoginId } from './login-id.issuer';
+import { hashToken } from './token.hash';
 
 import type { UserAttributes, UserEntity } from '@/models/user.model';
 // Mongoose 9 renamed `FilterQuery` to `QueryFilter`. `UpdateQuery` kept its name.
@@ -23,6 +27,19 @@ const DATABASE = CODES.DATABASE.USERS;
 const VALIDATION = CODES.VALIDATION.USERS;
 const BUSINESS = CODES.BUSINESS.USERS;
 const AUTH = CODES.AUTH.USERS;
+
+/**
+ * A saved profile, plus the one-time token an address change has to be proven with.
+ *
+ * `pendingEmailToken` is null whenever the address did not move, which is most of the
+ * time. It leaves the service exactly once and is never stored — only its hash is —
+ * and returning it rather than sending it from here keeps the service free of the mail
+ * layer, the same way `Registration` does in `AuthService`.
+ */
+export type ProfileUpdate = {
+  user: UserDto;
+  pendingEmailToken: string | null;
+};
 
 /*
   Who may do what to whom, in one place, because the answer is the same whichever verb
@@ -60,6 +77,36 @@ export class UserService {
       log.error({ err: error }, 'Listing users failed');
 
       return listFailure(createError(DATABASE.LIST_FAILED.CODE, DATABASE.LIST_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * One account, by id.
+   *
+   * The profile screen's read. It goes to the database rather than to the session token,
+   * which carries a name, a role and an approval flag because that is all a guard needs —
+   * while a profile has to show every field the department holds, as it stands now rather
+   * than as it stood when somebody signed in.
+   *
+   * @param userId - The account to read.
+   *
+   * @returns The account, or a failure.
+   */
+  public async getById(userId: string): Promise<SingleResult<UserDto>> {
+    try {
+      await connectToDatabase();
+
+      const user = await User.findById(userId).lean<UserEntity | null>();
+
+      if (!user) {
+        return this.userNotFound();
+      }
+
+      return singleSuccess(userFromEntity(user));
+    } catch (error) {
+      log.error({ err: error }, 'Reading a user failed');
+
+      return singleFailure(createError(DATABASE.FIND_BY_ID_FAILED.CODE, DATABASE.FIND_BY_ID_FAILED.MESSAGE));
     }
   }
 
@@ -182,6 +229,113 @@ export class UserService {
 
       return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
     }
+  }
+
+  /**
+   * Correct the fields an account holder owns about themselves.
+   *
+   * Separate from `update()` and not a special case of it, because the two answer
+   * different questions. That one asks whether an administrator may change this row; this
+   * one never has to ask, since the row is the caller's own — and in exchange it may
+   * touch almost nothing. The account is taken from the session rather than the payload,
+   * so there is no id to tamper with and no `refuseDisallowedRoleChange` to run: no role
+   * is moving, because the schema has no role in it.
+   *
+   * An email change does not happen here. The address is written to `pendingEmail` and a
+   * token is returned for the caller to mail; `email` keeps its old value until the link
+   * is clicked. Everything else is applied immediately.
+   *
+   * @param input - Validated profile input.
+   * @param requester - The signed-in account making the request.
+   *
+   * @returns The updated account and, when the address changed, the token to mail.
+   */
+  public async updateOwnProfile(input: ProfileUpdateOutput, requester: SessionUser): Promise<SingleResult<ProfileUpdate>> {
+    try {
+      await connectToDatabase();
+
+      const target = await User.findById(requester.userId).lean<UserEntity | null>();
+
+      if (!target) {
+        return singleFailure(createError(VALIDATION.USER_NOT_FOUND.CODE, VALIDATION.USER_NOT_FOUND.MESSAGE));
+      }
+
+      const isAddressChanging = input.email !== target.email;
+
+      if (isAddressChanging) {
+        const taken = await User.findOne({ email: input.email, _id: { $ne: target._id } }).lean<UserEntity | null>();
+
+        if (taken) {
+          return singleFailure(createError(VALIDATION.EMAIL_ALREADY_USED.CODE, VALIDATION.EMAIL_ALREADY_USED.MESSAGE, 'email'));
+        }
+      }
+
+      /*
+        Submitting the address the account already has clears a change that was asked for
+        and never confirmed. It is the only way back from a typo — the link went to an
+        inbox nobody owns, so it will never be clicked — and it needs no button of its
+        own, because putting the old address back is exactly what somebody in that
+        position would try.
+      */
+      const pending = isAddressChanging ? this.mintPendingEmail(input.email) : this.clearedPendingEmail();
+
+      const updated = await User.findByIdAndUpdate(
+        target._id,
+        this.toUpdateDocument({
+          name: input.name,
+          phone: this.optionalText(input.phone),
+          address: this.optionalText(input.address),
+          ...pending.fields,
+        }),
+        { returnDocument: 'after' }
+      ).lean<UserEntity | null>();
+
+      if (!updated) {
+        return singleFailure(createError(VALIDATION.USER_NOT_FOUND.CODE, VALIDATION.USER_NOT_FOUND.MESSAGE));
+      }
+
+      return singleSuccess({ user: userFromEntity(updated), pendingEmailToken: pending.token });
+    } catch (error) {
+      log.error({ err: error }, 'Updating an own profile failed');
+
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * A fresh claim on an address, and the token that proves it.
+   *
+   * Minting a new one silently retires whatever was pending: the stored hash is
+   * overwritten, so the previous link stops working. Asking twice cannot leave two live
+   * links pointing at two different addresses.
+   *
+   * @param email - The address being asked for, already lowercased and trimmed by the schema.
+   *
+   * @returns The fields to write and the raw token to mail.
+   */
+  private mintPendingEmail(email: string): { fields: Record<string, unknown>; token: string } {
+    const token = randomBytes(EMAIL_VERIFICATION.TOKEN_BYTES).toString('hex');
+
+    return {
+      token,
+      fields: {
+        pendingEmail: email,
+        pendingEmailTokenHash: hashToken(token),
+        pendingEmailExpiresAt: new Date(Date.now() + EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000),
+      },
+    };
+  }
+
+  /**
+   * The same three fields, absent — `toUpdateDocument` turns `undefined` into `$unset`.
+   *
+   * @returns The fields to clear, and no token, because nothing is being sent.
+   */
+  private clearedPendingEmail(): { fields: Record<string, unknown>; token: null } {
+    return {
+      token: null,
+      fields: { pendingEmail: undefined, pendingEmailTokenHash: undefined, pendingEmailExpiresAt: undefined },
+    };
   }
 
   /**
