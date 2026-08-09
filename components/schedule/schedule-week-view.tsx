@@ -44,7 +44,7 @@ export function ScheduleWeekView({
   const grouped = groupSessionsByDay(sessions);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {TEACHING_DAYS.map(day => (
         <section
           key={day}

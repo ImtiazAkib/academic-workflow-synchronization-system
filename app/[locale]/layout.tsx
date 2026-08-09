@@ -14,6 +14,8 @@ import { AppLocale } from '@/types';
 
 import { buildLocaleUrl } from '@/lib/utils';
 
+import { SkipToContent, ThemeProvider } from '@/components/shared';
+
 import '../globals.css';
 
 const inter = Inter({
@@ -130,23 +132,41 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     notFound();
   }
 
+  const l10n = await getTranslations();
+
   return (
     /*
       The font variables sit on <html>, not <body>. `--font-body` is declared on <html>
       too, and a custom property is resolved against the element that declares it — so
       if the faces were declared one level down on <body>, the per-language swap in
       globals.css would resolve to nothing.
+
+      `suppressHydrationWarning` because `next-themes` writes the `.dark` class onto this
+      element from an inline script before React hydrates — deliberately, since that is what
+      stops a light flash before the dark stylesheet applies. The server rendered no class,
+      so React would otherwise report the difference it was asked to allow.
     */
-    <html lang={locale} className={`${inter.variable} ${poppins.variable} ${notoSansBengali.variable} ${anekBangla.variable}`}>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${inter.variable} ${poppins.variable} ${notoSansBengali.variable} ${anekBangla.variable}`}>
       <body className="font-sans antialiased">
+        {/*
+          First in the tab order, before every provider, so it is reachable on the very
+          first press of Tab on any screen in the app.
+        */}
+        <SkipToContent label={l10n('SKIP_TO_CONTENT')} />
+
         {/*
           `NuqsAdapter` teaches nuqs how this app routes. It wraps the whole tree rather
           than the one screen that uses it, because the hooks read from context and a
           later screen adding a URL filter should not have to remember this.
         */}
-        <NextIntlClientProvider>
-          <NuqsAdapter>{children}</NuqsAdapter>
-        </NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider>
+            <NuqsAdapter>{children}</NuqsAdapter>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

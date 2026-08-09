@@ -95,7 +95,7 @@ export function MaterialsScreen({ materials, courses, labels }: MaterialsScreenP
           {removing && (
             <div className="bg-muted/50 rounded-md px-3 py-2 text-sm">
               <span className="block font-medium">{removing.title}</span>
-              <span className="text-muted-foreground block text-xs">{removing.fileName}</span>
+              <span className="text-muted-foreground block text-xs break-all">{removing.fileName}</span>
             </div>
           )}
 

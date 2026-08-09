@@ -3,7 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { APP_DATA, ROUTES } from '@/constants';
 import { Link } from '@/l10n/navigation';
 
-import { AppLogo, Container, LanguageSelector } from '@/components/shared';
+import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
+
+import { AppLogo, Container, LanguageSelector, ThemeSelector } from '@/components/shared';
 
 type AuthLayoutProps = {
   children: React.ReactNode;
@@ -25,6 +27,15 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
             <span className="font-heading text-regular-bold tracking-tight">{APP_DATA.SHORT_NAME}</span>
           </Link>
 
+          <ThemeSelector
+            labels={{
+              group: l10n('THEME_SELECTOR_LABEL'),
+              light: l10n('THEME_LIGHT'),
+              dark: l10n('THEME_DARK'),
+              system: l10n('THEME_SYSTEM'),
+            }}
+          />
+
           <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
         </Container>
       </header>
@@ -34,7 +45,9 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
         its content and settles against the left edge. Stacking makes it fill the width,
         so the card its own `justify-center` centres actually has a full row to centre in.
       */}
-      <main className="flex flex-1 flex-col justify-center">{children}</main>
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex flex-1 flex-col justify-center">
+        {children}
+      </main>
     </div>
   );
 }

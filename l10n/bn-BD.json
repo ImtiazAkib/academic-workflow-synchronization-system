@@ -552,5 +552,11 @@
   "NOTICES_ERROR_BODY_OR_IMAGE": "একটি নোটিশে ঘোষণা, ছবি, অথবা দুটোই থাকতে হবে।",
   "NOTICES_ERROR_IMAGE_TOO_LARGE": "ছবিটি 5 MB সীমার চেয়ে বড়।",
   "NOTICES_ERROR_IMAGE_TYPE": "এই ধরনের ছবি গ্রহণ করা হয় না। PNG, JPEG বা WebP ব্যবহার করুন।",
-  "ERROR_TOO_MANY_ATTEMPTS": "অনেকবার চেষ্টা করা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।"
+  "ERROR_TOO_MANY_ATTEMPTS": "অনেকবার চেষ্টা করা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।",
+  "THEME_SELECTOR_LABEL": "থিম",
+  "THEME_LIGHT": "উজ্জ্বল",
+  "THEME_DARK": "অন্ধকার",
+  "THEME_SYSTEM": "আমার ডিভাইস অনুযায়ী",
+  "NOTICES_PUBLISHED_TITLE": "প্রকাশিত",
+  "SKIP_TO_CONTENT": "সরাসরি বিষয়বস্তুতে যান"
 }

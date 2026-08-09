@@ -27,11 +27,16 @@ export function NoticeCard({ notice, labels }: NoticeCardProps) {
   return (
     <article className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="text-regular-semibold">{notice.title}</h3>
+        <h3 className="text-regular-semibold min-w-0 wrap-break-word">{notice.title}</h3>
         <NoticeBadge audience={notice.audience} label={notice.audienceLabel} />
       </div>
 
-      {notice.body && <p className="text-sm whitespace-pre-wrap">{notice.body}</p>}
+      {/*
+        `wrap-break-word` alongside `whitespace-pre-wrap`: the pre-wrap keeps the paragraphs
+        somebody typed, and on its own it also keeps a pasted URL on one unbreakable line
+        that pushes the card past the viewport and scrolls the whole page sideways.
+      */}
+      {notice.body && <p className="text-sm wrap-break-word whitespace-pre-wrap">{notice.body}</p>}
 
       {/*
         The title is the alt text, and for a picture-only notice that is the whole of what
@@ -41,10 +46,19 @@ export function NoticeCard({ notice, labels }: NoticeCardProps) {
 
         Served from a route that checks the audience, not from a public path: the id in the
         URL is guessable, so the picture is refused rather than merely unlinked.
+
+        `max-w-full` is what stops a wide photograph scrolling the page. `w-auto` caps the
+        height but says nothing about width, so a 4000px scan rendered at its natural width
+        until this was added.
       */}
       {notice.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- access-checked route; the optimizer fetches without the viewer's session
-        <img src={notice.imageUrl} alt={notice.title} loading="lazy" className="border-border max-h-96 w-auto rounded-md border object-contain" />
+        <img
+          src={notice.imageUrl}
+          alt={notice.title}
+          loading="lazy"
+          className="border-border h-auto max-h-96 w-auto max-w-full rounded-md border object-contain"
+        />
       )}
 
       <p className="text-muted-foreground text-xs">

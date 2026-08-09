@@ -12,7 +12,7 @@ function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
     <textarea
       data-slot="textarea"
       className={cn(
-        'border-input bg-background text-foreground placeholder:text-muted-foreground/70 flex field-sizing-content min-h-24 w-full rounded-md border px-3 py-2 text-sm transition-colors',
+        'border-input bg-background text-foreground placeholder:text-muted-foreground flex field-sizing-content min-h-24 w-full rounded-md border px-3 py-2 text-sm transition-colors',
         'focus-visible:border-ring focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:ring-destructive/20',

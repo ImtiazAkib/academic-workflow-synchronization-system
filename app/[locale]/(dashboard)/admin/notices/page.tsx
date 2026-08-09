@@ -56,8 +56,17 @@ export default async function AdminNoticesPage() {
         </Button>
       </div>
 
-      {/* No limit: this is the record of everything published, not a summary of it. */}
-      <DashboardNotices role={sessionUser.role} limit={null} />
+      {/*
+        Wrapped in a titled section so the heading order runs h1 → h2 → the cards' h3. The
+        three home screens already do this; without it this page jumped a level.
+
+        No limit: this is the record of everything published, not a summary of it.
+      */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-regular-semibold">{l10n('NOTICES_PUBLISHED_TITLE')}</h2>
+
+        <DashboardNotices role={sessionUser.role} limit={null} />
+      </section>
     </div>
   );
 }

@@ -53,6 +53,7 @@ export function buildScheduleLabels(l10n: Translator, count: string): ScheduleLa
     today: l10n('SCHEDULE_TODAY'),
     count,
     statusCancelled: l10n('SCHEDULE_STATUS_CANCELLED'),
+    timeLabel: l10n('STUDENT_ROUTINE_TIME_LABEL'),
     cancel: l10n('SCHEDULE_ACTION_CANCEL'),
     restore: l10n('SCHEDULE_ACTION_RESTORE'),
     emptyTitle: l10n('SCHEDULE_EMPTY_TITLE'),
