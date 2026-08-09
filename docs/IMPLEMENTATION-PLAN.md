@@ -34,7 +34,7 @@ in a working state.
 | [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
 | [12](#step-12) | Accounts, registration, email  | Phase 5        | ✅ Done        |
 | [13](#step-13) | Profiles                       | Phase 5        | ✅ Done        |
-| [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
+| [14](#step-14) | Notices & announcements        | Phase 5        | ✅ Done        |
 | [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
 | [16](#step-16) | Testing & deployment           | Phase 6        | ⬜ Not started |
 
@@ -1474,7 +1474,7 @@ whole screen in Bangla with Latin digits intact; and signing out and returning t
 
 <a id="step-14"></a>
 
-### Step 14 — Notices & announcements
+### Step 14 — Notices & announcements ✅ Done
 
 **Goal.** Department-wide communication that actually lands on the right dashboards.
 
@@ -1491,11 +1491,107 @@ components/dashboard/dashboard-notices.tsx     feed on every role's home
 **Notes.**
 
 - Audience is `all` | `teachers` | `students`, filtered server-side by the viewer's role.
+- **A notice is text, a picture, or both.** Added after the step was first built, because that is how a
+  department actually announces things — a scanned circular and a routine photographed off a noticeboard are
+  the common case, and retyping one into a textarea is work nobody does.
 - Unread state is deliberately out of scope — it needs per-user read receipts, which is a schema change.
   Logged in [Backlog](#backlog).
 
 **Acceptance.** An administrator publishes a notice targeted at students and it appears on student
 dashboards only.
+
+**Result.** ✅ Rules proven and screens driven. `npm run verify:notices` runs 53 checks against the real
+database, 0 failures, every row it writes prefixed `notice-verify` and deleted afterwards — including the
+image bytes, which are removed from the bucket before the rows that point at them. It publishes one notice to
+each audience and then asks the service as each role in turn: a student is sent the department-wide and
+students notices and **exactly** those two, a teacher the mirror image, and the admin area all three. It also
+covers ordering, the limit, what the schema refuses, that a payload naming somebody else as publisher is
+attributed to the session instead, all four combinations of text and picture, every way an image can be
+refused, and the audience check on the image route. The six earlier suites still pass unchanged — profile 51,
+accounts 45, student 37, users 28, schedule 14, materials 14. Lint, format and build are green; both new
+screens and both new route handlers register. 44 keys shipped with Bangla alongside the English, and three
+dead keys retired — 553 in total, no fallbacks.
+
+**Verified in the browser.** An administrator publishes to each audience in turn and the notice appears on
+the admin archive immediately; a student signed in beside them sees the department-wide and students notices
+on their dashboard and not the teachers one; the Notices nav entry is absent for both non-admin roles, and
+`/admin/notices` sends them to `/unauthorized` rather than rendering; `/bn` shows the whole feature in Bangla
+with Latin digits in the dates.
+
+For the images: all four combinations were published against the running app — picture only, words only, both,
+and neither, the last refused with 25005. A teacher signed in afterwards saw the department-wide notice with
+its picture rendered from the image route, and asking that route directly for the **students-only** notice's
+image — with a valid session and the exact id — returned 404. The response carries `inline`, `nosniff` and
+`private, no-store`, and the bytes decode to the dimensions they were uploaded at.
+
+**One thing was not driven: the file picker itself.** The dev server's HMR socket kept dropping during the
+check and the publish page would not hydrate — nor would `/admin/courses/new`, which this step never touched,
+which is what identifies it as the pane rather than the form. The transport underneath it was exercised
+directly instead, so what is unverified is the picker and its preview, not the publishing.
+
+**The Bangla is machine-written and wants your eye.**
+
+**Deviations from the plan, and why.**
+
+- **A notice carries an optional image, which the plan did not mention at all.** Asked for after the step was
+  first built. It reshapes more than it looks: `body` stops being required, so "is there anything here" becomes
+  a rule about the pair rather than about a field, and publishing moves from a Server Action to a
+  `POST /api/notices` route handler — an action serializes its arguments, and the house rule from step 9 is
+  that bytes go through a route handler. One request rather than create-then-attach, so a failed upload cannot
+  leave a picture-only notice with neither picture nor words.
+- **The image is served by an access-checked route, not a public path.** The image URL re-asks the audience
+  question the feed answers by filtering, because that URL carries a guessable id rather than being reached by
+  a link.
+- **No SVG, and that is load-bearing.** A notice image renders inline, unlike a material, which is served as
+  an attachment precisely so the browser never renders it. An SVG is a document that can carry script, and
+  this origin holds the session cookie. PNG, JPEG and WebP cannot execute anything.
+- **`components/ui/textarea.tsx` is new, and so is a WebP signature.** There was no multi-line input in the
+  design system, and `file-signature.utils.ts` had no entry for WebP — it checks the `RIFF` prefix, with the
+  same looseness the zip family already gets and for the same stated reason.
+- **Publishing is a page, `admin/notices/new`, not `notice-create.dialog`.** The plan named a dialog, and
+  every other create in the admin area had since moved to its own route — accounts, courses and classes all
+  did, each for the same reason. The body settles it: 5000 characters is several paragraphs, a modal gives
+  them a box inside a box, and closing it by mistake loses everything typed.
+- **The deliverables path was `app/(dashboard)/admin/notices/page.tsx`, missing the `[locale]` segment.**
+  Every route in this app lives under `app/[locale]/`. Corrected silently; noted here because the plan text
+  still reads that way.
+- **No `notices-screen.tsx`.** Users, courses and the timetable each need one because their rows open
+  dialogs and hold selection state. A notice is published and then read, so the admin page is a plain server
+  component and there is nothing for a client component to remember.
+- **`components/ui/textarea.tsx` is new.** There was no multi-line input in the design system; `Input` would
+  have asked for a five-paragraph announcement through a one-line box.
+- **`codes-notices.const.ts` and codes on `NoticeCreateSchema`.** The schema carried plain strings since
+  step 4, which `user-fields.schema.ts` explains: only schemas a service consumes carry codes, and the rest
+  get theirs when that service lands. It landed here.
+- **`UserService.listByIds()` was added.** A feed attributes each notice to its publisher, and looping
+  `getById` over twenty notices from three administrators is twenty queries for three answers.
+- **A failed read says so, rather than showing the empty state.** Found by an Atlas timeout mid-verification:
+  `listFailure` carries an empty array, so the feed rendered "nothing announced yet" over a database it could
+  not reach. An urgent notice invisible behind a sentence saying there are none is the exact failure
+  `student.service.ts` already warns about for the semester read.
+- **`DASHBOARD_UNDER_CONSTRUCTION` was retired.** This step replaced the placeholder card on the admin and
+  teacher homes — its last two uses — leaving the key orphaned.
+
+**What the department still has to supply.**
+
+1. **A read of the Bangla.** 34 keys were added across this step, all machine-written.
+2. **A decision on withdrawing a notice.** There is no delete, and the plan did not ask for one — but a
+   notice published to the wrong audience currently stays there. Logged in [Backlog](#backlog).
+
+**Deliberately left as they are.**
+
+- **No unread state.** It needs per-user read receipts, which is a schema change. Already in
+  [Backlog](#backlog), where this step's notes put it.
+- **No editing or deleting.** Out of the deliverables, and both are more than they look: an edited notice
+  that people have already read is a different message, and a deleted one leaves a conversation referring to
+  something that no longer exists.
+- **The body is plain text, not markup.** `whitespace-pre-wrap` keeps the paragraphs somebody typed.
+  Rendering it as HTML would put author-supplied markup on a page every account in the department loads.
+- **One image per notice, and no caption of its own.** The title is the alt text, which for a picture-only
+  notice is the whole of what a screen reader gets — the honest answer, since nobody types a description of a
+  scanned circular and inventing one from the file name would describe the file rather than the announcement.
+- **Images are not resized or re-encoded.** A 5 MB cap and a capped display height is the whole of it.
+  Thumbnails mean an image pipeline, which is a dependency and a step of its own.
 
 ---
 
@@ -1548,6 +1644,7 @@ Real, out of scope for now, and here so they are not lost:
 | Item                                    | Why it is parked                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                       |
+| Withdrawing a published notice          | [Step 14](#step-14) publishes but never unpublishes. An edit or a delete after people have read it is a different message, not a correction — it needs a decision about what readers see, not just a button         |
 | Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                               |
 | Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones       |
 | Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                               |

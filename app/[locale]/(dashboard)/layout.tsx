@@ -52,6 +52,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
         scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
         materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
         teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
+        noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
         profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
       />
 
@@ -67,6 +68,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
           materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
           teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
+          noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
           profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
           languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
           signOutLabel={l10n('DASHBOARD_SIGN_OUT')}

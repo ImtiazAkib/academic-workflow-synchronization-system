@@ -13,6 +13,14 @@ const SIGNATURES: { mimeTypes: string[]; magic: number[][] }[] = [
   { mimeTypes: ['image/png'], magic: [[0x89, 0x50, 0x4e, 0x47]] }, // .PNG
   { mimeTypes: ['image/jpeg'], magic: [[0xff, 0xd8, 0xff]] },
   /*
+    A WebP is a RIFF container, and the four bytes that say `WEBP` sit at offset 8 rather
+    than at the front — past what this reads. `RIFF` alone therefore also matches a .wav
+    or an .avi, which is the same looseness the zip family below is allowed: the declared
+    type and the extension both had to agree first, and this is a mislabel check rather
+    than a decoder.
+  */
+  { mimeTypes: ['image/webp'], magic: [[0x52, 0x49, 0x46, 0x46]] },
+  /*
     Every modern Office format is a zip, so they share PK\003\004 with a plain archive.
     Telling a .docx from a .zip means reading the central directory, which is more than
     a mislabel check needs — the extension already had to agree.

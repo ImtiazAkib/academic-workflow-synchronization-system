@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, UserRound, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Megaphone, UserRound, Users } from 'lucide-react';
 
 import { Link, usePathname } from '@/l10n/navigation';
 import { UserRole } from '@/types';
@@ -19,6 +19,7 @@ type DashboardNavProps = {
   scheduleLabel: string;
   materialsLabel: string;
   teachersLabel: string;
+  noticesLabel: string;
   profileLabel: string;
   className?: string;
 };
@@ -37,6 +38,7 @@ export function DashboardNav({
   scheduleLabel,
   materialsLabel,
   teachersLabel,
+  noticesLabel,
   profileLabel,
   className,
 }: DashboardNavProps) {
@@ -153,6 +155,26 @@ export function DashboardNav({
           )}>
           <Users className="size-4 shrink-0" />
           {teachersLabel}
+        </Link>
+      )}
+
+      {/*
+        Publishing is the administrator's. Everybody else meets notices on their own home
+        screen, which is where an announcement belongs — a reader should not have to go
+        looking for one, so there is no reading route to link to.
+      */}
+      {isAdminArea && (
+        <Link
+          href={ROUTES.ADMIN_NOTICES.HREF}
+          aria-current={pathname.startsWith(ROUTES.ADMIN_NOTICES.HREF) ? 'page' : undefined}
+          className={cn(
+            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            pathname.startsWith(ROUTES.ADMIN_NOTICES.HREF)
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+          )}>
+          <Megaphone className="size-4 shrink-0" />
+          {noticesLabel}
         </Link>
       )}
 

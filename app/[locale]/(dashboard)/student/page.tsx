@@ -10,6 +10,7 @@ import { requireRole } from '@/lib/auth';
 import { CourseService, StudentService } from '@/lib/services';
 import { resolveDepartmentToday, resolveSemesterLabel } from '@/lib/utils';
 
+import { DashboardNotices } from '@/components/dashboard';
 import { StudentEmpty, StudentRoutineCard } from '@/components/student';
 
 const courseService = new CourseService();
@@ -79,6 +80,13 @@ export default async function StudentDashboardPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-regular-semibold">{l10n('DASHBOARD_NOTICES_TITLE')}</h2>
+
+        {/* Addressed to `all` or `students` — the query cannot return a teachers-only notice. */}
+        <DashboardNotices role={USER_ROLES.STUDENT} />
       </section>
 
       <section className="flex flex-col gap-3">

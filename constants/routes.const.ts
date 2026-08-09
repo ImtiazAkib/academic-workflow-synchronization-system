@@ -81,6 +81,14 @@ export const ROUTES = {
     LABEL: 'Create course',
     HREF: '/admin/courses/new',
   },
+  ADMIN_NOTICES: {
+    LABEL: 'Notices',
+    HREF: '/admin/notices',
+  },
+  ADMIN_NOTICES_NEW: {
+    LABEL: 'Publish a notice',
+    HREF: '/admin/notices/new',
+  },
   ADMIN_SCHEDULE: {
     LABEL: 'Schedule',
     HREF: '/admin/schedule',
