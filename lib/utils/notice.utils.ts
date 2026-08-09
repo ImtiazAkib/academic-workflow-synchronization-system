@@ -7,8 +7,10 @@ const VALIDATION = CODES.VALIDATION.NOTICES;
 
 export type NoticeErrorLabels = {
   titleRequired: string;
-  bodyRequired: string;
+  bodyOrImageRequired: string;
   audienceInvalid: string;
+  imageTooLarge: string;
+  imageType: string;
   generic: string;
 };
 
@@ -28,12 +30,20 @@ export function resolveNoticeErrorMessage(code: number, labels: NoticeErrorLabel
     return labels.titleRequired;
   }
 
-  if (code === VALIDATION.BODY_REQUIRED.CODE || code === VALIDATION.BODY_TOO_LONG.CODE) {
-    return labels.bodyRequired;
+  if (code === VALIDATION.BODY_OR_IMAGE_REQUIRED.CODE || code === VALIDATION.BODY_TOO_LONG.CODE) {
+    return labels.bodyOrImageRequired;
   }
 
   if (code === VALIDATION.AUDIENCE_INVALID.CODE) {
     return labels.audienceInvalid;
+  }
+
+  if (code === VALIDATION.IMAGE_TOO_LARGE.CODE) {
+    return labels.imageTooLarge;
+  }
+
+  if (code === VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE) {
+    return labels.imageType;
   }
 
   return labels.generic;

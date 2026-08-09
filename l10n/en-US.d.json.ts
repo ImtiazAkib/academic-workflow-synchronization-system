@@ -527,7 +527,6 @@ declare const messages: {
   "NOTICES_FIELD_TITLE_REQUIRED": "Give the notice a title.",
   "NOTICES_FIELD_TITLE_TOO_LONG": "A title cannot exceed 200 characters.",
   "NOTICES_FIELD_BODY_LABEL": "Announcement",
-  "NOTICES_FIELD_BODY_REQUIRED": "Write something to announce.",
   "NOTICES_FIELD_BODY_TOO_LONG": "A notice cannot exceed 5000 characters.",
   "NOTICES_FIELD_AUDIENCE_LABEL": "Who it is for",
   "NOTICES_FIELD_AUDIENCE_HINT": "Only the people you choose will see it on their dashboard.",
@@ -543,9 +542,18 @@ declare const messages: {
   "NOTICES_DIALOG_WORKING": "Publishing…",
   "NOTICES_TOAST_PUBLISHED": "The notice is published.",
   "NOTICES_ERROR_TITLE": "Check the title and try again.",
-  "NOTICES_ERROR_BODY": "Check the announcement and try again.",
   "NOTICES_ERROR_AUDIENCE": "Choose who this notice is for.",
   "NOTICES_ERROR_GENERIC": "The notice could not be published. Try again.",
-  "NOTICES_UNAVAILABLE": "Notices could not be loaded just now. Refresh the page to try again."
+  "NOTICES_UNAVAILABLE": "Notices could not be loaded just now. Refresh the page to try again.",
+  "NOTICES_FIELD_IMAGE_LABEL": "Image (optional)",
+  "NOTICES_FIELD_IMAGE_HINT": "Up to 5 MB. PNG, JPEG or WebP — a photographed circular or a scanned page works.",
+  "NOTICES_FIELD_IMAGE_TOO_LARGE": "That image is larger than the 5 MB limit.",
+  "NOTICES_FIELD_IMAGE_TYPE": "Attach a PNG, JPEG or WebP image.",
+  "NOTICES_FIELD_BODY_OR_IMAGE_REQUIRED": "Write an announcement, attach an image, or both.",
+  "NOTICES_IMAGE_PREVIEW_ALT": "The image you chose",
+  "NOTICES_IMAGE_REMOVE": "Remove image",
+  "NOTICES_ERROR_BODY_OR_IMAGE": "A notice needs an announcement, an image, or both.",
+  "NOTICES_ERROR_IMAGE_TOO_LARGE": "That image is larger than the 5 MB limit.",
+  "NOTICES_ERROR_IMAGE_TYPE": "That image type is not accepted. Use PNG, JPEG or WebP."
 };
 export default messages;

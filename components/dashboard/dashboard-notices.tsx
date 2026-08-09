@@ -83,6 +83,12 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT }: DashboardNo
     noticeId: notice.noticeId,
     title: notice.title,
     body: notice.body,
+    /*
+      Built here rather than stored, because it is derived: a notice either has a picture
+      or it does not, and the route that serves one is a fact about the app rather than
+      about the notice. The DTO reports `hasImage` and withholds the storage key.
+    */
+    imageUrl: notice.hasImage ? `/api/notices/${notice.noticeId}/image` : null,
     audience: notice.audience,
     audienceLabel: resolveNoticeAudienceLabel(notice.audience, audiences),
     /*

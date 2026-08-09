@@ -9,13 +9,18 @@ import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ListResult, SingleResult, createError, listFailure, listSuccess, singleFailure, singleSuccess } from '@/lib/result';
 import type { NoticeCreateOutput } from '@/lib/schemas';
+import { storage } from '@/lib/storage';
+import type { StoredFileStream } from '@/lib/storage';
+import { fileMatchesDeclaredType } from '@/lib/utils';
 
-import type { NoticeAttributes, NoticeEntity } from '@/models/notice.model';
+import type { NoticeAttributes, NoticeEntity, NoticeImage } from '@/models/notice.model';
 import type { QueryFilter } from 'mongoose';
 
 const log = createLoggerWithContext('notice.service');
 
 const DATABASE = CODES.DATABASE.NOTICES;
+const VALIDATION = CODES.VALIDATION.NOTICES;
+const AUTH = CODES.AUTH.NOTICES;
 
 export class NoticeService {
   /**
@@ -63,18 +68,38 @@ export class NoticeService {
    * "when was this announced" is the notice's own fact and should not depend on which
    * layer happened to fill it in.
    *
+   * An image, when there is one, is written to storage first and the row second. If the
+   * row then fails, the bytes are deleted again — otherwise a failed publish would leave
+   * an orphan in the bucket that nothing points at and nothing will ever clean up. The
+   * same compensating delete `MaterialService.upload()` does, for the same reason.
+   *
    * @param input - Validated create input.
    * @param requester - The signed-in account publishing it.
    *
    * @returns The published notice, or a failure.
    */
   public async create(input: NoticeCreateOutput, requester: SessionUser): Promise<SingleResult<NoticeDto>> {
+    let image: NoticeImage | undefined;
+
     try {
       await connectToDatabase();
 
+      if (input.image) {
+        // The one type check the client cannot fake — the declared type is only a claim.
+        if (!(await fileMatchesDeclaredType(input.image))) {
+          return singleFailure(createError(VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE, VALIDATION.IMAGE_TYPE_NOT_ALLOWED.MESSAGE, 'image'));
+        }
+
+        const stored = await storage.save(input.image);
+
+        image = { storageKey: stored.storageKey, fileName: stored.fileName, mimeType: stored.mimeType, size: stored.size };
+      }
+
       const created = await Notice.create({
         title: input.title,
-        body: input.body,
+        // Stored as absent rather than as an empty string, so a picture-only notice reads as one.
+        body: input.body ? input.body : undefined,
+        image,
         audience: input.audience,
         publishedBy: requester.userId,
         publishedAt: new Date(),
@@ -84,8 +109,66 @@ export class NoticeService {
     } catch (error) {
       log.error({ err: error }, 'Creating a notice failed');
 
+      if (image) {
+        await storage.remove(image.storageKey).catch(() => undefined);
+      }
+
       return singleFailure(createError(DATABASE.CREATE_FAILED.CODE, DATABASE.CREATE_FAILED.MESSAGE));
     }
+  }
+
+  /**
+   * Open a notice's image for somebody allowed to see it.
+   *
+   * The access check the feed does not need. A list simply never returns a notice outside
+   * the viewer's audience, but an image URL contains an id and ids can be guessed — so
+   * being addressed by the notice is checked here, against the same `audiencesFor()` rule
+   * the list uses, rather than left to the fact that nothing links to it.
+   *
+   * The URL carries the notice's id, never the storage key: resolving one to the other
+   * happens here, behind the check, so the bucket cannot be read by guessing.
+   *
+   * @param noticeId - Notice whose image is wanted.
+   * @param viewer - The signed-in account asking, or null.
+   *
+   * @returns The image stream, or a failure.
+   */
+  public async openImage(noticeId: string, viewer: SessionUser | null): Promise<SingleResult<StoredFileStream>> {
+    try {
+      if (!viewer) {
+        return singleFailure(createError(AUTH.NOT_IN_AUDIENCE.CODE, AUTH.NOT_IN_AUDIENCE.MESSAGE));
+      }
+
+      await connectToDatabase();
+
+      const notice = await Notice.findById(noticeId).lean<NoticeEntity | null>();
+
+      if (!notice || !notice.image) {
+        return this.noticeNotFound();
+      }
+
+      const audiences = this.audiencesFor(viewer.role);
+
+      if (audiences && !audiences.includes(notice.audience)) {
+        return singleFailure(createError(AUTH.NOT_IN_AUDIENCE.CODE, AUTH.NOT_IN_AUDIENCE.MESSAGE));
+      }
+
+      const file = await storage.read(notice.image.storageKey);
+
+      if (!file) {
+        return this.noticeNotFound();
+      }
+
+      return singleSuccess(file);
+    } catch (error) {
+      log.error({ err: error }, 'Opening a notice image failed');
+
+      return singleFailure(createError(DATABASE.LIST_FAILED.CODE, DATABASE.LIST_FAILED.MESSAGE));
+    }
+  }
+
+  private noticeNotFound(): SingleResult<StoredFileStream> {
+    return singleFailure(createError(VALIDATION.NOTICE_NOT_FOUND.CODE, VALIDATION.NOTICE_NOT_FOUND.MESSAGE));
   }
 
   /**
