@@ -34,7 +34,7 @@ in a working state.
 | [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
 | [12](#step-12) | Accounts, registration, email  | Phase 5        | ✅ Done        |
 | [13](#step-13) | Profiles                       | Phase 5        | ✅ Done        |
-| [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
+| [14](#step-14) | Notices & announcements        | Phase 5        | ✅ Done        |
 | [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
 | [16](#step-16) | Testing & deployment           | Phase 6        | ⬜ Not started |
 
@@ -1474,7 +1474,7 @@ whole screen in Bangla with Latin digits intact; and signing out and returning t
 
 <a id="step-14"></a>
 
-### Step 14 — Notices & announcements
+### Step 14 — Notices & announcements ✅ Done
 
 **Goal.** Department-wide communication that actually lands on the right dashboards.
 
@@ -1496,6 +1496,66 @@ components/dashboard/dashboard-notices.tsx     feed on every role's home
 
 **Acceptance.** An administrator publishes a notice targeted at students and it appears on student
 dashboards only.
+
+**Result.** ✅ Rules proven and screens driven. `npm run verify:notices` runs 27 checks against the real
+database, 0 failures, every row it writes prefixed `notice-verify` and deleted afterwards. It publishes one
+notice to each audience and then asks the service as each role in turn: a student is sent the department-wide
+and students notices and **exactly** those two, a teacher the mirror image, and the admin area all three. It
+also covers ordering, the limit, what the schema refuses, and that a payload naming somebody else as
+publisher is attributed to the session instead. The six earlier suites still pass unchanged — profile 51,
+accounts 45, student 37, users 28, schedule 14, materials 14. Lint, format and build are green; both new
+routes register. 34 keys shipped with Bangla alongside the English, and one dead key retired — 545 in total,
+no fallbacks.
+
+**Verified in the browser.** An administrator publishes to each audience in turn and the notice appears on
+the admin archive immediately; a student signed in beside them sees the department-wide and students notices
+on their dashboard and not the teachers one; the Notices nav entry is absent for both non-admin roles, and
+`/admin/notices` sends them to `/unauthorized` rather than rendering; `/bn` shows the whole feature in Bangla
+with Latin digits in the dates.
+
+**The Bangla is machine-written and wants your eye.**
+
+**Deviations from the plan, and why.**
+
+- **Publishing is a page, `admin/notices/new`, not `notice-create.dialog`.** The plan named a dialog, and
+  every other create in the admin area had since moved to its own route — accounts, courses and classes all
+  did, each for the same reason. The body settles it: 5000 characters is several paragraphs, a modal gives
+  them a box inside a box, and closing it by mistake loses everything typed.
+- **The deliverables path was `app/(dashboard)/admin/notices/page.tsx`, missing the `[locale]` segment.**
+  Every route in this app lives under `app/[locale]/`. Corrected silently; noted here because the plan text
+  still reads that way.
+- **No `notices-screen.tsx`.** Users, courses and the timetable each need one because their rows open
+  dialogs and hold selection state. A notice is published and then read, so the admin page is a plain server
+  component and there is nothing for a client component to remember.
+- **`components/ui/textarea.tsx` is new.** There was no multi-line input in the design system; `Input` would
+  have asked for a five-paragraph announcement through a one-line box.
+- **`codes-notices.const.ts` and codes on `NoticeCreateSchema`.** The schema carried plain strings since
+  step 4, which `user-fields.schema.ts` explains: only schemas a service consumes carry codes, and the rest
+  get theirs when that service lands. It landed here.
+- **`UserService.listByIds()` was added.** A feed attributes each notice to its publisher, and looping
+  `getById` over twenty notices from three administrators is twenty queries for three answers.
+- **A failed read says so, rather than showing the empty state.** Found by an Atlas timeout mid-verification:
+  `listFailure` carries an empty array, so the feed rendered "nothing announced yet" over a database it could
+  not reach. An urgent notice invisible behind a sentence saying there are none is the exact failure
+  `student.service.ts` already warns about for the semester read.
+- **`DASHBOARD_UNDER_CONSTRUCTION` was retired.** This step replaced the placeholder card on the admin and
+  teacher homes — its last two uses — leaving the key orphaned.
+
+**What the department still has to supply.**
+
+1. **A read of the Bangla.** 34 keys were added across this step, all machine-written.
+2. **A decision on withdrawing a notice.** There is no delete, and the plan did not ask for one — but a
+   notice published to the wrong audience currently stays there. Logged in [Backlog](#backlog).
+
+**Deliberately left as they are.**
+
+- **No unread state.** It needs per-user read receipts, which is a schema change. Already in
+  [Backlog](#backlog), where this step's notes put it.
+- **No editing or deleting.** Out of the deliverables, and both are more than they look: an edited notice
+  that people have already read is a different message, and a deleted one leaves a conversation referring to
+  something that no longer exists.
+- **The body is plain text, not markup.** `whitespace-pre-wrap` keeps the paragraphs somebody typed.
+  Rendering it as HTML would put author-supplied markup on a page every account in the department loads.
 
 ---
 
@@ -1548,6 +1608,7 @@ Real, out of scope for now, and here so they are not lost:
 | Item                                    | Why it is parked                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                       |
+| Withdrawing a published notice          | [Step 14](#step-14) publishes but never unpublishes. An edit or a delete after people have read it is a different message, not a correction — it needs a decision about what readers see, not just a button         |
 | Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                               |
 | Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones       |
 | Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                               |

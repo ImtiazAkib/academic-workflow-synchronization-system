@@ -15,6 +15,7 @@ type DashboardSidebarProps = {
   scheduleLabel: string;
   materialsLabel: string;
   teachersLabel: string;
+  noticesLabel: string;
   profileLabel: string;
 };
 
@@ -31,6 +32,7 @@ export function DashboardSidebar({
   scheduleLabel,
   materialsLabel,
   teachersLabel,
+  noticesLabel,
   profileLabel,
 }: DashboardSidebarProps) {
   return (
@@ -49,6 +51,7 @@ export function DashboardSidebar({
         scheduleLabel={scheduleLabel}
         materialsLabel={materialsLabel}
         teachersLabel={teachersLabel}
+        noticesLabel={noticesLabel}
         profileLabel={profileLabel}
         className="flex-col"
       />
