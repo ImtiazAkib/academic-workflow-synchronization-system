@@ -17,6 +17,7 @@
     "verify:accounts": "tsx --env-file-if-exists=.env.local scripts/verify-accounts.ts",
     "verify:profile": "tsx --env-file-if-exists=.env.local scripts/verify-profile.ts",
     "verify:notices": "tsx --env-file-if-exists=.env.local scripts/verify-notices.ts",
+    "verify:rate-limit": "tsx --env-file-if-exists=.env.local scripts/verify-rate-limit.ts",
     "verify:users": "tsx --env-file-if-exists=.env.local scripts/verify-user-service.ts",
     "verify:materials": "tsx --env-file-if-exists=.env.local scripts/verify-materials.ts",
     "verify:schedule": "tsx --env-file-if-exists=.env.local scripts/verify-schedule.ts",

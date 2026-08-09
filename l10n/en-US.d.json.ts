@@ -554,6 +554,7 @@ declare const messages: {
   "NOTICES_IMAGE_REMOVE": "Remove image",
   "NOTICES_ERROR_BODY_OR_IMAGE": "A notice needs an announcement, an image, or both.",
   "NOTICES_ERROR_IMAGE_TOO_LARGE": "That image is larger than the 5 MB limit.",
-  "NOTICES_ERROR_IMAGE_TYPE": "That image type is not accepted. Use PNG, JPEG or WebP."
+  "NOTICES_ERROR_IMAGE_TYPE": "That image type is not accepted. Use PNG, JPEG or WebP.",
+  "ERROR_TOO_MANY_ATTEMPTS": "Too many attempts. Wait a minute and try again."
 };
 export default messages;

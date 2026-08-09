@@ -70,7 +70,7 @@ export function TeacherScheduleScreen({ sessions, courses, teachers, labels, tod
     const isCancelled = !target.isCancelled;
 
     startWorking(async () => {
-      const result = await setClassSessionCancelledAction(target.classSessionId, isCancelled);
+      const result = await setClassSessionCancelledAction({ classSessionId: target.classSessionId, isCancelled: isCancelled });
 
       if (!isSuccess(result)) {
         setActionError(resolveScheduleErrorMessage(result.errors[0]?.code ?? 0, labels.errors));

@@ -68,7 +68,7 @@ export function CoursesScreen({ courses, teachers, labels }: CoursesScreenProps)
     const isActive = !target.isActive;
 
     startWorking(async () => {
-      const result = await setCourseActiveAction(target.courseId, isActive);
+      const result = await setCourseActiveAction({ courseId: target.courseId, isActive });
 
       if (!isSuccess(result)) {
         setConfirmError(resolveCourseErrorMessage(result.errors[0]?.code ?? 0, labels.errors));

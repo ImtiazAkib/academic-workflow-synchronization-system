@@ -9,6 +9,7 @@ export * from './users.const';
 export * from './schedule.const';
 export * from './material.const';
 export * from './notice.const';
+export * from './rate-limit.const';
 export * from './seo.const';
 export * from './json-ld.const';
 export * from './codes-common.const';

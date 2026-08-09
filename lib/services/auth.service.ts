@@ -5,6 +5,7 @@ import { UserDto, userFromEntity } from '@/types';
 
 import { EMAIL_VERIFICATION } from '@/constants/account.const';
 import { CODES } from '@/constants/codes.const';
+import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
@@ -15,6 +16,7 @@ import { looksLikeLoginId } from '@/lib/utils';
 import type { IssuableRole } from '@/lib/utils';
 
 import { issueLoginId } from './login-id.issuer';
+import { consumeRateLimit, resetRateLimit } from './rate-limit.guard';
 import { hashToken } from './token.hash';
 
 import type { UserEntity } from '@/models/user.model';
@@ -22,6 +24,7 @@ import type { UserEntity } from '@/models/user.model';
 const log = createLoggerWithContext('auth.service');
 
 const AUTH = CODES.AUTH.USERS;
+const BUSINESS_COMMON = CODES.BUSINESS.COMMON;
 const VALIDATION = CODES.VALIDATION.USERS;
 const BUSINESS = CODES.BUSINESS.USERS;
 const DATABASE = CODES.DATABASE.USERS;
@@ -66,6 +69,23 @@ export class AuthService {
   public async verifyCredentials(identifier: string, password: string): Promise<SingleResult<UserDto>> {
     try {
       await connectToDatabase();
+
+      /*
+        Counted before the password is checked, and keyed on the identifier exactly as it
+        was typed. Two things follow, and both are deliberate.
+
+        An identifier nobody owns throttles the same as one that exists, so the refusal
+        cannot be used to discover which accounts are real — the same rule the shared
+        `invalidCredentials()` message already follows, and it would be undone by a
+        limiter that only counted attempts against accounts that exist.
+
+        And bcrypt at cost 12 is roughly a quarter-second of pegged CPU per attempt on a
+        single forked process. Refusing before that runs is what keeps a spray from
+        stopping the department's app rather than merely failing.
+      */
+      if (!(await consumeRateLimit('sign-in', identifier, RATE_LIMIT.SIGN_IN))) {
+        return singleFailure(createError(BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE, BUSINESS_COMMON.TOO_MANY_REQUESTS.MESSAGE));
+      }
 
       const matchedByLoginId = looksLikeLoginId(identifier);
       const user = await this.resolveByIdentifier(identifier);
@@ -112,6 +132,18 @@ export class AuthService {
       if (!user.isApproved) {
         return singleFailure(createError(AUTH.ACCOUNT_NOT_APPROVED.CODE, AUTH.ACCOUNT_NOT_APPROVED.MESSAGE));
       }
+
+      /*
+        Cleared on the way through, so the allowance counts consecutive failures rather
+        than lifetime ones. Somebody who mistypes twice and then gets it right starts
+        their next visit with a full five, which is the difference between a speed bump
+        and a punishment.
+
+        After the state gates rather than before them: an account that is unverified,
+        unapproved or switched off has proved the password but still cannot sign in, and
+        an unlimited retry against those would be an unlimited password oracle.
+      */
+      await resetRateLimit('sign-in', identifier);
 
       return singleSuccess(userFromEntity(user));
     } catch (error) {

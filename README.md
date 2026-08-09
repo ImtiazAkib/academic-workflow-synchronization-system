@@ -9,9 +9,9 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
 > repository, the read-only student dashboard, the super administrator, self-registration with email
-> verification, the profile somebody edits themselves and audience-targeted notices with images are in place.
-> Polish and
-> hardening are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> verification, the profile somebody edits themselves, audience-targeted notices with images and the rate
+> limits and action audit of step 15a are in place. The polish pass — loading states, accessibility, responsive
+> and dark mode — is next; see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -124,25 +124,26 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                     | Description                                                                       |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`              | Start the dev server                                                              |
-| `npm run build`            | Production build (`output: 'standalone'`)                                         |
-| `npm run start`            | Serve the production build                                                        |
-| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier                        |
-| `npm run lint:fix`         | ESLint with `--fix`                                                               |
-| `npm run format`           | Prettier check                                                                    |
-| `npm run format:write`     | Prettier write                                                                    |
-| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`                           |
-| `npm run seed:super-admin` | Create the super administrator (see below)                                        |
-| `npm run migrate:accounts` | Backfill accounts created before step 12 with the identity fields                 |
-| `npm run verify:users`     | Exercise UserService against the database, then clean up                          |
-| `npm run verify:schedule`  | Exercise conflict detection the same way                                          |
-| `npm run verify:materials` | Exercise upload, download, delete and the access rules                            |
-| `npm run verify:student`   | Exercise semester scoping and what the directory publishes                        |
-| `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier                     |
-| `npm run verify:profile`   | Exercise self-editing and the address change that waits for a link                |
-| `npm run verify:notices`   | Exercise audience targeting and notice images — what each role is and is not sent |
+| Script                      | Description                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`               | Start the dev server                                                              |
+| `npm run build`             | Production build (`output: 'standalone'`)                                         |
+| `npm run start`             | Serve the production build                                                        |
+| `npm run lint`              | ESLint — import order, cspell, canonical classes, Prettier                        |
+| `npm run lint:fix`          | ESLint with `--fix`                                                               |
+| `npm run format`            | Prettier check                                                                    |
+| `npm run format:write`      | Prettier write                                                                    |
+| `npm run i18n:generate`     | Regenerate the locale dictionaries from `l10n/l10n.csv`                           |
+| `npm run seed:super-admin`  | Create the super administrator (see below)                                        |
+| `npm run migrate:accounts`  | Backfill accounts created before step 12 with the identity fields                 |
+| `npm run verify:users`      | Exercise UserService against the database, then clean up                          |
+| `npm run verify:schedule`   | Exercise conflict detection the same way                                          |
+| `npm run verify:materials`  | Exercise upload, download, delete and the access rules                            |
+| `npm run verify:student`    | Exercise semester scoping and what the directory publishes                        |
+| `npm run verify:accounts`   | Exercise registration, verification and sign-in by identifier                     |
+| `npm run verify:profile`    | Exercise self-editing and the address change that waits for a link                |
+| `npm run verify:notices`    | Exercise audience targeting and notice images — what each role is and is not sent |
+| `npm run verify:rate-limit` | Exercise the limiter, and that sign-in counts failures rather than attempts       |
 
 ## Project structure
 
@@ -478,6 +479,7 @@ re-uses the compiled model instead of redefining it.
 | `ClassSession` | course, teacher, room, day, start and end time, semester                             |
 | `Material`     | course, uploader, file name, MIME type, size, storage key                            |
 | `Notice`       | title, an optional body, an optional image, audience, publisher, publish date        |
+| `RateLimit`    | A hashed key, a hit count and a window, swept by a TTL index                         |
 
 Times are 24-hour `HH:mm` strings. Zero-padded, so `startTime < endTime` is a plain string comparison — and so
 is the overlap test that step 8's conflict detection runs between two sessions.
@@ -645,6 +647,22 @@ compiler package as a resolver and every `@/*` import fails to resolve.
 On Vercel the option is skipped. The platform traces and packages the output itself, and leaving
 `standalone` on makes the build fail on a missing `.next/next-server.js.nft.json` — the file the standalone
 copy step reads. Nothing else differs between the two targets.
+
+### One thing the reverse proxy has to do
+
+The rate limits on registration and the confirmation resend are keyed on the caller, read from
+`x-forwarded-for`. **On Vercel the platform sets that header itself and a client cannot override it. Behind
+PM2 it is whatever nginx was configured to send — and if nothing is configured, it is whatever the client
+typed**, which makes those two limits a formality that rotating a header defeats.
+
+```nginx
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+```
+
+The endpoints behind it are not left bare either way: registration is still bounded by email uniqueness and
+the resend by a per-account cooldown, so a bypassed caller limit falls back to the protection that was already
+there rather than to none. The sign-in and upload limits do not depend on this at all — they are keyed on the
+identifier and the session.
 
 ```bash
 npm run build:linux

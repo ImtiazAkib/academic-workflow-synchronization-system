@@ -58,6 +58,8 @@
     "pino",
     "prerenders",
     "presentationml",
+    "ratelimits",
+    "resends",
     "rulebook",
     "shadcn",
     "spreadsheetml",
