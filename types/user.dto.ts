@@ -21,6 +21,12 @@ export type UserDto = {
    */
   loginId?: string | null;
   emailVerified: boolean;
+  /**
+   * An address this account has asked to move to and not yet proven. Safe to show: it is
+   * the address its owner just typed, and the profile has to say what it is waiting on —
+   * otherwise a change that went to a mistyped address is silent.
+   */
+  pendingEmail?: string | null;
   designation?: string | null;
   roll?: string | null;
   registrationNo?: string | null;
@@ -54,6 +60,7 @@ export function userFromEntity(entity: UserEntity): UserDto {
     isActive: entity.isActive,
     loginId: entity.loginId ?? null,
     emailVerified: entity.emailVerified,
+    pendingEmail: entity.pendingEmail ?? null,
     designation: entity.designation ?? null,
     roll: entity.roll ?? null,
     registrationNo: entity.registrationNo ?? null,

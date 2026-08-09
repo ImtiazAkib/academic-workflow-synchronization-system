@@ -33,7 +33,7 @@ in a working state.
 | [10](#step-10) | Student dashboard              | Phase 5        | ✅ Done        |
 | [11](#step-11) | Roles and access control       | Phase 5        | ✅ Done        |
 | [12](#step-12) | Accounts, registration, email  | Phase 5        | ✅ Done        |
-| [13](#step-13) | Profiles                       | Phase 5        | ⬜ Not started |
+| [13](#step-13) | Profiles                       | Phase 5        | ✅ Done        |
 | [14](#step-14) | Notices & announcements        | Phase 5        | ⬜ Not started |
 | [15](#step-15) | Polish & hardening             | Phase 6        | ⬜ Not started |
 | [16](#step-16) | Testing & deployment           | Phase 6        | ⬜ Not started |
@@ -1363,7 +1363,7 @@ issued an identifier by it has to be told what it is** — they sign in with tha
 
 <a id="step-13"></a>
 
-### Step 13 — Profiles
+### Step 13 — Profiles ✅ Done
 
 **Goal.** An account somebody owns, with the fields that are actually theirs to correct.
 
@@ -1404,6 +1404,71 @@ schema.
 **Follow-on, now cheap.** Password reset by email has been in [Backlog](#backlog) only because there was no
 mail transport. Once step 12 builds one, reset is a token, two screens and a service method — worth its own
 small step rather than folding it into this one.
+
+**Result.** ✅ Rules proven and screens driven. `npm run verify:profile` runs 51 checks against the real
+database, 0 failures, every row it writes prefixed `profile-verify` and deleted afterwards. It covers the four
+editable fields, clearing an optional one, the six fields the schema silently drops, the address change that
+does not move the account, both credential shapes still resolving the old address, the link applying the
+change, replaying it, expiring it, two accounts racing for one address, and cancelling a change by re-typing
+the current address. The five earlier suites still pass unchanged — accounts 45, student 37, users 28,
+schedule 14, materials 14. Lint, format and build are green; both new routes register. 36 keys shipped with
+Bangla alongside the English — 512 in total, no fallbacks.
+
+**Verified in the browser, including the signed-in screens.** Every step from 7 onward could only report
+"rules proven, screens not", because everything behind the dashboard guard needs credentials. This one was
+driven end to end against a throwaway student seeded for the purpose and deleted afterwards: `/profile`
+renders the identifier card, the department record and the four editable fields; saving a name, phone and
+address writes them and updates the greeting in the topbar; changing the address leaves `email` untouched,
+stores `pendingEmail`, and renders the waiting notice; the confirmation link moves the account and reports the
+new address; a replayed link says "not valid" and an expired one says "expired"; `/bn/profile` renders the
+whole screen in Bangla with Latin digits intact; and signing out and returning to `/profile` redirects to
+`/bn/sign-in?next=%2Fprofile` — the guard the step exists to add.
+
+**The Bangla is machine-written and wants your eye.**
+
+**Deviations from the plan, and why.**
+
+- **A second route, `/verify-email-change`, which the deliverables did not name.** The plan says an email
+  change re-opens verification but not where the link lands. It cannot land on `/verify-email`: that screen
+  mints a login identifier for an account that has none, and one route deciding between the two jobs by
+  inspecting the token is a route that can pick wrong. It is public rather than dashboard-guarded, because the
+  link is opened from an inbox — as often on a phone that has never signed in as in the browser that asked.
+- **Three fields on the user model rather than reusing the registration token.** `pendingEmail`,
+  `pendingEmailTokenHash` and `pendingEmailExpiresAt`. Sharing `emailVerificationTokenHash` would have let a
+  registration link apply an address change and an address change re-issue an identifier.
+- **`hashToken()` moved to `lib/services/token.hash.ts`.** It was private to `AuthService`; two services now
+  mint or check tokens, and a token hashed one way and looked up another is a link that never works,
+  discovered by the person it was sent to.
+- **`UserService.getById()` was added.** The profile has to show every field the department holds, and the
+  session cookie carries five.
+- **The session cookie is re-issued on save.** Not in the plan, and the screen is visibly wrong without it —
+  the topbar greets you by the name in the token, so a rename left the old one on screen until the next
+  sign-in and read as the save having failed. The address in the re-issued cookie is taken from the stored
+  record, never the form, so an unproven change cannot reach the session.
+- **Cancelling a pending change has no button.** Re-submitting the address the account already has clears it.
+  A typo means the link went to an inbox nobody owns and will never be clicked, and putting the old address
+  back is what somebody in that position already tries.
+- **Two README corrections.** The Authentication section still said there is "no public sign-up", which step
+  12 made false, and the Models table still described `User` as five fields. Step 13 adds three more to that
+  row, so both were fixed here.
+
+**What the department still has to supply.**
+
+1. **A read of the Bangla.** 36 keys were added across this step, all machine-written.
+2. **A decision on re-sending a change link.** There is no throttle on requesting one, deliberately: unlike
+   the public resend, this endpoint needs a session and only ever mails an address the session holder just
+   typed, so refusing a correction made two minutes later would punish the common case. Rate limiting is
+   [step 15](#step-15)'s, and this is one of the endpoints it should cover.
+
+**Deliberately left as they are.**
+
+- **Password reset is still not built.** It is in [Backlog](#backlog), and this step's own follow-on note says
+  it deserves its own step. Nothing here was widened to reach it.
+- **`pendingEmail` is not unique.** Two accounts may ask for the same address; only the one who proves it
+  first gets it, and the loser is refused at the link. A unique index would let a claim nobody ever confirms
+  reserve an address forever.
+- **No migration was needed.** The three new fields are optional, and absent means "nothing pending" — unlike
+  step 12, where a renamed field left existing rows wrong.
 
 ---
 

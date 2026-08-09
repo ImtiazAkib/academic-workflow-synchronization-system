@@ -52,6 +52,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
         scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
         materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
         teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
+        profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -66,6 +67,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
           materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
           teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
+          profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
           languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
           signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
           locale={locale}

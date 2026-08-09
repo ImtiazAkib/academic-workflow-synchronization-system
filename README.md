@@ -5,11 +5,11 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–12 of 17 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–13 of 17 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
-> repository, the read-only student dashboard, the super administrator and self-registration with email
-> verification are in place. Profiles are next —
+> repository, the read-only student dashboard, the super administrator, self-registration with email
+> verification and the profile somebody edits themselves are in place. Notices and announcements are next —
 > see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
@@ -123,22 +123,24 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                     | Description                                                   |
-| -------------------------- | ------------------------------------------------------------- |
-| `npm run dev`              | Start the dev server                                          |
-| `npm run build`            | Production build (`output: 'standalone'`)                     |
-| `npm run start`            | Serve the production build                                    |
-| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier    |
-| `npm run lint:fix`         | ESLint with `--fix`                                           |
-| `npm run format`           | Prettier check                                                |
-| `npm run format:write`     | Prettier write                                                |
-| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`       |
-| `npm run seed:super-admin` | Create the super administrator (see below)                    |
-| `npm run verify:users`     | Exercise UserService against the database, then clean up      |
-| `npm run verify:schedule`  | Exercise conflict detection the same way                      |
-| `npm run verify:materials` | Exercise upload, download, delete and the access rules        |
-| `npm run verify:student`   | Exercise semester scoping and what the directory publishes    |
-| `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier |
+| Script                     | Description                                                        |
+| -------------------------- | ------------------------------------------------------------------ |
+| `npm run dev`              | Start the dev server                                               |
+| `npm run build`            | Production build (`output: 'standalone'`)                          |
+| `npm run start`            | Serve the production build                                         |
+| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier         |
+| `npm run lint:fix`         | ESLint with `--fix`                                                |
+| `npm run format`           | Prettier check                                                     |
+| `npm run format:write`     | Prettier write                                                     |
+| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`            |
+| `npm run seed:super-admin` | Create the super administrator (see below)                         |
+| `npm run migrate:accounts` | Backfill accounts created before step 12 with the identity fields  |
+| `npm run verify:users`     | Exercise UserService against the database, then clean up           |
+| `npm run verify:schedule`  | Exercise conflict detection the same way                           |
+| `npm run verify:materials` | Exercise upload, download, delete and the access rules             |
+| `npm run verify:student`   | Exercise semester scoping and what the directory publishes         |
+| `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier      |
+| `npm run verify:profile`   | Exercise self-editing and the address change that waits for a link |
 
 ## Project structure
 
@@ -146,7 +148,7 @@ import { env } from '@/env/server';
 app/
   [locale]/       layout.tsx — the document and locale, no page chrome
     (marketing)/  Landing page, catch-all, 404 — site header and footer
-    (auth)/       Sign-in, register, verify-email — logo and language selector only
+    (auth)/       Sign-in, register, verify-email, verify-email-change — logo and language selector only
     (dashboard)/  admin · teacher · student — sidebar, topbar, loading, error
                   admin/users · admin/users/new — account management
                   admin/courses · admin/courses/new — course management
@@ -154,6 +156,7 @@ app/
                   teacher/schedule — the teacher's own week
                   teacher/materials · teacher/courses — the file repository
                   student/schedule · student/materials · student/teachers — read-only
+                  profile — one route, every role, outside the role areas
   api/materials/  upload · [id]/download — route handlers, not Server Actions
     unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
@@ -164,8 +167,9 @@ components/
   admin/courses/  Courses table, semester filter, shared fields, create form, dialogs
   schedule/       Week view, filters, conflict notice, create form, edit and delete dialogs
   admin/users/    Users table, filters, create form, edit and confirm dialogs, actions
-  auth/           SignInForm and the sign-in / sign-out actions
+  auth/           Sign-in, both registration forms, both confirmation screens, their actions
   dashboard/      Sidebar, topbar, nav, sign-out button
+  profile/        Login-ID card, the department record, the four editable fields, actions
   student/        Routine, material list by course code, teacher directory — no actions.ts
   home/           Landing sections — hero, roles, features, stack, roadmap
   layout/         SiteHeader, SiteFooter
@@ -180,6 +184,7 @@ lib/
   result/         SingleResult · ListResult · EmptyResult and their factories
   schemas/        Zod schemas, {entity}-{action}.schema.ts
   services/       One class per entity — auth · user · course · class-session
+                  login-id.issuer · token.hash — the shared non-class helpers
   utils/          Every helper, barrelled — `@/lib/utils` resolves here
                   class-name (cn) · auth · error · llms · mongo · role · url · zod
   logger.ts       pino — JSON in production, pretty in development
@@ -461,13 +466,13 @@ it wrong.
 One per file in `models/`, each guarded with `mongoose.models.X ?? mongoose.model('X', schema)` so hot reload
 re-uses the compiled model instead of redefining it.
 
-| Model          | Holds                                                       |
-| -------------- | ----------------------------------------------------------- |
-| `User`         | name, email, password hash, role, approval and active flags |
-| `Course`       | code, title, semester, credits, assigned teacher            |
-| `ClassSession` | course, teacher, room, day, start and end time, semester    |
-| `Material`     | course, uploader, file name, MIME type, size, storage key   |
-| `Notice`       | title, body, audience, publisher, publish date              |
+| Model          | Holds                                                                                |
+| -------------- | ------------------------------------------------------------------------------------ |
+| `User`         | Identity, credentials, the department's record, and an address change awaiting proof |
+| `Course`       | code, title, semester, credits, assigned teacher                                     |
+| `ClassSession` | course, teacher, room, day, start and end time, semester                             |
+| `Material`     | course, uploader, file name, MIME type, size, storage key                            |
+| `Notice`       | title, body, audience, publisher, publish date                                       |
 
 Times are 24-hour `HH:mm` strings. Zero-padded, so `startTime < endTime` is a plain string comparison — and so
 is the overlap test that step 8's conflict detection runs between two sessions.
@@ -511,8 +516,10 @@ A session JWT signed with [`jose`](https://github.com/panva/jose), stored in an 
 library sits in between — the pieces are small enough that owning them costs less than working around someone
 else's abstraction, and it keeps the project free of pre-release dependencies.
 
-There is **no public sign-up**: the administrator creates every account, which is why the first one comes from
-the seed script.
+Accounts arrive two ways. Teachers and students **register themselves** (step 12) and are issued a login ID
+once they prove their address; administrators are created by the super administrator, which is why the first
+account comes from the seed script. Both routes end at the same gate — an account signs in only when its
+address is verified **and** the department has approved it.
 
 ### The pieces
 
@@ -542,6 +549,11 @@ Two things `verifySessionToken()` does that are easy to leave out:
 
 The cookie is `httpOnly` (so a scripting bug cannot lift the session), `sameSite: lax`, `secure` in
 production, and lives seven days.
+
+Because the token is self-contained, whatever is inside it goes stale until it is re-minted. Editing your own
+profile therefore re-issues the cookie, so the name greeting you in the topbar is the name you just saved. The
+address in it comes from the stored record rather than the form — an email change is not in force until its
+link is followed, and must not reach the session ahead of that.
 
 ### Refusals
 
