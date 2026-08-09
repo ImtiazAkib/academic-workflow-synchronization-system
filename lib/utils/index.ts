@@ -10,6 +10,7 @@
 export * from './class-name.utils';
 export * from './course.utils';
 export * from './auth.utils';
+export * from './caller.utils';
 export * from './error.utils';
 export * from './file-signature.utils';
 export * from './material.utils';

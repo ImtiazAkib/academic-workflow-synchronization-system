@@ -7,7 +7,7 @@ import { USER_ROLES } from '@/constants/roles.const';
 
 import { gateAdminArea, getSessionUser } from '@/lib/auth';
 import { EmptyResult, SingleResult, createError, emptyFailureWithError, singleFailure, singleFailureWithErrors } from '@/lib/result';
-import { ClassSessionCreateSchema, ClassSessionUpdateSchema, objectIdField } from '@/lib/schemas';
+import { ClassSessionCancelSchema, ClassSessionCreateSchema, ClassSessionUpdateSchema, objectIdField } from '@/lib/schemas';
 import { ClassSessionService } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
@@ -68,12 +68,11 @@ export async function updateClassSessionAction(values: unknown): Promise<SingleR
  * service, which refuses a class they are not teaching. The scope comes from the
  * session, never from the caller's arguments.
  *
- * @param classSessionId - Session to change.
- * @param isCancelled - The new state.
+ * @param values - Raw values carrying the session id and the new cancelled flag.
  *
  * @returns The updated session, or a failure.
  */
-export async function setClassSessionCancelledAction(classSessionId: unknown, isCancelled: boolean): Promise<SingleResult<ClassSessionDto>> {
+export async function setClassSessionCancelledAction(values: unknown): Promise<SingleResult<ClassSessionDto>> {
   const sessionUser = await getSessionUser();
 
   if (!sessionUser) {
@@ -84,16 +83,19 @@ export async function setClassSessionCancelledAction(classSessionId: unknown, is
     return singleFailure(createError(AUTH.NOT_AUTHORIZED.CODE, AUTH.NOT_AUTHORIZED.MESSAGE));
   }
 
-  const validation = objectIdField.safeParse(classSessionId);
+  const validation = ClassSessionCancelSchema.safeParse(values);
 
   if (!validation.success) {
     return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
   }
 
-  // Undefined for an administrator, which skips the ownership check.
-  const requestedBy = sessionUser.role === USER_ROLES.TEACHER ? sessionUser.userId : undefined;
-
-  return classSessionService.setCancelled(validation.data, isCancelled, requestedBy);
+  /*
+    The whole session goes to the service, not a pre-computed scope. This used to pass
+    `sessionUser.role === TEACHER ? userId : undefined`, and the service's check was
+    `if (requestedBy && ...)` — so the rule was disabled by omitting an argument. A
+    row-level rule that any caller can switch off by passing less is not a rule.
+  */
+  return classSessionService.setCancelled(validation.data.classSessionId, validation.data.isCancelled, sessionUser);
 }
 
 /**

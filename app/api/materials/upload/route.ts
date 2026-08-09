@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { withForbidden, withOk, withUnauthorized } from '@/lib/api';
+import { withForbidden, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
 import { getSessionUser } from '@/lib/auth';
 import { isSuccess } from '@/lib/result';
 import { MaterialUploadSchema } from '@/lib/schemas';
-import { MaterialService } from '@/lib/services';
+import { MaterialService, consumeRateLimit } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
 const materialService = new MaterialService();
@@ -28,6 +29,21 @@ export async function POST(request: NextRequest) {
   // Students read materials; they do not publish them.
   if (sessionUser.role === USER_ROLES.STUDENT) {
     return withForbidden();
+  }
+
+  /*
+    Before `formData()`, and the order is the whole point. Refusing after the body is read
+    means the bytes already crossed the wire and sat in a buffer — which is most of what
+    the limit exists to prevent. Keyed on the account rather than the caller, because this
+    endpoint requires a session: a user id is a fact the server issued, where a forwarded
+    address is a header somebody may be able to set.
+
+    The bucket these files land in is the same database that holds users, courses and the
+    timetable, so filling it does not degrade materials — it takes down every feature at
+    once.
+  */
+  if (!(await consumeRateLimit('upload', sessionUser.userId, RATE_LIMIT.UPLOAD))) {
+    return withTooManyRequests();
   }
 
   const form = await request.formData();
