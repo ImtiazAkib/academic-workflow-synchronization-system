@@ -12,7 +12,16 @@ import type { NoticeAudienceLabels, NoticeErrorLabels } from '@/lib/utils';
 export type NoticeView = {
   noticeId: string;
   title: string;
+  /** Empty when the notice is nothing but a picture. */
   body: string;
+  /**
+   * Where to fetch the picture, or null when there is none.
+   *
+   * A URL rather than the bytes, and an access-checked route rather than a public path:
+   * the route resolves the storage key behind the audience check, so the id in this URL
+   * being guessable costs nothing.
+   */
+  imageUrl: string | null;
   audience: string;
   audienceLabel: string;
   publishedOn: string;
@@ -25,14 +34,17 @@ export type NoticeFieldLabels = {
   title: string;
   body: string;
   audience: string;
+  image: string;
 };
 
 export type NoticeFieldErrorLabels = {
   titleRequired: string;
   titleTooLong: string;
-  bodyRequired: string;
+  bodyOrImageRequired: string;
   bodyTooLong: string;
   audienceInvalid: string;
+  imageTooLarge: string;
+  imageType: string;
 };
 
 /**
@@ -47,6 +59,9 @@ export type NoticeCreateFormLabels = {
   fieldErrors: NoticeFieldErrorLabels;
   audiences: NoticeAudienceOptionLabels;
   audienceHint: string;
+  imageHint: string;
+  imagePreviewAlt: string;
+  imageRemove: string;
   submit: string;
   working: string;
   cancel: string;

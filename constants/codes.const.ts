@@ -1,7 +1,7 @@
 import { COMMON_AUTH, COMMON_BUSINESS, COMMON_DATABASE, COMMON_VALIDATION } from './codes-common.const';
 import { COURSES_BUSINESS, COURSES_DATABASE, COURSES_VALIDATION } from './codes-courses.const';
 import { MATERIALS_AUTH, MATERIALS_DATABASE, MATERIALS_VALIDATION } from './codes-materials.const';
-import { NOTICES_DATABASE, NOTICES_VALIDATION } from './codes-notices.const';
+import { NOTICES_AUTH, NOTICES_DATABASE, NOTICES_VALIDATION } from './codes-notices.const';
 import { SCHEDULE_AUTH, SCHEDULE_BUSINESS, SCHEDULE_DATABASE, SCHEDULE_VALIDATION } from './codes-schedule.const';
 import { USERS_AUTH, USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './codes-users.const';
 
@@ -59,5 +59,6 @@ export const CODES = {
     USERS: USERS_AUTH, // 51xxx
     SCHEDULE: SCHEDULE_AUTH, // 53xxx
     MATERIALS: MATERIALS_AUTH, // 54xxx
+    NOTICES: NOTICES_AUTH, // 55xxx
   },
 } as const;

@@ -25,11 +25,25 @@ export const NOTICES_VALIDATION = {
   BODY_REQUIRED: createErrorDefinition(25002, 'Write something to announce.'),
   BODY_TOO_LONG: createErrorDefinition(25003, 'A notice cannot exceed 5000 characters.'),
   AUDIENCE_INVALID: createErrorDefinition(25004, 'Choose who this notice is for.'),
+  /*
+    A notice is text, a picture, or both — but not neither. Raised against the body field
+    so the message lands under the textarea, which is where somebody who announced nothing
+    is already looking.
+  */
+  BODY_OR_IMAGE_REQUIRED: createErrorDefinition(25005, 'Write an announcement, attach an image, or both.'),
+  IMAGE_TOO_LARGE: createErrorDefinition(25006, 'That image is larger than the 5 MB limit.'),
+  IMAGE_TYPE_NOT_ALLOWED: createErrorDefinition(25007, 'Attach a PNG, JPEG or WebP image.'),
+  NOTICE_NOT_FOUND: createErrorDefinition(25008, 'That notice no longer exists.'),
 } as const;
 
-/*
-  No business or authorization layer here, and their absence is the design rather than an
-  omission. Publishing is the admin area's alone, which `gateAdminArea()` already answers
-  before the service is reached; and a notice has no state to be in — it is written once,
-  addressed to a group, and read. There is nothing left for a rule to refuse.
-*/
+/**
+ * Authorization errors for Notices (55000-55999).
+ */
+export const NOTICES_AUTH = {
+  /*
+    Reading a notice image is the one place a notice's audience becomes an access rule
+    rather than a filter. The feed simply never lists a notice somebody may not see; the
+    image URL is guessable, so it has to be refused outright.
+  */
+  NOT_IN_AUDIENCE: createErrorDefinition(55000, 'That notice was not addressed to you.'),
+} as const;

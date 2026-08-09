@@ -9,7 +9,8 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
 > repository, the read-only student dashboard, the super administrator, self-registration with email
-> verification, the profile somebody edits themselves and audience-targeted notices are in place. Polish and
+> verification, the profile somebody edits themselves and audience-targeted notices with images are in place.
+> Polish and
 > hardening are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
@@ -123,25 +124,25 @@ import { env } from '@/env/server';
 
 ## Scripts
 
-| Script                     | Description                                                        |
-| -------------------------- | ------------------------------------------------------------------ |
-| `npm run dev`              | Start the dev server                                               |
-| `npm run build`            | Production build (`output: 'standalone'`)                          |
-| `npm run start`            | Serve the production build                                         |
-| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier         |
-| `npm run lint:fix`         | ESLint with `--fix`                                                |
-| `npm run format`           | Prettier check                                                     |
-| `npm run format:write`     | Prettier write                                                     |
-| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`            |
-| `npm run seed:super-admin` | Create the super administrator (see below)                         |
-| `npm run migrate:accounts` | Backfill accounts created before step 12 with the identity fields  |
-| `npm run verify:users`     | Exercise UserService against the database, then clean up           |
-| `npm run verify:schedule`  | Exercise conflict detection the same way                           |
-| `npm run verify:materials` | Exercise upload, download, delete and the access rules             |
-| `npm run verify:student`   | Exercise semester scoping and what the directory publishes         |
-| `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier      |
-| `npm run verify:profile`   | Exercise self-editing and the address change that waits for a link |
-| `npm run verify:notices`   | Exercise audience targeting — what each role is and is not sent    |
+| Script                     | Description                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`              | Start the dev server                                                              |
+| `npm run build`            | Production build (`output: 'standalone'`)                                         |
+| `npm run start`            | Serve the production build                                                        |
+| `npm run lint`             | ESLint — import order, cspell, canonical classes, Prettier                        |
+| `npm run lint:fix`         | ESLint with `--fix`                                                               |
+| `npm run format`           | Prettier check                                                                    |
+| `npm run format:write`     | Prettier write                                                                    |
+| `npm run i18n:generate`    | Regenerate the locale dictionaries from `l10n/l10n.csv`                           |
+| `npm run seed:super-admin` | Create the super administrator (see below)                                        |
+| `npm run migrate:accounts` | Backfill accounts created before step 12 with the identity fields                 |
+| `npm run verify:users`     | Exercise UserService against the database, then clean up                          |
+| `npm run verify:schedule`  | Exercise conflict detection the same way                                          |
+| `npm run verify:materials` | Exercise upload, download, delete and the access rules                            |
+| `npm run verify:student`   | Exercise semester scoping and what the directory publishes                        |
+| `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier                     |
+| `npm run verify:profile`   | Exercise self-editing and the address change that waits for a link                |
+| `npm run verify:notices`   | Exercise audience targeting and notice images — what each role is and is not sent |
 
 ## Project structure
 
@@ -160,6 +161,7 @@ app/
                   student/schedule · student/materials · student/teachers — read-only
                   profile — one route, every role, outside the role areas
   api/materials/  upload · [id]/download — route handlers, not Server Actions
+  api/notices/    publish · [id]/image — bytes go through a route handler, never an action
     unauthorized/ 403 for a signed-in visitor in the wrong area
   llms.txt/ · llms-full.txt/   Route handlers for LLM crawlers
   globals.css · global-error.tsx · robots.ts · sitemap.ts · icon.svg
@@ -171,7 +173,7 @@ components/
   admin/users/    Users table, filters, create form, edit and confirm dialogs, actions
   auth/           Sign-in, both registration forms, both confirmation screens, their actions
   dashboard/      Sidebar, topbar, nav, sign-out button, the notices feed
-  notices/        Notice card, badge, list, empty state, publish form, actions
+  notices/        Notice card, badge, list, empty state, publish form with image picker
   profile/        Login-ID card, the department record, the four editable fields, actions
   student/        Routine, material list by course code, teacher directory — no actions.ts
   home/           Landing sections — hero, roles, features, stack, roadmap
@@ -475,7 +477,7 @@ re-uses the compiled model instead of redefining it.
 | `Course`       | code, title, semester, credits, assigned teacher                                     |
 | `ClassSession` | course, teacher, room, day, start and end time, semester                             |
 | `Material`     | course, uploader, file name, MIME type, size, storage key                            |
-| `Notice`       | title, body, audience, publisher, publish date                                       |
+| `Notice`       | title, an optional body, an optional image, audience, publisher, publish date        |
 
 Times are 24-hour `HH:mm` strings. Zero-padded, so `startTime < endTime` is a plain string comparison — and so
 is the overlap test that step 8's conflict detection runs between two sessions.
