@@ -15,6 +15,7 @@ type DashboardSidebarProps = {
   scheduleLabel: string;
   materialsLabel: string;
   teachersLabel: string;
+  profileLabel: string;
 };
 
 /*
@@ -30,6 +31,7 @@ export function DashboardSidebar({
   scheduleLabel,
   materialsLabel,
   teachersLabel,
+  profileLabel,
 }: DashboardSidebarProps) {
   return (
     <aside className="bg-sidebar border-sidebar-border hidden w-60 shrink-0 flex-col gap-6 border-r p-4 lg:flex">
@@ -47,6 +49,7 @@ export function DashboardSidebar({
         scheduleLabel={scheduleLabel}
         materialsLabel={materialsLabel}
         teachersLabel={teachersLabel}
+        profileLabel={profileLabel}
         className="flex-col"
       />
     </aside>

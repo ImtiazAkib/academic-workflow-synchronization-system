@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import { User } from '@/models/user.model';
 import { UserDto, userFromEntity } from '@/types';
@@ -15,6 +15,7 @@ import { looksLikeLoginId } from '@/lib/utils';
 import type { IssuableRole } from '@/lib/utils';
 
 import { issueLoginId } from './login-id.issuer';
+import { hashToken } from './token.hash';
 
 import type { UserEntity } from '@/models/user.model';
 
@@ -176,7 +177,7 @@ export class AuthService {
     try {
       await connectToDatabase();
 
-      const user = await User.findOne({ emailVerificationTokenHash: this.hashToken(token) }).select('+emailVerificationTokenHash');
+      const user = await User.findOne({ emailVerificationTokenHash: hashToken(token) }).select('+emailVerificationTokenHash');
 
       if (!user) {
         return singleFailure(createError(VALIDATION.VERIFICATION_LINK_INVALID.CODE, VALIDATION.VERIFICATION_LINK_INVALID.MESSAGE));
@@ -214,6 +215,71 @@ export class AuthService {
       return singleSuccess({ user: userFromEntity(user), loginId });
     } catch (error) {
       log.error({ err: error }, 'Email verification failed');
+
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * Move an account onto the address it asked for, now that the address has answered.
+   *
+   * Lives here beside `verifyEmail` rather than in `UserService` with the method that
+   * started the change, because this is the same act: somebody arriving from an inbox
+   * with a token, holding no session. The link is as likely to be opened on a phone as in
+   * the browser that submitted the form, so it cannot require one.
+   *
+   * The address is re-checked against every other account at this moment and not only
+   * when it was requested. Two people may both ask for one address — nothing stops them,
+   * and nothing should, since a claim nobody confirms would otherwise reserve an address
+   * forever — so the second person to click is refused here rather than colliding with
+   * the unique index and surfacing as an unexplained failure.
+   *
+   * `emailVerified` is not touched. It was already true for anybody who could sign in and
+   * reach the profile, and this proves the new address rather than re-proving the account.
+   *
+   * @param token - Raw token from the link.
+   *
+   * @returns The account on its new address, or a failure.
+   */
+  public async confirmEmailChange(token: string): Promise<SingleResult<UserDto>> {
+    try {
+      await connectToDatabase();
+
+      const user = await User.findOne({ pendingEmailTokenHash: hashToken(token) }).select('+pendingEmailTokenHash');
+
+      if (!user || !user.pendingEmail) {
+        return singleFailure(createError(VALIDATION.VERIFICATION_LINK_INVALID.CODE, VALIDATION.VERIFICATION_LINK_INVALID.MESSAGE));
+      }
+
+      if (!user.pendingEmailExpiresAt || user.pendingEmailExpiresAt.getTime() < Date.now()) {
+        return singleFailure(createError(VALIDATION.VERIFICATION_LINK_EXPIRED.CODE, VALIDATION.VERIFICATION_LINK_EXPIRED.MESSAGE));
+      }
+
+      const taken = await User.findOne({ email: user.pendingEmail, _id: { $ne: user._id } }).lean<UserEntity | null>();
+
+      if (taken) {
+        return singleFailure(createError(VALIDATION.EMAIL_ALREADY_USED.CODE, VALIDATION.EMAIL_ALREADY_USED.MESSAGE, 'email'));
+      }
+
+      /*
+        Single-use, like the registration token: cleared as the address is written, so
+        following the link again finds nothing. A second click therefore reports an
+        invalid link rather than silently re-applying a change — which is the right answer
+        here, unlike at registration, because by then the address has already moved and
+        may have moved again since.
+      */
+      user.set({
+        email: user.pendingEmail,
+        pendingEmail: undefined,
+        pendingEmailTokenHash: undefined,
+        pendingEmailExpiresAt: undefined,
+      });
+
+      await user.save();
+
+      return singleSuccess(userFromEntity(user));
+    } catch (error) {
+      log.error({ err: error }, 'Confirming an email change failed');
 
       return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
     }
@@ -279,7 +345,7 @@ export class AuthService {
         emailVerified: false,
         isApproved: false,
         isActive: true,
-        emailVerificationTokenHash: this.hashToken(token),
+        emailVerificationTokenHash: hashToken(token),
         emailVerificationExpiresAt: new Date(Date.now() + EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000),
       });
 
@@ -342,7 +408,7 @@ export class AuthService {
       const token = randomBytes(EMAIL_VERIFICATION.TOKEN_BYTES).toString('hex');
 
       user.set({
-        emailVerificationTokenHash: this.hashToken(token),
+        emailVerificationTokenHash: hashToken(token),
         emailVerificationExpiresAt: new Date(Date.now() + EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000),
       });
 
@@ -354,10 +420,6 @@ export class AuthService {
 
       return null;
     }
-  }
-
-  private hashToken(token: string): string {
-    return createHash('sha256').update(token).digest('hex');
   }
 
   /**

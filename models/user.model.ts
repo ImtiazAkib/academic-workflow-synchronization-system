@@ -44,6 +44,26 @@ export type UserAttributes = {
    */
   emailVerificationTokenHash?: string;
   emailVerificationExpiresAt?: Date;
+  /**
+   * An address somebody has asked to move to, and has not yet proven.
+   *
+   * Held apart from `email` rather than written over it, because the address on the
+   * account is the password-recovery channel. Trusting a new one before it is proven
+   * turns a borrowed session into a permanent theft — change the address, ask for a
+   * reset, own the account. The old one keeps working, and keeps being the way back in,
+   * until the link sent to the new one is clicked.
+   *
+   * Not unique, unlike `email`. Two people may both ask for the same address; only the
+   * one who proves it first gets it, and the loser is refused at that moment rather than
+   * at this one — a claim nobody ever confirms should not reserve an address forever.
+   */
+  pendingEmail?: string;
+  /**
+   * SHA-256 of the token in the change link, never the token — the same reason
+   * `emailVerificationTokenHash` holds a hash. `select: false`, cleared once it is used.
+   */
+  pendingEmailTokenHash?: string;
+  pendingEmailExpiresAt?: Date;
   designation?: string;
   /**
    * The department's own number for a student. Data, not a login — unique among
@@ -98,6 +118,10 @@ const userSchema = new Schema<UserAttributes, UserModel, UserMethods>(
     emailVerified: { type: Boolean, required: true, default: false },
     emailVerificationTokenHash: { type: String, select: false },
     emailVerificationExpiresAt: { type: Date },
+    // Deliberately not unique — see the note on the attribute.
+    pendingEmail: { type: String, lowercase: true, trim: true, maxlength: 255 },
+    pendingEmailTokenHash: { type: String, select: false },
+    pendingEmailExpiresAt: { type: Date },
     designation: { type: String, trim: true, maxlength: 120 },
     roll: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.ROLL },
     registrationNo: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.REGISTRATION_NO },

@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, UserRound, Users } from 'lucide-react';
 
 import { Link, usePathname } from '@/l10n/navigation';
 import { UserRole } from '@/types';
@@ -19,6 +19,7 @@ type DashboardNavProps = {
   scheduleLabel: string;
   materialsLabel: string;
   teachersLabel: string;
+  profileLabel: string;
   className?: string;
 };
 
@@ -36,6 +37,7 @@ export function DashboardNav({
   scheduleLabel,
   materialsLabel,
   teachersLabel,
+  profileLabel,
   className,
 }: DashboardNavProps) {
   const pathname = usePathname();
@@ -153,6 +155,24 @@ export function DashboardNav({
           {teachersLabel}
         </Link>
       )}
+
+      {/*
+        Last, and unconditional. Every role has one profile at one route — it is the only
+        entry here that needs no test, because it is the only screen whose content is
+        decided by who is looking rather than by which area they are allowed into.
+      */}
+      <Link
+        href={ROUTES.PROFILE.HREF}
+        aria-current={pathname.startsWith(ROUTES.PROFILE.HREF) ? 'page' : undefined}
+        className={cn(
+          'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          pathname.startsWith(ROUTES.PROFILE.HREF)
+            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+        )}>
+        <UserRound className="size-4 shrink-0" />
+        {profileLabel}
+      </Link>
     </nav>
   );
 }

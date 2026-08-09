@@ -81,6 +81,57 @@ export function buildVerifyAddressMail(to: string, name: string, verifyUrl: stri
 }
 
 /**
+ * Prove an address somebody has moved to.
+ *
+ * Sent to the new address and only to it, because it is the new address that has to
+ * answer. It says which account is asking, since this arrives in an inbox that has never
+ * heard of the application before — an unexplained "confirm your address" is
+ * indistinguishable from a phishing attempt, and deserves to be ignored.
+ *
+ * The closing line is aimed at the other case: somebody who did not ask for this, whose
+ * address has been typed into a stranger's profile by mistake. Ignoring the message is
+ * genuinely enough — the change cannot happen without this link, and the account keeps
+ * running on the address it already had.
+ *
+ * @param to - The address being proven.
+ * @param name - The account holder's name.
+ * @param confirmUrl - Absolute URL carrying the token.
+ *
+ * @returns The rendered message.
+ */
+export function buildVerifyNewAddressMail(to: string, name: string, confirmUrl: string): MailMessage {
+  const safeName = escapeHtml(name);
+  const safeUrl = escapeHtml(confirmUrl);
+
+  return {
+    to,
+    subject: `Confirm your new email address — ${APP_DATA.SHORT_NAME}`,
+    text: [
+      `Hello ${name},`,
+      '',
+      `This address was given as the new email for the ${APP_DATA.SHORT_NAME} account belonging to ${name}. Confirm it to make the change:`,
+      '',
+      confirmUrl,
+      '',
+      'Until then the account keeps its previous address, and sign-in is unchanged.',
+      '',
+      'If you were not expecting this, ignore the message. Nothing changes without this link.',
+    ].join('\n'),
+    html: wrap(
+      'Confirm your new email address',
+      [
+        `<p>Hello ${safeName},</p>`,
+        `<p>This address was given as the new email for the ${APP_DATA.SHORT_NAME} account belonging to ${safeName}. Confirm it to make the change:</p>`,
+        `<p><a href="${safeUrl}" style="display:inline-block;background:#4f46e5;color:#fff;padding:0.6rem 1.1rem;border-radius:6px;text-decoration:none">Confirm my new address</a></p>`,
+        `<p style="font-size:0.85rem;color:#666c85">Or paste this into your browser:<br>${safeUrl}</p>`,
+        '<p style="font-size:0.85rem;color:#666c85">Until then the account keeps its previous address, and sign-in is unchanged.</p>',
+        '<p style="font-size:0.85rem;color:#666c85">If you were not expecting this, ignore the message. Nothing changes without this link.</p>',
+      ].join('')
+    ),
+  };
+}
+
+/**
  * The second message: here is what you sign in with.
  *
  * It has three jobs and must do all of them. Name the identifier, say plainly that it —
