@@ -5,12 +5,12 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–13 of 17 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–14 of 17 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
 > repository, the read-only student dashboard, the super administrator, self-registration with email
-> verification and the profile somebody edits themselves are in place. Notices and announcements are next —
-> see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> verification, the profile somebody edits themselves and audience-targeted notices are in place. Polish and
+> hardening are next — see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -141,6 +141,7 @@ import { env } from '@/env/server';
 | `npm run verify:student`   | Exercise semester scoping and what the directory publishes         |
 | `npm run verify:accounts`  | Exercise registration, verification and sign-in by identifier      |
 | `npm run verify:profile`   | Exercise self-editing and the address change that waits for a link |
+| `npm run verify:notices`   | Exercise audience targeting — what each role is and is not sent    |
 
 ## Project structure
 
@@ -153,6 +154,7 @@ app/
                   admin/users · admin/users/new — account management
                   admin/courses · admin/courses/new — course management
                   admin/schedule · admin/schedule/new — the timetable
+                  admin/notices · admin/notices/new — department announcements
                   teacher/schedule — the teacher's own week
                   teacher/materials · teacher/courses — the file repository
                   student/schedule · student/materials · student/teachers — read-only
@@ -168,7 +170,8 @@ components/
   schedule/       Week view, filters, conflict notice, create form, edit and delete dialogs
   admin/users/    Users table, filters, create form, edit and confirm dialogs, actions
   auth/           Sign-in, both registration forms, both confirmation screens, their actions
-  dashboard/      Sidebar, topbar, nav, sign-out button
+  dashboard/      Sidebar, topbar, nav, sign-out button, the notices feed
+  notices/        Notice card, badge, list, empty state, publish form, actions
   profile/        Login-ID card, the department record, the four editable fields, actions
   student/        Routine, material list by course code, teacher directory — no actions.ts
   home/           Landing sections — hero, roles, features, stack, roadmap
@@ -183,7 +186,7 @@ lib/
   auth/           session · session-cookie · current-user · guards
   result/         SingleResult · ListResult · EmptyResult and their factories
   schemas/        Zod schemas, {entity}-{action}.schema.ts
-  services/       One class per entity — auth · user · course · class-session
+  services/       One class per entity — auth · user · course · class-session · notice
                   login-id.issuer · token.hash — the shared non-class helpers
   utils/          Every helper, barrelled — `@/lib/utils` resolves here
                   class-name (cn) · auth · error · llms · mongo · role · url · zod

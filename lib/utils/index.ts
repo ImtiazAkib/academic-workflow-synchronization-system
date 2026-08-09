@@ -17,6 +17,7 @@ export * from './llms.utils';
 export * from './register-labels.utils';
 export * from './login-id.utils';
 export * from './mongo.utils';
+export * from './notice.utils';
 export * from './role.utils';
 export * from './schedule.utils';
 export * from './schedule-labels.utils';

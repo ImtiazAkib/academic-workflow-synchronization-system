@@ -16,6 +16,7 @@ type DashboardTopbarProps = {
   scheduleLabel: string;
   materialsLabel: string;
   teachersLabel: string;
+  noticesLabel: string;
   profileLabel: string;
   languageLabel: string;
   signOutLabel: string;
@@ -33,6 +34,7 @@ export function DashboardTopbar({
   scheduleLabel,
   materialsLabel,
   teachersLabel,
+  noticesLabel,
   profileLabel,
   languageLabel,
   signOutLabel,
@@ -73,6 +75,7 @@ export function DashboardTopbar({
           scheduleLabel={scheduleLabel}
           materialsLabel={materialsLabel}
           teachersLabel={teachersLabel}
+          noticesLabel={noticesLabel}
           profileLabel={profileLabel}
           className="border-border -mx-4 gap-1 overflow-x-auto border-t px-4 py-2 lg:hidden"
         />

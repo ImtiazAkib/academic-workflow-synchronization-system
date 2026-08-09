@@ -81,6 +81,39 @@ export class UserService {
   }
 
   /**
+   * The named accounts, in one round trip.
+   *
+   * For attributing rows to the person behind them. A notice carries a publisher's id, and
+   * a feed of twenty notices from three administrators should ask about three accounts
+   * once rather than twenty times — which is what looping `getById` over a list would do.
+   *
+   * A missing id is simply absent from the result rather than an error. The caller is
+   * labelling somebody else's row, and an account that has since been deleted is a reason
+   * to say so on that one card, not to fail the whole screen.
+   *
+   * @param userIds - Accounts to look up.
+   *
+   * @returns The accounts that exist, as DTOs.
+   */
+  public async listByIds(userIds: string[]): Promise<ListResult<UserDto>> {
+    try {
+      if (userIds.length === 0) {
+        return listSuccess([]);
+      }
+
+      await connectToDatabase();
+
+      const users = await User.find({ _id: { $in: userIds } }).lean<UserEntity[]>();
+
+      return listSuccess(users.map(userFromEntity));
+    } catch (error) {
+      log.error({ err: error }, 'Listing users by id failed');
+
+      return listFailure(createError(DATABASE.LIST_FAILED.CODE, DATABASE.LIST_FAILED.MESSAGE));
+    }
+  }
+
+  /**
    * One account, by id.
    *
    * The profile screen's read. It goes to the database rather than to the session token,
