@@ -18,8 +18,9 @@ export function LanguageSelector({ label }: LanguageSelectorProps) {
   const router = useRouter();
 
   const handleLocaleClick = (locale: AppLocale): void => {
-    // `pathname` comes back without the locale prefix, so the visitor stays on the
-    // page they were reading instead of being dropped on the home page.
+    // `pathname` comes back without the locale prefix, so the visitor stays on the page
+    // they were reading. `router.replace` switches in place — no reload — and sets the
+    // locale cookie itself, so the choice both takes effect and sticks.
     router.replace(pathname, { locale });
   };
 

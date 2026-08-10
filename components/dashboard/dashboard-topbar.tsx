@@ -1,6 +1,7 @@
 ﻿import { UserRole } from '@/types';
 
-import { LanguageSelector } from '@/components/shared';
+import { LanguageSelector, ThemeSelector } from '@/components/shared';
+import type { ThemeSelectorLabels } from '@/components/shared';
 
 import { DashboardNav } from './dashboard-nav';
 import { SignOutButton } from './sign-out-button';
@@ -19,6 +20,7 @@ type DashboardTopbarProps = {
   noticesLabel: string;
   profileLabel: string;
   languageLabel: string;
+  themeLabels: ThemeSelectorLabels;
   signOutLabel: string;
   locale: string;
 };
@@ -37,6 +39,7 @@ export function DashboardTopbar({
   noticesLabel,
   profileLabel,
   languageLabel,
+  themeLabels,
   signOutLabel,
   locale,
 }: DashboardTopbarProps) {
@@ -57,6 +60,8 @@ export function DashboardTopbar({
           </div>
 
           <div className="ms-auto flex shrink-0 items-center gap-2">
+            <ThemeSelector labels={themeLabels} />
+
             <LanguageSelector label={languageLabel} />
             <SignOutButton label={signOutLabel} locale={locale} />
           </div>

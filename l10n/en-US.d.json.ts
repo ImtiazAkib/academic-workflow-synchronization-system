@@ -555,6 +555,12 @@ declare const messages: {
   "NOTICES_ERROR_BODY_OR_IMAGE": "A notice needs an announcement, an image, or both.",
   "NOTICES_ERROR_IMAGE_TOO_LARGE": "That image is larger than the 5 MB limit.",
   "NOTICES_ERROR_IMAGE_TYPE": "That image type is not accepted. Use PNG, JPEG or WebP.",
-  "ERROR_TOO_MANY_ATTEMPTS": "Too many attempts. Wait a minute and try again."
+  "ERROR_TOO_MANY_ATTEMPTS": "Too many attempts. Wait a minute and try again.",
+  "THEME_SELECTOR_LABEL": "Theme",
+  "THEME_LIGHT": "Light",
+  "THEME_DARK": "Dark",
+  "THEME_SYSTEM": "Match my device",
+  "NOTICES_PUBLISHED_TITLE": "Published",
+  "SKIP_TO_CONTENT": "Skip to content"
 };
 export default messages;

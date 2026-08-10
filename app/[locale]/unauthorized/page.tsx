@@ -5,6 +5,8 @@ import { getTranslations } from 'next-intl/server';
 import { ROLE_HOME } from '@/constants';
 import { Link } from '@/l10n/navigation';
 
+import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
+
 import { requireSession } from '@/lib/auth';
 
 import { AppLogo, Container } from '@/components/shared';
@@ -36,7 +38,12 @@ export default async function UnauthorizedPage() {
   const l10n = await getTranslations();
 
   return (
-    <section className="flex min-h-dvh items-center">
+    /*
+      Its own `main`, because this page sits directly under the locale layout with no route
+      group above it — so it was the one screen in the app whose content lived outside every
+      landmark.
+    */
+    <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex min-h-dvh items-center">
       <Container className="flex flex-col items-center gap-6 text-center">
         <AppLogo className="size-11" />
 
@@ -50,6 +57,6 @@ export default async function UnauthorizedPage() {
           {l10n('UNAUTHORIZED_CTA')}
         </Button>
       </Container>
-    </section>
+    </main>
   );
 }

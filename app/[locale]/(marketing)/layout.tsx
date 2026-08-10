@@ -4,6 +4,8 @@ import { buildJsonLdGraph, getMessageLocale } from '@/constants';
 import { env } from '@/env/server';
 import { AppLocale } from '@/types';
 
+import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
+
 import { SiteFooter, SiteHeader } from '@/components/layout';
 import { JsonLd } from '@/components/shared';
 
@@ -34,7 +36,9 @@ export default async function MarketingLayout({ children, params }: MarketingLay
 
       <SiteHeader />
 
-      <main className="flex-1">{children}</main>
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1">
+        {children}
+      </main>
 
       <SiteFooter />
     </div>

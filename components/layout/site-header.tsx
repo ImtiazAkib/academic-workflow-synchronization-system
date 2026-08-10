@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { APP_DATA, ROUTES, SECTION_IDS } from '@/constants';
 import { Link } from '@/l10n/navigation';
 
-import { AppLogo, Container, LanguageSelector } from '@/components/shared';
+import { AppLogo, Container, LanguageSelector, ThemeSelector } from '@/components/shared';
 import { Button } from '@/components/ui';
 
 export async function SiteHeader() {
@@ -40,6 +40,15 @@ export async function SiteHeader() {
               {l10n('NAV_ROADMAP')}
             </a>
           </nav>
+
+          <ThemeSelector
+            labels={{
+              group: l10n('THEME_SELECTOR_LABEL'),
+              light: l10n('THEME_LIGHT'),
+              dark: l10n('THEME_DARK'),
+              system: l10n('THEME_SYSTEM'),
+            }}
+          />
 
           <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
 
