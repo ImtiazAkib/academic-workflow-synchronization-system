@@ -16,6 +16,8 @@ export type RegisterFormLabels = {
   sessionPlaceholder: string;
   department: string;
   semester: string;
+  showPassword: string;
+  hidePassword: string;
   submit: string;
   submitting: string;
   fieldErrors: {

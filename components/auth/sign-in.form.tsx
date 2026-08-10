@@ -13,7 +13,7 @@ import { isSuccess } from '@/lib/result';
 import { SignInInput, SignInOutput, SignInSchema } from '@/lib/schemas';
 import { SignInErrorLabels, resolveSignInErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label, Spinner } from '@/components/ui';
+import { Button, Input, Label, PasswordInput, Spinner } from '@/components/ui';
 
 import { signInAction } from './actions';
 
@@ -24,6 +24,8 @@ type SignInFormLabels = {
   identifierHint: string;
   passwordLabel: string;
   passwordRequired: string;
+  showPassword: string;
+  hidePassword: string;
   submit: string;
   submitting: string;
   errors: SignInErrorLabels;
@@ -103,7 +105,14 @@ export function SignInForm({ labels }: SignInFormProps) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="password">{labels.passwordLabel}</Label>
-        <Input id="password" type="password" autoComplete="current-password" aria-invalid={Boolean(errors.password)} {...register('password')} />
+        <PasswordInput
+          id="password"
+          autoComplete="current-password"
+          aria-invalid={Boolean(errors.password)}
+          showLabel={labels.showPassword}
+          hideLabel={labels.hidePassword}
+          {...register('password')}
+        />
         {errors.password && <p className="text-destructive text-sm">{labels.passwordRequired}</p>}
       </div>
 

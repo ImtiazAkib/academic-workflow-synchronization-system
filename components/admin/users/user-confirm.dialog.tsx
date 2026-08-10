@@ -13,6 +13,8 @@ type UserConfirmDialogProps = {
   workingLabel: string;
   isWorking: boolean;
   error: string | null;
+  /** A red confirm button for the one action that cannot be taken back — delete. */
+  destructive?: boolean;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
 };
@@ -26,7 +28,17 @@ type UserConfirmDialogProps = {
   description, because the description is looked up on the server where the row is not
   yet known.
 */
-export function UserConfirmDialog({ user, labels, cancelLabel, workingLabel, isWorking, error, onConfirm, onOpenChange }: UserConfirmDialogProps) {
+export function UserConfirmDialog({
+  user,
+  labels,
+  cancelLabel,
+  workingLabel,
+  isWorking,
+  error,
+  destructive = false,
+  onConfirm,
+  onOpenChange,
+}: UserConfirmDialogProps) {
   const handleConfirmClick = (): void => {
     onConfirm();
   };
@@ -61,7 +73,7 @@ export function UserConfirmDialog({ user, labels, cancelLabel, workingLabel, isW
             {cancelLabel}
           </Button>
 
-          <Button type="button" variant="appPrimary" disabled={isWorking} onClick={handleConfirmClick}>
+          <Button type="button" variant={destructive ? 'destructive' : 'appPrimary'} disabled={isWorking} onClick={handleConfirmClick}>
             {isWorking ? workingLabel : labels.confirm}
           </Button>
         </DialogFooter>

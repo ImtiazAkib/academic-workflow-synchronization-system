@@ -85,6 +85,8 @@ export default async function AdminUserCreatePage() {
             roleAdmin: l10n('ROLE_ADMIN_LABEL'),
             roleTeacher: l10n('ROLE_TEACHER_LABEL'),
             roleStudent: l10n('ROLE_STUDENT_LABEL'),
+            showPassword: l10n('PASSWORD_SHOW'),
+            hidePassword: l10n('PASSWORD_HIDE'),
             submit: l10n('USERS_CREATE_SUBMIT'),
             working: l10n('USERS_DIALOG_WORKING'),
             cancel: l10n('USERS_DIALOG_CANCEL'),

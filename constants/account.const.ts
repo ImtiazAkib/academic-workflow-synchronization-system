@@ -66,6 +66,19 @@ export const EMAIL_VERIFICATION = {
 } as const;
 
 /**
+ * The departments an account may belong to.
+ *
+ * One entry for now — the proposal is explicit that this is a single department — but a
+ * list rather than a bare string, so the registration and admin forms offer a dropdown
+ * instead of a free-text box that invites five spellings of the same department. Adding a
+ * second one later is a line here; the stored value is the label, so no mapping is needed
+ * and it reads the same in both languages the app ships.
+ */
+export const DEPARTMENTS = ['ICT'] as const;
+
+export type Department = (typeof DEPARTMENTS)[number];
+
+/**
  * Bounds on the departmental fields registration collects. Deliberately generous: these
  * are typed by the applicant and corrected by an administrator at approval, so the
  * schema is stopping abuse rather than enforcing a format nobody agreed on yet.

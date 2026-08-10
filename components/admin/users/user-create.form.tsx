@@ -15,7 +15,7 @@ import { isSuccess } from '@/lib/result';
 import { UserCreateInput, UserCreateOutput, UserCreateSchema } from '@/lib/schemas';
 import { resolveUserErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { Button, Input, Label, PasswordInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { createUserAction } from './actions';
 import { UserDepartmentFields } from './user-department.fields';
@@ -119,7 +119,14 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="create-password">{labels.fields.password}</Label>
-          <Input id="create-password" type="password" autoComplete="new-password" aria-invalid={Boolean(errors.password)} {...register('password')} />
+          <PasswordInput
+            id="create-password"
+            autoComplete="new-password"
+            aria-invalid={Boolean(errors.password)}
+            showLabel={labels.showPassword}
+            hideLabel={labels.hidePassword}
+            {...register('password')}
+          />
           {errors.password && <p className="text-destructive text-sm">{labels.fieldErrors.passwordTooShort}</p>}
         </div>
 
