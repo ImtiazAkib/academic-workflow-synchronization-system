@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
 import { CODES } from '@/constants/codes.const';
-import { NOTICE_AUDIENCES, NOTICE_IMAGE, NOTICE_IMAGE_EXTENSIONS, NOTICE_IMAGE_MIME_TYPES } from '@/constants/notice.const';
+import {
+  NOTICE_AUDIENCES,
+  NOTICE_CATEGORIES,
+  NOTICE_IMAGE,
+  NOTICE_IMAGE_EXTENSIONS,
+  NOTICE_IMAGE_MIME_TYPES,
+  NOTICE_MAX_SESSIONS,
+} from '@/constants/notice.const';
 
 import { encodeZodMessage } from '@/lib/utils';
 
@@ -62,6 +69,16 @@ export const NoticeCreateSchema = z
       .optional(),
 
     audience: z.enum(Object.values(NOTICE_AUDIENCES), encodeZodMessage(NOTICES.AUDIENCE_INVALID.CODE, NOTICES.AUDIENCE_INVALID.MESSAGE)),
+
+    category: z.enum(Object.values(NOTICE_CATEGORIES), encodeZodMessage(NOTICES.CATEGORY_INVALID.CODE, NOTICES.CATEGORY_INVALID.MESSAGE)),
+
+    /*
+      The intake sessions a session notice is for. Optional in shape, required by the refine
+      below only when the category calls for it — a general notice carries none, and asking
+      for one would refuse the common case. Bounded per string to the same length a student's
+      `session` holds, so the two can actually match.
+    */
+    sessions: z.array(z.string().trim().max(20)).default([]),
   })
   /*
     Text, a picture, or both — but not neither. Reported against `body`, so the message
@@ -71,6 +88,19 @@ export const NoticeCreateSchema = z
   .refine(x => Boolean(x.body) || x.image !== undefined, {
     message: encodeZodMessage(NOTICES.BODY_OR_IMAGE_REQUIRED.CODE, NOTICES.BODY_OR_IMAGE_REQUIRED.MESSAGE),
     path: ['body'],
+  })
+  /*
+    A session notice has to name at least one session, or it reaches nobody — the whole
+    point of the category is the narrowing. A general notice's sessions are ignored, so an
+    empty list there is not a fault.
+  */
+  .refine(x => x.category !== NOTICE_CATEGORIES.SESSION || x.sessions.some(session => session.length > 0), {
+    message: encodeZodMessage(NOTICES.SESSIONS_REQUIRED.CODE, NOTICES.SESSIONS_REQUIRED.MESSAGE),
+    path: ['sessions'],
+  })
+  .refine(x => x.sessions.length <= NOTICE_MAX_SESSIONS, {
+    message: encodeZodMessage(NOTICES.TOO_MANY_SESSIONS.CODE, NOTICES.TOO_MANY_SESSIONS.MESSAGE),
+    path: ['sessions'],
   });
 
 export type NoticeCreateInput = z.input<typeof NoticeCreateSchema>;

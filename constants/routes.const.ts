@@ -89,6 +89,10 @@ export const ROUTES = {
     LABEL: 'Publish a notice',
     HREF: '/admin/notices/new',
   },
+  ADMIN_UPLOADS: {
+    LABEL: 'Uploads',
+    HREF: '/admin/uploads',
+  },
   ADMIN_SCHEDULE: {
     LABEL: 'Schedule',
     HREF: '/admin/schedule',
@@ -108,6 +112,18 @@ export const ROUTES = {
   TEACHER_MATERIALS: {
     LABEL: 'Materials',
     HREF: '/teacher/materials',
+  },
+  TEACHER_NOTICES: {
+    LABEL: 'Notices',
+    HREF: '/teacher/notices',
+  },
+  TEACHER_NOTICES_NEW: {
+    LABEL: 'Publish a notice',
+    HREF: '/teacher/notices/new',
+  },
+  TEACHER_UPLOADS: {
+    LABEL: 'Uploads',
+    HREF: '/teacher/uploads',
   },
   TEACHER: {
     LABEL: 'Teacher',

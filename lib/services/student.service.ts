@@ -109,6 +109,26 @@ export class StudentService {
   }
 
   /**
+   * The intake a student belongs to, or null when none is set — for scoping their notice
+   * feed to the session notices addressed to their batch.
+   *
+   * Read from the account for the same reason the semester is: the token does not carry it,
+   * and one indexed lookup beats a value that goes stale until the next sign-in. It fails
+   * soft rather than throwing, unlike `resolveSemester` — a notice feed that cannot resolve
+   * the session simply drops the session notices, where a routine with no semester has
+   * nothing at all to show.
+   *
+   * @param studentUserId - The signed-in student.
+   *
+   * @returns Their session, or null.
+   */
+  public async resolveSession(studentUserId: string): Promise<string | null> {
+    const profile = await this.getProfile(studentUserId);
+
+    return profile.success ? (profile.result?.session ?? null) : null;
+  }
+
+  /**
    * The week's classes for one semester.
    *
    * Cancelled classes are included rather than filtered out: a class that is off for

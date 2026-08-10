@@ -32,9 +32,20 @@ export async function setSessionCookie(user: SessionUser): Promise<void> {
 
 /**
  * Sign the visitor out by removing the session cookie.
+ *
+ * Expired with the same `path` and attributes it was set under, not a bare `delete(name)`.
+ * The cookie lives at `path: '/'`; a delete that does not say so lands on the path the
+ * sign-out action ran at instead — leaving the real cookie in place, so the visitor is
+ * still signed in and `/sign-in` bounces them back to the home page.
  */
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies();
 
-  store.delete(SESSION.COOKIE.NAME);
+  store.set(SESSION.COOKIE.NAME, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: production,
+    path: '/',
+    maxAge: 0,
+  });
 }

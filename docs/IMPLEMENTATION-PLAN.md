@@ -38,6 +38,12 @@ in a working state.
 | [15a](#step-15a) | Hardening                      | Phase 6        | ✅ Done        |
 | [15b](#step-15b) | Polish                         | Phase 6        | ✅ Done        |
 | [16](#step-16)   | Testing & deployment           | Phase 6        | ⬜ Not started |
+| [17](#step-17)   | Result notices                 | —              | ⬜ Not started |
+| [18](#step-18)   | Class reps & shared notes      | —              | ⬜ Not started |
+
+Steps 17 and 18 are past the original eight-week proposal — later asks, kept here so the shape is decided
+before anyone starts. Both lean on spines this build already has: the background-job runner from the
+file-conversion work, and the per-session addressing from [step 14](#step-14)'s notices.
 
 ## Decisions
 
@@ -1833,6 +1839,81 @@ Responsive   notice card bounded three ways · break-all on two dialogs · five 
 
 **Acceptance.** A clean clone reaches a running production build with only `.env.local` supplied; every smoke
 test passes against it.
+
+---
+
+<a id="step-17"></a>
+
+### Step 17 — Result notices
+
+**Goal.** A results kind of notice that lands on each targeted student's own results page, and nowhere else.
+
+**Why it is its own step.** Step 14's notices are read the same by everyone they reach. A result is the
+opposite — one row per student, and a student must see theirs and no one else's. That is a data model and an
+access rule, not a third audience on the notice card, so it earns its own step rather than a fourth category
+bolted onto the publish form.
+
+**Scope.**
+
+- A `result` notice category beside `general` and `session`. It carries two inputs a session notice does not:
+  the **session(s)** it is for, and a **result title** — "Semester Final 2024", the heading the students see it
+  under.
+- A **downloadable sample sheet** (CSV, and an `.xlsx` mirror) that shows the columns a publisher fills — roll
+  or registration number to match a student on, then the mark or grade columns — so the upload has a shape
+  agreed in advance rather than guessed at parse time.
+- The uploaded sheet is **processed in the background**, on the same job spine the file-conversion work
+  introduces: parsed row by row into per-student `Result` records, each matched to a student of the named
+  session by roll/registration number. A row that matches nobody is collected and reported, not silently
+  dropped.
+- A new **results page** in the student area. A student sees the results published to their session, each
+  showing only their own row — resolved from the session token's account, never from a query parameter, the
+  same way the routine and materials are scoped.
+
+**New surface.** A `Result` model (student, session, title, values, publishedAt); a sheet parser (a new
+dependency — `xlsx` or a CSV reader — is the one real addition); a `ResultService` with a background import;
+a `/student/results` route and page; a publish flow that reuses the notice form's session picker plus the
+title field and the file upload.
+
+**Acceptance.** An administrator uploads a result sheet against a session and a title; once the job finishes,
+every student of that session sees their own result under that title and no other student's; a malformed or
+unmatched sheet finishes as **failed with a reason** and imports nothing, rather than half a class's marks.
+
+---
+
+<a id="step-18"></a>
+
+### Step 18 — Class representatives and shared notes
+
+**Goal.** Each session elects up to two class representatives by a vote of its own students, and those
+representatives curate a shelf of notes the session can read.
+
+**Why it is its own step.** It introduces the first student _write_ path in the app — every student surface so
+far is read-only by design (see `StudentService`). A student uploading a file, and another student vetting it,
+is a new trust boundary, so the safety of what gets stored and served is the substance of the step rather than
+a footnote to it.
+
+**Scope.**
+
+- A **poll** per session in which **only that session's students may vote**, electing at most **two** class
+  representatives. Membership in the vote is checked against the account's session, the same gate the session
+  notices use; the two-CR ceiling is enforced where it is counted, not by the screen.
+- A new **Notes** section, visible only to a session's own students. A note is an **image, plain text, or a
+  PDF**, uploaded by a student or a CR of that session.
+- A **verification gate**: an uploaded note is held out of sight until a **CR of that session approves it**. On
+  approval it becomes visible to the session; otherwise it is **deleted, bytes and all** — the compensating
+  delete the material and notice uploads already do, made the normal path rather than the error one.
+- An **extensive safety check before anything is stored or served**, because these bytes come from students
+  rather than staff: the magic-number type check materials and notices already run, a size and type allow-list,
+  and — for a PDF, which is served to be opened — the same inline-serving caution notice images take, so a
+  script-bearing file cannot execute on a page a session loads with its session cookie attached.
+
+**New surface.** A `Poll`/`Vote` shape and a CR assignment (at most two per session); a `Note` model (session,
+uploader, kind, storageKey, an approval state); a `/student/notes` route and page; a CR-only approval action;
+and the upload safety pipeline, which is where most of the step's care goes.
+
+**Acceptance.** Only a session's students can open its poll or its notes; a note stays invisible until a CR of
+that session approves it; a rejected note leaves no bytes in storage; and a file that fails the safety check is
+refused before it is ever written, not cleaned up after.
 
 ---
 

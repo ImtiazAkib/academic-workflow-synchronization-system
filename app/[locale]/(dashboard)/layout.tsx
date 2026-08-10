@@ -9,6 +9,7 @@ import { requireSession } from '@/lib/auth';
 import { resolveRoleLabel } from '@/lib/utils';
 
 import { DashboardSidebar, DashboardTopbar } from '@/components/dashboard';
+import { DialogLabelsProvider } from '@/components/ui';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -44,25 +45,16 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   const l10n = await getTranslations();
 
   return (
-    <div className="flex min-h-dvh flex-col lg:flex-row">
-      <DashboardSidebar
-        role={sessionUser.role}
-        navLabel={l10n('DASHBOARD_NAV_LABEL')}
-        overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
-        usersLabel={l10n('DASHBOARD_NAV_USERS')}
-        coursesLabel={l10n('DASHBOARD_NAV_COURSES')}
-        scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
-        materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
-        teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
-        noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
-        profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <DashboardTopbar
+    /*
+      One provider for the whole dashboard, so every confirm and edit dialog's close button
+      gets its label without each of the seven of them taking a prop for it. The value
+      crosses from here — a server component — into the client context once.
+    */
+    <DialogLabelsProvider close={l10n('DIALOG_CLOSE')}>
+      <div className="flex min-h-dvh flex-col lg:flex-row">
+        <DashboardSidebar
           role={sessionUser.role}
-          roleLabel={resolveRoleLabel(sessionUser.role, l10n)}
-          welcome={l10n('DASHBOARD_WELCOME', { name: sessionUser.name })}
+          logoLabel={l10n('APP_LOGO_ALT')}
           navLabel={l10n('DASHBOARD_NAV_LABEL')}
           overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
           usersLabel={l10n('DASHBOARD_NAV_USERS')}
@@ -71,28 +63,48 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
           teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
           noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
+          uploadsLabel={l10n('DASHBOARD_NAV_UPLOADS')}
           profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
-          languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
-          themeLabels={{
-            group: l10n('THEME_SELECTOR_LABEL'),
-            light: l10n('THEME_LIGHT'),
-            dark: l10n('THEME_DARK'),
-            system: l10n('THEME_SYSTEM'),
-          }}
-          signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
-          locale={locale}
         />
 
-        <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 p-4 lg:p-8">
-          {children}
-        </main>
-      </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <DashboardTopbar
+            role={sessionUser.role}
+            roleLabel={resolveRoleLabel(sessionUser.role, l10n)}
+            welcome={l10n('DASHBOARD_WELCOME', { name: sessionUser.name })}
+            navLabel={l10n('DASHBOARD_NAV_LABEL')}
+            overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
+            usersLabel={l10n('DASHBOARD_NAV_USERS')}
+            coursesLabel={l10n('DASHBOARD_NAV_COURSES')}
+            scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
+            materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
+            teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
+            noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
+            uploadsLabel={l10n('DASHBOARD_NAV_UPLOADS')}
+            profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
+            languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
+            themeLabels={{
+              group: l10n('THEME_SELECTOR_LABEL'),
+              light: l10n('THEME_LIGHT'),
+              dark: l10n('THEME_DARK'),
+              system: l10n('THEME_SYSTEM'),
+            }}
+            signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
+            signOutWorkingLabel={l10n('DASHBOARD_SIGNING_OUT')}
+            locale={locale}
+          />
 
-      {/*
-        Mounted once for the whole dashboard rather than per screen, so an action can
-        confirm itself from anywhere underneath without each page wiring up its own.
-      */}
-      <Toaster position="top-right" richColors closeButton />
-    </div>
+          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 p-4 lg:p-8">
+            {children}
+          </main>
+        </div>
+
+        {/*
+          Mounted once for the whole dashboard rather than per screen, so an action can
+          confirm itself from anywhere underneath without each page wiring up its own.
+        */}
+        <Toaster position="top-right" richColors closeButton />
+      </div>
+    </DialogLabelsProvider>
   );
 }

@@ -14,7 +14,7 @@ export async function SiteFooter() {
     <footer className="border-border border-t">
       <Container className="flex flex-col gap-6 py-10 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <AppLogo className="size-9" />
+          <AppLogo label={l10n('APP_LOGO_ALT')} className="size-9" />
 
           <div className="flex flex-col">
             <span className="font-heading text-regular-bold tracking-tight">{APP_DATA.SHORT_NAME}</span>

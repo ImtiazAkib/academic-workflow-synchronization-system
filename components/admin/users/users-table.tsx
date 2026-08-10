@@ -13,9 +13,10 @@ type UsersTableProps = {
   onEdit: (user: UserDto) => void;
   onApproval: (user: UserDto) => void;
   onActivation: (user: UserDto) => void;
+  onDelete: (user: UserDto) => void;
 };
 
-export function UsersTable({ users, labels, viewer, onEdit, onApproval, onActivation }: UsersTableProps) {
+export function UsersTable({ users, labels, viewer, onEdit, onApproval, onActivation, onDelete }: UsersTableProps) {
   return (
     /*
       The wrapper scrolls and the table refuses to go below its natural width. Without
@@ -44,6 +45,7 @@ export function UsersTable({ users, labels, viewer, onEdit, onApproval, onActiva
               onEdit={onEdit}
               onApproval={onApproval}
               onActivation={onActivation}
+              onDelete={onDelete}
             />
           ))}
         </TableBody>

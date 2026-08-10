@@ -42,7 +42,7 @@ export default async function SignInPage({ params }: SignInPageProps) {
       <Container className="flex justify-center">
         <div className="surface-card flex w-full max-w-md flex-col gap-6 p-8">
           <div className="flex flex-col items-center gap-3 text-center">
-            <AppLogo className="size-11" />
+            <AppLogo label={l10n('APP_LOGO_ALT')} className="size-11" />
             <h1 className="text-2xl sm:text-3xl">{l10n('SIGN_IN_TITLE')}</h1>
             <p className="text-muted-foreground text-sm">{l10n('SIGN_IN_SUBTITLE')}</p>
           </div>
@@ -55,6 +55,8 @@ export default async function SignInPage({ params }: SignInPageProps) {
               identifierHint: l10n('SIGN_IN_IDENTIFIER_HINT'),
               passwordLabel: l10n('SIGN_IN_PASSWORD_LABEL'),
               passwordRequired: l10n('SIGN_IN_PASSWORD_REQUIRED'),
+              showPassword: l10n('PASSWORD_SHOW'),
+              hidePassword: l10n('PASSWORD_HIDE'),
               submit: l10n('SIGN_IN_SUBMIT'),
               submitting: l10n('SIGN_IN_SUBMITTING'),
               errors: {

@@ -4,6 +4,7 @@ import { MaterialDto, SessionUser, materialFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
+import { FILE_CONVERSION_TARGET } from '@/constants/storage.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
@@ -24,6 +25,9 @@ import { storage } from '@/lib/storage';
 import type { StoredFileStream } from '@/lib/storage';
 import { fileMatchesDeclaredType, toId } from '@/lib/utils';
 
+import { ConversionService } from './conversion.service';
+import { hasStorageRoomFor } from './storage.guard';
+
 import type { CourseEntity } from '@/models/course.model';
 import type { MaterialAttributes, MaterialEntity } from '@/models/material.model';
 import type { QueryFilter } from 'mongoose';
@@ -33,6 +37,9 @@ const log = createLoggerWithContext('material.service');
 const DATABASE = CODES.DATABASE.MATERIALS;
 const VALIDATION = CODES.VALIDATION.MATERIALS;
 const AUTH = CODES.AUTH.MATERIALS;
+const BUSINESS = CODES.BUSINESS.COMMON;
+
+const conversions = new ConversionService();
 
 export class MaterialService {
   /**
@@ -98,6 +105,16 @@ export class MaterialService {
         return singleFailure(createError(VALIDATION.FILE_TYPE_NOT_ALLOWED.CODE, VALIDATION.FILE_TYPE_NOT_ALLOWED.MESSAGE, 'file'));
       }
 
+      /*
+        The exact room check, now that the size is finally known. The route already turned
+        the request away if the bucket was over the line before it arrived; this catches the
+        file that is itself the one to tip it over. Kept here beside the type and ownership
+        checks so a request that reaches the service another way cannot skip it.
+      */
+      if (!(await hasStorageRoomFor(input.file.size))) {
+        return singleFailure(createError(BUSINESS.STORAGE_FULL.CODE, BUSINESS.STORAGE_FULL.MESSAGE, 'file'));
+      }
+
       const stored = await storage.save(input.file);
 
       try {
@@ -110,6 +127,15 @@ export class MaterialService {
           size: stored.size,
           storageKey: stored.storageKey,
         });
+
+        /*
+          The file is stored raw and the row points at it; compressing it is booked to run
+          after the response so the upload does not wait. The job swaps the row to the
+          smaller file once it finishes — and if it fails, the raw file still serves.
+        */
+        const jobId = await conversions.enqueue(FILE_CONVERSION_TARGET.MATERIAL, toId(created._id), stored.fileName, stored.size, uploader.userId);
+
+        conversions.schedule(jobId);
 
         return singleSuccess(materialFromEntity(created));
       } catch (error) {

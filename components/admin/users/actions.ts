@@ -3,8 +3,8 @@
 import { UserDto } from '@/types';
 
 import { gateAdminArea } from '@/lib/auth';
-import { SingleResult, singleFailureWithErrors } from '@/lib/result';
-import { UserActivateSchema, UserApproveSchema, UserCreateSchema, UserUpdateSchema } from '@/lib/schemas';
+import { EmptyResult, SingleResult, emptyFailureWithErrors, singleFailureWithErrors } from '@/lib/result';
+import { UserActivateSchema, UserApproveSchema, UserCreateSchema, UserDeleteSchema, UserUpdateSchema } from '@/lib/schemas';
 import { UserService } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
@@ -102,4 +102,31 @@ export async function deactivateUserAction(values: unknown): Promise<SingleResul
   }
 
   return userService.setActive(validation.data, gate.requester);
+}
+
+/**
+ * Delete an account and everything it owns.
+ *
+ * Irreversible, and the cascade is the reason: the account's materials, notices and class
+ * sessions go with it. Who may do this, and to whom, is the service's decision — this only
+ * admits the caller to the area and validates the id.
+ *
+ * @param values - Raw values carrying the account id.
+ *
+ * @returns Empty success, or a failure carrying the reason's code.
+ */
+export async function deleteUserAction(values: unknown): Promise<EmptyResult> {
+  const gate = await gateAdminArea<UserDto>();
+
+  if (!gate.allowed) {
+    return emptyFailureWithErrors(gate.refusal.errors);
+  }
+
+  const validation = UserDeleteSchema.safeParse(values);
+
+  if (!validation.success) {
+    return emptyFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
+  }
+
+  return userService.delete(validation.data.userId, gate.requester);
 }

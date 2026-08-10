@@ -1,11 +1,13 @@
 'use client';
 
+import { useTransition } from 'react';
+
 import { parseAsString, useQueryStates } from 'nuqs';
 
 import { SEMESTER } from '@/constants/schedule.const';
 import { FILTER_ALL } from '@/constants/users.const';
 
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner } from '@/components/ui';
 
 import type { CoursesLabels } from './courses.types';
 
@@ -19,7 +21,13 @@ type CoursesFiltersProps = {
   change reaches the server component, which re-runs the query.
 */
 export function CoursesFilters({ labels }: CoursesFiltersProps) {
-  const [filters, setFilters] = useQueryStates({ semester: parseAsString.withDefault(FILTER_ALL) }, { shallow: false, clearOnDefault: true });
+  // Passed to nuqs so `isPending` follows the `shallow: false` server re-query.
+  const [isPending, startTransition] = useTransition();
+
+  const [filters, setFilters] = useQueryStates(
+    { semester: parseAsString.withDefault(FILTER_ALL) },
+    { shallow: false, clearOnDefault: true, startTransition }
+  );
 
   const semesterItems: Record<string, string> = { [FILTER_ALL]: labels.all };
 
@@ -36,9 +44,12 @@ export function CoursesFilters({ labels }: CoursesFiltersProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div aria-busy={isPending} className="flex flex-wrap items-end gap-3">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="courses-semester">{labels.semesterFilter}</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="courses-semester">{labels.semesterFilter}</Label>
+          {isPending && <Spinner className="text-muted-foreground size-3.5" />}
+        </div>
         <Select items={semesterItems} value={filters.semester} onValueChange={handleSemesterChange}>
           <SelectTrigger id="courses-semester" className="w-full sm:w-44">
             <SelectValue />

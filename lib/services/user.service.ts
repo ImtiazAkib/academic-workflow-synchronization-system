@@ -1,5 +1,9 @@
 import { randomBytes } from 'node:crypto';
 
+import { ClassSession } from '@/models/class-session.model';
+import { Course } from '@/models/course.model';
+import { Material } from '@/models/material.model';
+import { Notice } from '@/models/notice.model';
 import { User } from '@/models/user.model';
 import { SessionUser, UserDto, UserFilters, UserRole, userFromEntity } from '@/types';
 
@@ -10,8 +14,20 @@ import { FILTER_ALL, USER_STATUS_FILTERS } from '@/constants/users.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
-import { ListResult, SingleResult, createError, listFailure, listSuccess, singleFailure, singleSuccess } from '@/lib/result';
+import {
+  EmptyResult,
+  ListResult,
+  SingleResult,
+  createError,
+  emptyFailureWithError,
+  emptySuccess,
+  listFailure,
+  listSuccess,
+  singleFailure,
+  singleSuccess,
+} from '@/lib/result';
 import type { ProfileUpdateOutput, UserActivateOutput, UserApproveOutput, UserCreateOutput, UserUpdateOutput } from '@/lib/schemas';
+import { storage } from '@/lib/storage';
 import { escapeRegExp, isIssuableRole, toId } from '@/lib/utils';
 
 import { issueLoginId } from './login-id.issuer';
@@ -110,6 +126,31 @@ export class UserService {
       log.error({ err: error }, 'Listing users by id failed');
 
       return listFailure(createError(DATABASE.LIST_FAILED.CODE, DATABASE.LIST_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * The distinct intake sessions the students belong to, sorted.
+   *
+   * The source for the session-notice picker: rather than typing a batch and risking
+   * `2021-22` on one notice and `2021-2022` on the next, a publisher chooses from the
+   * intakes that actually exist. Blank and absent sessions are excluded — an account whose
+   * session was never set is not an intake anybody addresses.
+   *
+   * @returns The sessions in use, alphabetically.
+   */
+  public async listStudentSessions(): Promise<string[]> {
+    try {
+      await connectToDatabase();
+
+      const sessions = await User.distinct('session', { role: USER_ROLES.STUDENT, session: { $nin: [null, ''] } });
+
+      return (sessions as string[]).filter(Boolean).sort();
+    } catch (error) {
+      log.error({ err: error }, 'Listing student sessions failed');
+
+      // Fail soft: the picker shows no sessions rather than the screen failing to render.
+      return [];
     }
   }
 
@@ -445,6 +486,92 @@ export class UserService {
    */
   public async setActive(input: UserActivateOutput, requester: SessionUser): Promise<SingleResult<UserDto>> {
     return this.applyStateChange(input.userId, { isActive: input.isActive }, requester);
+  }
+
+  /**
+   * Delete an account and everything it owns.
+   *
+   * The opposite of deactivation, and offered alongside it rather than in its place: a
+   * departed teacher whose row is only switched off still fills the account list and still
+   * holds a login ID, and sometimes the department wants the record gone. This is that,
+   * and it is irreversible, so the guard is the same one every mutation goes through —
+   * the seeded super administrator is untouchable, an administrator is the super
+   * administrator's alone, and nobody deletes their own account.
+   *
+   * The cascade is deliberate and its scope is what the confirm dialog warns about: the
+   * account's own content is removed with its bytes — materials, notices, the class
+   * sessions it teaches — so nothing is left in storage pointing at a row that no longer
+   * exists. Courses are the exception: they are department assets a teacher was merely
+   * assigned, so they are unassigned rather than deleted, and outlive whoever taught them.
+   *
+   * @param userId - The account to delete.
+   * @param requester - The signed-in account making the request.
+   *
+   * @returns Empty success, or a failure.
+   */
+  public async delete(userId: string, requester: SessionUser): Promise<EmptyResult> {
+    try {
+      await connectToDatabase();
+
+      const target = await User.findById(userId).lean<UserEntity | null>();
+
+      if (!target) {
+        return emptyFailureWithError(createError(VALIDATION.USER_NOT_FOUND.CODE, VALIDATION.USER_NOT_FOUND.MESSAGE));
+      }
+
+      if (target.role === USER_ROLES.SUPER_ADMIN) {
+        return emptyFailureWithError(createError(BUSINESS.SUPER_ADMIN_IS_IMMUTABLE.CODE, BUSINESS.SUPER_ADMIN_IS_IMMUTABLE.MESSAGE));
+      }
+
+      if (target.role === USER_ROLES.ADMIN && requester.role !== USER_ROLES.SUPER_ADMIN) {
+        return emptyFailureWithError(createError(AUTH.ADMIN_MANAGED_BY_SUPER_ADMIN.CODE, AUTH.ADMIN_MANAGED_BY_SUPER_ADMIN.MESSAGE));
+      }
+
+      // Deleting yourself is the access half of "nobody changes their own access", made permanent.
+      if (toId(target._id) === requester.userId) {
+        return emptyFailureWithError(createError(BUSINESS.CANNOT_CHANGE_OWN_ACCESS.CODE, BUSINESS.CANNOT_CHANGE_OWN_ACCESS.MESSAGE));
+      }
+
+      await this.purgeOwnedContent(userId);
+
+      // Department assets, not the teacher's — handed back rather than destroyed.
+      await Course.updateMany({ assignedTeacher: userId }, { $unset: { assignedTeacher: '' } });
+
+      // The row last, so a cascade interrupted midway leaves the account present to retry against.
+      await User.findByIdAndDelete(userId);
+
+      return emptySuccess();
+    } catch (error) {
+      log.error({ err: error }, 'Deleting a user failed');
+
+      return emptyFailureWithError(createError(DATABASE.DELETE_FAILED.CODE, DATABASE.DELETE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * Remove the content an account owns, bytes and all.
+   *
+   * Rows are read for their storage keys before they are deleted, then the bytes behind
+   * them are released — the same row-then-bytes discipline `MaterialService` and
+   * `NoticeService` keep for a single item, done here in bulk. A key that is already gone
+   * is not an error, so a half-finished previous attempt does not block a retry.
+   *
+   * @param userId - The account whose content is being removed.
+   */
+  private async purgeOwnedContent(userId: string): Promise<void> {
+    // Class sessions name their teacher directly; a student has none, so this is simply empty for them.
+    await ClassSession.deleteMany({ teacher: userId });
+
+    const materials = await Material.find({ uploadedBy: userId }).lean<{ storageKey: string }[]>();
+
+    await Material.deleteMany({ uploadedBy: userId });
+    await Promise.all(materials.map(x => storage.remove(x.storageKey)));
+
+    const notices = await Notice.find({ publishedBy: userId }).lean<{ image?: { storageKey: string } }[]>();
+
+    await Notice.deleteMany({ publishedBy: userId });
+    // `flatMap` narrows `image` inside the guard, where a filter-then-map would not.
+    await Promise.all(notices.flatMap(x => (x.image ? [storage.remove(x.image.storageKey)] : [])));
   }
 
   /**

@@ -39,6 +39,13 @@ export const COMMON_BUSINESS = {
     tuned.
   */
   TOO_MANY_REQUESTS: createErrorDefinition(30002, 'Too many attempts. Wait a moment and try again.'),
+
+  /*
+    Shared by materials and notices because both spend the same bucket: the request is
+    valid and the caller is allowed to make it, there is simply no room left to hold what
+    it carries. A cross-cutting refusal, so it lives here rather than under either feature.
+  */
+  STORAGE_FULL: createErrorDefinition(30003, 'Storage is full. This file cannot be saved right now.'),
 } as const;
 
 /**

@@ -4,7 +4,7 @@ import { Notice } from '@/models/notice.model';
 import { User } from '@/models/user.model';
 
 import { CODES } from '@/constants/codes.const';
-import { NOTICE_AUDIENCES, NOTICE_IMAGE } from '@/constants/notice.const';
+import { NOTICE_AUDIENCES, NOTICE_CATEGORIES, NOTICE_IMAGE } from '@/constants/notice.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
 import { connectToDatabase } from '@/lib/mongodb';
@@ -101,7 +101,10 @@ async function seedUser(role: UserRole, name: string): Promise<SessionUser> {
 async function publish(audience: NoticeAudience, requester: SessionUser): Promise<string> {
   const title = `${TEMP} for ${audience}`;
 
-  const result = await notices.create(NoticeCreateSchema.parse({ title, body: `Body of the ${audience} notice.`, audience }), requester);
+  const result = await notices.create(
+    NoticeCreateSchema.parse({ title, body: `Body of the ${audience} notice.`, audience, category: NOTICE_CATEGORIES.GENERAL }),
+    requester
+  );
 
   if (!result.success) {
     throw new Error(`could not publish the ${audience} notice: ${JSON.stringify(result.errors)}`);
@@ -201,25 +204,40 @@ async function run(): Promise<void> {
 
   check('the newest notice is first', seeded[0]?.title === forStudents, seeded.map(x => x.title).join(' | '));
 
-  const limited = await notices.listForRole(USER_ROLES.ADMIN, 1);
+  const limited = await notices.listForRole(USER_ROLES.ADMIN, null, 1);
 
   check('a limit is applied', limited.result.length === 1, String(limited.result.length));
 
-  const unlimited = await notices.listForRole(USER_ROLES.ADMIN, null);
+  const unlimited = await notices.listForRole(USER_ROLES.ADMIN, null, null);
 
   check('and null means every one of them', unlimited.result.length >= 3, String(unlimited.result.length));
 
   console.log('\n6. what the schema refuses');
 
-  const blankTitle = NoticeCreateSchema.safeParse({ title: '   ', body: 'Something', audience: NOTICE_AUDIENCES.ALL });
+  const blankTitle = NoticeCreateSchema.safeParse({
+    title: '   ',
+    body: 'Something',
+    audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
+  });
 
   check('a blank title is refused', !blankTitle.success);
 
-  const blankBody = NoticeCreateSchema.safeParse({ title: 'Something', body: '', audience: NOTICE_AUDIENCES.ALL });
+  const blankBody = NoticeCreateSchema.safeParse({
+    title: 'Something',
+    body: '',
+    audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
+  });
 
   check('an empty announcement is refused', !blankBody.success);
 
-  const strangeAudience = NoticeCreateSchema.safeParse({ title: 'Something', body: 'Something', audience: 'parents' });
+  const strangeAudience = NoticeCreateSchema.safeParse({
+    title: 'Something',
+    body: 'Something',
+    audience: 'parents',
+    category: NOTICE_CATEGORIES.GENERAL,
+  });
 
   check('an audience nobody defined is refused', !strangeAudience.success);
   check(
@@ -236,6 +254,7 @@ async function run(): Promise<void> {
     title: `${TEMP} impersonation attempt`,
     body: 'Published by somebody else, allegedly.',
     audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
     publishedBy: student.userId,
     publishedAt: new Date('2000-01-01'),
   } as never);
@@ -253,7 +272,13 @@ async function run(): Promise<void> {
   console.log('\n7. a picture, words, or both');
 
   const withImage = await notices.create(
-    NoticeCreateSchema.parse({ title: `${TEMP} with a picture`, body: 'Both halves.', audience: NOTICE_AUDIENCES.ALL, image: pngFile() }),
+    NoticeCreateSchema.parse({
+      title: `${TEMP} with a picture`,
+      body: 'Both halves.',
+      audience: NOTICE_AUDIENCES.ALL,
+      category: NOTICE_CATEGORIES.GENERAL,
+      image: pngFile(),
+    }),
     admin
   );
 
@@ -261,7 +286,12 @@ async function run(): Promise<void> {
   check('and reports that it has one', withImage.result?.hasImage === true);
 
   const imageOnly = await notices.create(
-    NoticeCreateSchema.parse({ title: `${TEMP} picture only`, audience: NOTICE_AUDIENCES.STUDENTS, image: pngFile('routine.png') }),
+    NoticeCreateSchema.parse({
+      title: `${TEMP} picture only`,
+      audience: NOTICE_AUDIENCES.STUDENTS,
+      category: NOTICE_CATEGORIES.GENERAL,
+      image: pngFile('routine.png'),
+    }),
     admin
   );
 
@@ -269,14 +299,24 @@ async function run(): Promise<void> {
   check('and its body reads as empty', imageOnly.result?.body === '');
 
   const textOnly = await notices.create(
-    NoticeCreateSchema.parse({ title: `${TEMP} words only`, body: 'No picture here.', audience: NOTICE_AUDIENCES.ALL }),
+    NoticeCreateSchema.parse({
+      title: `${TEMP} words only`,
+      body: 'No picture here.',
+      audience: NOTICE_AUDIENCES.ALL,
+      category: NOTICE_CATEGORIES.GENERAL,
+    }),
     admin
   );
 
   check('words with no picture are still a notice', textOnly.success, JSON.stringify(textOnly.errors));
   check('and it reports no image', textOnly.result?.hasImage === false);
 
-  const neither = NoticeCreateSchema.safeParse({ title: `${TEMP} nothing`, body: '', audience: NOTICE_AUDIENCES.ALL });
+  const neither = NoticeCreateSchema.safeParse({
+    title: `${TEMP} nothing`,
+    body: '',
+    audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
+  });
 
   check('neither words nor picture is refused', !neither.success);
   check(
@@ -304,6 +344,7 @@ async function run(): Promise<void> {
   const tooBig = NoticeCreateSchema.safeParse({
     title: `${TEMP} huge`,
     audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
     image: new File([new Uint8Array(NOTICE_IMAGE.MAX_SIZE_BYTES + 1) as BlobPart], 'huge.png', { type: 'image/png' }),
   });
 
@@ -317,6 +358,7 @@ async function run(): Promise<void> {
   const wrongType = NoticeCreateSchema.safeParse({
     title: `${TEMP} pdf`,
     audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
     image: new File([PNG_BYTES as BlobPart], 'circular.pdf', { type: 'application/pdf' }),
   });
 
@@ -329,6 +371,7 @@ async function run(): Promise<void> {
   const svg = NoticeCreateSchema.safeParse({
     title: `${TEMP} svg`,
     audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
     image: new File(['<svg></svg>' as BlobPart], 'logo.svg', { type: 'image/svg+xml' }),
   });
 
@@ -341,6 +384,7 @@ async function run(): Promise<void> {
   const mislabelled = NoticeCreateSchema.safeParse({
     title: `${TEMP} mislabelled`,
     audience: NOTICE_AUDIENCES.ALL,
+    category: NOTICE_CATEGORIES.GENERAL,
     image: new File(['MZ this is not a picture' as BlobPart], 'payload.png', { type: 'image/png' }),
   });
 

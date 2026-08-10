@@ -4,21 +4,21 @@ import { cn } from '@/lib/utils';
 
 type AppLogoProps = {
   className?: string;
+  /**
+   * The accessible name for the mark. Passed in so a server component can localize it —
+   * the SVG stays a server component, and the untranslated `APP_DATA` value is only the
+   * fallback for a call site that has no translator to hand.
+   */
+  label?: string;
 };
 
 /*
   Drawn inline rather than shipped as an image file, so the mark stays crisp at every
   size and the app has no binary dependency. `app/icon.svg` is the same artwork.
 */
-export function AppLogo({ className }: AppLogoProps) {
+export function AppLogo({ className, label = APP_DATA.LOGO.IMAGE_ALT }: AppLogoProps) {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label={APP_DATA.LOGO.IMAGE_ALT}
-      className={cn('size-10', className)}>
+    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={label} className={cn('size-10', className)}>
       <defs>
         <linearGradient id="app-logo-gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
           <stop stopColor="#4f46e5" />

@@ -86,6 +86,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         revoke: l10n('USERS_ACTION_REVOKE'),
         deactivate: l10n('USERS_ACTION_DEACTIVATE'),
         reactivate: l10n('USERS_ACTION_REACTIVATE'),
+        delete: l10n('USERS_ACTION_DELETE'),
         actionsUnavailable: l10n('USERS_ACTION_UNAVAILABLE'),
         fields: {
           name: l10n('USERS_FIELD_NAME_LABEL'),
@@ -142,6 +143,11 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
           description: l10n('USERS_REACTIVATE_DESCRIPTION'),
           confirm: l10n('USERS_ACTION_REACTIVATE'),
         },
+        deleteDialog: {
+          title: l10n('USERS_DELETE_TITLE'),
+          description: l10n('USERS_DELETE_DESCRIPTION'),
+          confirm: l10n('USERS_DELETE_CONFIRM'),
+        },
         cancel: l10n('USERS_DIALOG_CANCEL'),
         working: l10n('USERS_DIALOG_WORKING'),
         toastCreated: l10n('USERS_TOAST_CREATED'),
@@ -150,6 +156,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         toastRevoked: l10n('USERS_TOAST_REVOKED'),
         toastDeactivated: l10n('USERS_TOAST_DEACTIVATED'),
         toastReactivated: l10n('USERS_TOAST_REACTIVATED'),
+        toastDeleted: l10n('USERS_TOAST_DELETED'),
         errors: {
           emailTaken: l10n('USERS_ERROR_EMAIL_TAKEN'),
           adminLimit: l10n('USERS_ERROR_ADMIN_LIMIT'),

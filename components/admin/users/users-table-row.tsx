@@ -1,3 +1,5 @@
+import { Trash2 } from 'lucide-react';
+
 import { UserDto } from '@/types';
 
 import { USER_ROLES } from '@/constants/roles.const';
@@ -15,9 +17,10 @@ type UsersTableRowProps = {
   onEdit: (user: UserDto) => void;
   onApproval: (user: UserDto) => void;
   onActivation: (user: UserDto) => void;
+  onDelete: (user: UserDto) => void;
 };
 
-export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActivation }: UsersTableRowProps) {
+export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActivation, onDelete }: UsersTableRowProps) {
   const status = resolveUserStatus(user);
 
   const roleLabel = resolveUserRoleLabel(user.role, {
@@ -41,6 +44,8 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
   const canEdit = !isImmutable && !isForeignAdmin;
   // Approval and activation decide whether an account can sign in, so never your own.
   const canChangeAccess = canEdit && !isSelf;
+  // Deletion is the same reach as changing access, made permanent — the service agrees.
+  const canDelete = canChangeAccess;
 
   const statusLabel = resolveUserStatusLabel(status, {
     pending: labels.statusPending,
@@ -58,6 +63,10 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
 
   const handleActivationClick = (): void => {
     onActivation(user);
+  };
+
+  const handleDeleteClick = (): void => {
+    onDelete(user);
   };
 
   return (
@@ -86,11 +95,13 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
 
       <TableCell>
         {/*
-          A three-column grid rather than a flex row: the middle label changes per row
-          ("Approve" / "Revoke"), and under flex that shifts every button beside it, so
-          nothing lines up down the column. Equal tracks keep the columns straight.
+          A two-column grid rather than a flex row: the labels change per row ("Approve" /
+          "Revoke", "Deactivate" / "Reactivate"), and under flex that shifts every button
+          beside them, so nothing lines up down the column. Equal tracks keep it straight —
+          two rows of two when every action is available: edit and access on top, delete
+          beneath, set apart by its red so it is not reached for by reflex.
         */}
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
           {canEdit && (
             <Button type="button" variant="outline" size="sm" onClick={handleEditClick}>
               {labels.edit}
@@ -109,8 +120,15 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
             </Button>
           )}
 
+          {canDelete && (
+            <Button type="button" variant="destructive" size="sm" onClick={handleDeleteClick}>
+              <Trash2 className="size-3.5" />
+              {labels.delete}
+            </Button>
+          )}
+
           {/* The seeded account, and your own: nothing here is yours to change. */}
-          {!canEdit && <span className="text-muted-foreground col-span-3 text-xs">{labels.actionsUnavailable}</span>}
+          {!canEdit && <span className="text-muted-foreground col-span-2 text-xs">{labels.actionsUnavailable}</span>}
         </div>
       </TableCell>
     </TableRow>

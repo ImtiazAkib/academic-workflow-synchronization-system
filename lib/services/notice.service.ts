@@ -1,9 +1,11 @@
 import { Notice } from '@/models/notice.model';
+import { User } from '@/models/user.model';
 import { NoticeAudience, NoticeDto, SessionUser, UserRole, noticeFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
-import { NOTICE_AUDIENCES } from '@/constants/notice.const';
+import { NOTICE_AUDIENCES, NOTICE_CATEGORIES } from '@/constants/notice.const';
 import { USER_ROLES } from '@/constants/roles.const';
+import { FILE_CONVERSION_TARGET } from '@/constants/storage.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
@@ -11,7 +13,10 @@ import { ListResult, SingleResult, createError, listFailure, listSuccess, single
 import type { NoticeCreateOutput } from '@/lib/schemas';
 import { storage } from '@/lib/storage';
 import type { StoredFileStream } from '@/lib/storage';
-import { fileMatchesDeclaredType } from '@/lib/utils';
+import { fileMatchesDeclaredType, toId } from '@/lib/utils';
+
+import { ConversionService } from './conversion.service';
+import { hasStorageRoomFor } from './storage.guard';
 
 import type { NoticeAttributes, NoticeEntity, NoticeImage } from '@/models/notice.model';
 import type { QueryFilter } from 'mongoose';
@@ -21,6 +26,9 @@ const log = createLoggerWithContext('notice.service');
 const DATABASE = CODES.DATABASE.NOTICES;
 const VALIDATION = CODES.VALIDATION.NOTICES;
 const AUTH = CODES.AUTH.NOTICES;
+const BUSINESS = CODES.BUSINESS.COMMON;
+
+const conversions = new ConversionService();
 
 export class NoticeService {
   /**
@@ -53,10 +61,25 @@ export class NoticeService {
    *
    * @returns The notices addressed to that role.
    */
-  public async listForRole(role: UserRole, limit: number | null = null): Promise<ListResult<NoticeDto>> {
-    const audiences = this.audiencesFor(role);
+  public async listForRole(role: UserRole, viewerSession: string | null = null, limit: number | null = null): Promise<ListResult<NoticeDto>> {
+    return this.find(this.conditionsForViewer(role, viewerSession), limit);
+  }
 
-    return this.find(audiences ? { audience: { $in: audiences } } : {}, limit);
+  /**
+   * The notices one account published, newest first.
+   *
+   * The teacher notices screen's read. A teacher's own session notices are addressed to
+   * students, so they never come back through `listForRole` for the teacher — this is how
+   * the author sees what they sent. Scoped to the publisher, so one teacher's screen cannot
+   * list another's.
+   *
+   * @param publisherId - The account whose notices to list.
+   * @param limit - How many, newest first, or null for all.
+   *
+   * @returns Their notices as DTOs.
+   */
+  public async listForPublisher(publisherId: string, limit: number | null = null): Promise<ListResult<NoticeDto>> {
+    return this.find({ publishedBy: publisherId }, limit);
   }
 
   /**
@@ -84,10 +107,36 @@ export class NoticeService {
     try {
       await connectToDatabase();
 
+      const isSession = input.category === NOTICE_CATEGORIES.SESSION;
+
+      /*
+        A teacher publishes to students — a general notice to all of them, or a session
+        notice to the intakes it names. Posting to the staff room or department-wide is the
+        administrator's. The form never offers a teacher those, so this refuses the request
+        built by hand to try.
+      */
+      if (requester.role === USER_ROLES.TEACHER && !isSession && input.audience !== NOTICE_AUDIENCES.STUDENTS) {
+        return singleFailure(createError(AUTH.TEACHER_STUDENTS_ONLY.CODE, AUTH.TEACHER_STUDENTS_ONLY.MESSAGE, 'audience'));
+      }
+
+      /*
+        A session notice is addressed by its sessions and always reaches students, so its
+        audience is fixed rather than read from the form. A general notice keeps its audience
+        and carries no sessions. Deduplicated and de-blanked so the same intake picked twice,
+        or an empty checkbox, cannot skew the match.
+      */
+      const audience = isSession ? NOTICE_AUDIENCES.STUDENTS : input.audience;
+      const sessions = isSession ? [...new Set(input.sessions.map(session => session.trim()).filter(Boolean))] : [];
+
       if (input.image) {
         // The one type check the client cannot fake — the declared type is only a claim.
         if (!(await fileMatchesDeclaredType(input.image))) {
           return singleFailure(createError(VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE, VALIDATION.IMAGE_TYPE_NOT_ALLOWED.MESSAGE, 'image'));
+        }
+
+        // Only the image spends the bucket. A text-only notice is never refused for room.
+        if (!(await hasStorageRoomFor(input.image.size))) {
+          return singleFailure(createError(BUSINESS.STORAGE_FULL.CODE, BUSINESS.STORAGE_FULL.MESSAGE, 'image'));
         }
 
         const stored = await storage.save(input.image);
@@ -100,10 +149,23 @@ export class NoticeService {
         // Stored as absent rather than as an empty string, so a picture-only notice reads as one.
         body: input.body ? input.body : undefined,
         image,
-        audience: input.audience,
+        audience,
+        category: input.category,
+        sessions,
         publishedBy: requester.userId,
         publishedAt: new Date(),
       });
+
+      /*
+        The image was stored raw; compressing it is booked to run after the response, and
+        swaps the notice's image to the smaller WebP once it finishes. A text-only notice
+        has nothing to convert, so no job is booked.
+      */
+      if (image) {
+        const jobId = await conversions.enqueue(FILE_CONVERSION_TARGET.NOTICE, toId(created._id), image.fileName, image.size, requester.userId);
+
+        conversions.schedule(jobId);
+      }
 
       return singleSuccess(noticeFromEntity(created));
     } catch (error) {
@@ -147,9 +209,7 @@ export class NoticeService {
         return this.noticeNotFound();
       }
 
-      const audiences = this.audiencesFor(viewer.role);
-
-      if (audiences && !audiences.includes(notice.audience)) {
+      if (!(await this.mayViewNotice(notice, viewer))) {
         return singleFailure(createError(AUTH.NOT_IN_AUDIENCE.CODE, AUTH.NOT_IN_AUDIENCE.MESSAGE));
       }
 
@@ -201,6 +261,88 @@ export class NoticeService {
 
       return listFailure(createError(DATABASE.LIST_FAILED.CODE, DATABASE.LIST_FAILED.MESSAGE));
     }
+  }
+
+  /**
+   * The query that returns exactly the notices a viewer may see.
+   *
+   * Admin sees every notice — they publish them. A teacher sees general notices addressed
+   * to teachers or everyone; session notices are students'. A student sees general notices
+   * addressed to students or everyone, plus the session notices naming their own intake —
+   * which is why their session is threaded in rather than read from the token, where it
+   * does not ride.
+   *
+   * @param role - The viewer's role.
+   * @param viewerSession - The student's intake, or null when unknown or irrelevant.
+   *
+   * @returns Conditions for the feed query.
+   */
+  private conditionsForViewer(role: UserRole, viewerSession: string | null): QueryFilter<NoticeAttributes> {
+    const audiences = this.audiencesFor(role);
+
+    // Admin: no narrowing at all.
+    if (!audiences) {
+      return {};
+    }
+
+    const general = { category: NOTICE_CATEGORIES.GENERAL, audience: { $in: audiences } };
+
+    // A teacher never sees session notices; a student with no known session sees general ones only.
+    if (role !== USER_ROLES.STUDENT || !viewerSession) {
+      return general;
+    }
+
+    return { $or: [general, { category: NOTICE_CATEGORIES.SESSION, sessions: viewerSession }] };
+  }
+
+  /**
+   * Whether a signed-in viewer is allowed the image on a particular notice.
+   *
+   * The check `conditionsForViewer` makes for a list, made for one row — because an image
+   * URL carries a guessable id rather than being reached from a feed. A session notice's
+   * image is refused to anyone but a student of its sessions (and the admin who sees all);
+   * a general one falls back to role-audience membership.
+   *
+   * @param notice - The notice whose image is wanted.
+   * @param viewer - The signed-in account asking.
+   *
+   * @returns True when the image may be served.
+   */
+  private async mayViewNotice(notice: NoticeEntity, viewer: SessionUser): Promise<boolean> {
+    const audiences = this.audiencesFor(viewer.role);
+
+    // Admin sees all.
+    if (!audiences) {
+      return true;
+    }
+
+    if (notice.category === NOTICE_CATEGORIES.SESSION) {
+      if (viewer.role !== USER_ROLES.STUDENT) {
+        return false;
+      }
+
+      const session = await this.viewerSession(viewer.userId);
+
+      return session !== null && notice.sessions.includes(session);
+    }
+
+    return audiences.includes(notice.audience);
+  }
+
+  /**
+   * The intake a signed-in student belongs to, read from their account.
+   *
+   * The token does not carry it, so a session-notice access check pays one indexed lookup —
+   * only ever on a session notice's image, which is the rare path.
+   *
+   * @param userId - The student's account.
+   *
+   * @returns Their session, or null when none is set.
+   */
+  private async viewerSession(userId: string): Promise<string | null> {
+    const user = await User.findById(userId).select('session').lean<{ session?: string } | null>();
+
+    return user?.session ?? null;
   }
 
   /**

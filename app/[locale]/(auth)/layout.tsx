@@ -21,22 +21,30 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-border border-b">
-        <Container className="flex h-16 items-center justify-between gap-4">
-          <Link href={ROUTES.HOME.HREF} className="flex items-center gap-2.5">
-            <AppLogo className="size-8" />
-            <span className="font-heading text-regular-bold tracking-tight">{APP_DATA.SHORT_NAME}</span>
+        {/*
+          `gap-2 sm:gap-4` and a brand that can shrink, matching the marketing header: at
+          375px the theme and language controls together are wider than what a non-shrinking
+          brand leaves, which pushed the language pill past the viewport. The brand truncates
+          into the slack instead; the controls keep their size.
+        */}
+        <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
+          <Link href={ROUTES.HOME.HREF} className="flex min-w-0 items-center gap-2.5">
+            <AppLogo label={l10n('APP_LOGO_ALT')} className="size-8 shrink-0" />
+            <span className="font-heading text-regular-bold truncate tracking-tight">{APP_DATA.SHORT_NAME}</span>
           </Link>
 
-          <ThemeSelector
-            labels={{
-              group: l10n('THEME_SELECTOR_LABEL'),
-              light: l10n('THEME_LIGHT'),
-              dark: l10n('THEME_DARK'),
-              system: l10n('THEME_SYSTEM'),
-            }}
-          />
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <ThemeSelector
+              labels={{
+                group: l10n('THEME_SELECTOR_LABEL'),
+                light: l10n('THEME_LIGHT'),
+                dark: l10n('THEME_DARK'),
+                system: l10n('THEME_SYSTEM'),
+              }}
+            />
 
-          <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
+            <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
+          </div>
         </Container>
       </header>
 

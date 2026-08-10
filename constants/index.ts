@@ -9,6 +9,7 @@ export * from './users.const';
 export * from './schedule.const';
 export * from './material.const';
 export * from './notice.const';
+export * from './storage.const';
 export * from './rate-limit.const';
 export * from './a11y.const';
 export * from './theme.const';
