@@ -9,9 +9,10 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
 > repository, the read-only student dashboard, the super administrator, self-registration with email
-> verification, the profile somebody edits themselves, audience-targeted notices with images and the rate
-> limits and action audit of step 15a are in place. The polish pass — loading states, accessibility, responsive
-> and dark mode — is next; see [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> verification, the profile somebody edits themselves, audience-targeted notices with images, the rate limits
+> and action audit of step 15a, and the polish pass of 15b — loading skeletons, a theme toggle, the contrast
+> and landmark fixes — are in place. Testing and deployment are next; see
+> [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
 
 ---
 
@@ -315,7 +316,7 @@ Typography helpers (`.tagline`, `.text-medium-normal`, `.text-regular-semibold`)
 (`.section-py`, `.section-px`) and `.surface-card` are defined alongside the tokens.
 
 The palette ships **light by default** with a complete `.dark` block already written. There is no theme toggle
-yet — step 15 adds `next-themes` and puts the class on `<html>`.
+and from step 15b the root layout reads a theme cookie and ships that class on `<html>` from the server — no script, so the first paint is already right and switching language stays a soft navigation. A hand-rolled three-way toggle (light, dark, or match the device) writes the cookie and applies the class.
 
 ### Type
 

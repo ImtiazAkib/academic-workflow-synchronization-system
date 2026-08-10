@@ -1,4 +1,5 @@
 export * from './app-locale';
+export * from './app-theme';
 export * from './message-locale';
 export * from './locale-model';
 export * from './user-role';

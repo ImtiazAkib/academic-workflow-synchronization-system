@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
+import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
+
 import { AppLogo, Container, NotFoundContent } from '@/components/shared';
 
 /*
@@ -21,7 +23,7 @@ export default async function NotFound() {
         </Container>
       </header>
 
-      <main className="flex flex-1 items-center">
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex flex-1 items-center">
         <NotFoundContent title={l10n('NOT_FOUND_TITLE')} description={l10n('NOT_FOUND_DESCRIPTION')} ctaLabel={l10n('NOT_FOUND_CTA')} />
       </main>
     </div>

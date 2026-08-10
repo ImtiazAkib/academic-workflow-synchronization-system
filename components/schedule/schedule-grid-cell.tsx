@@ -70,6 +70,13 @@ export function ScheduleGridCell({
       <dl className="text-muted-foreground flex flex-col gap-1 text-xs">
         <div className="flex items-center gap-1.5">
           <Clock className="size-3.5 shrink-0" aria-hidden />
+          {/*
+            The icon says "time" to somebody who can see it and nothing at all to somebody
+            who cannot — so the term is spelled out and hidden visually, matching the
+            read-only twin in `student-routine-card.tsx`. Without it this was a `dl` of
+            values with no terms: a screen reader read "09:00–10:00" and a bare name.
+          */}
+          <dt className="sr-only">{labels.timeLabel}</dt>
           <dd>
             {session.startTime}–{session.endTime}
           </dd>
@@ -78,6 +85,7 @@ export function ScheduleGridCell({
         {teacherName && (
           <div className="flex items-center gap-1.5">
             <User className="size-3.5 shrink-0" aria-hidden />
+            <dt className="sr-only">{labels.fields.teacher}</dt>
             <dd className="truncate">{teacherName}</dd>
           </div>
         )}

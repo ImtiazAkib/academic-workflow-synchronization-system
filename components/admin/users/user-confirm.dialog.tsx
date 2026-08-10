@@ -46,7 +46,7 @@ export function UserConfirmDialog({ user, labels, cancelLabel, workingLabel, isW
         {user && (
           <div className="bg-muted/50 rounded-md px-3 py-2 text-sm">
             <span className="block font-medium">{user.name}</span>
-            <span className="text-muted-foreground block text-xs">{user.email}</span>
+            <span className="text-muted-foreground block text-xs break-all">{user.email}</span>
           </div>
         )}
 

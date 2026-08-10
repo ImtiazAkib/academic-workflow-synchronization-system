@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Toaster } from 'sonner';
 
+import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
+
 import { requireSession } from '@/lib/auth';
 import { resolveRoleLabel } from '@/lib/utils';
 
@@ -71,11 +73,19 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
           profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
           languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
+          themeLabels={{
+            group: l10n('THEME_SELECTOR_LABEL'),
+            light: l10n('THEME_LIGHT'),
+            dark: l10n('THEME_DARK'),
+            system: l10n('THEME_SYSTEM'),
+          }}
           signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
           locale={locale}
         />
 
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 p-4 lg:p-8">
+          {children}
+        </main>
       </div>
 
       {/*

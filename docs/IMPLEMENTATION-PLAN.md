@@ -36,7 +36,7 @@ in a working state.
 | [13](#step-13)   | Profiles                       | Phase 5        | ✅ Done        |
 | [14](#step-14)   | Notices & announcements        | Phase 5        | ✅ Done        |
 | [15a](#step-15a) | Hardening                      | Phase 6        | ✅ Done        |
-| [15b](#step-15b) | Polish                         | Phase 6        | ⬜ Not started |
+| [15b](#step-15b) | Polish                         | Phase 6        | ✅ Done        |
 | [16](#step-16)   | Testing & deployment           | Phase 6        | ⬜ Not started |
 
 ## Decisions
@@ -1702,7 +1702,7 @@ session whose role has since changed**, and saying so is better than quietly rea
 
 <a id="step-15b"></a>
 
-### Step 15b — Polish
+### Step 15b — Polish ✅ Done
 
 **Goal.** Turn a working app into one that is comfortable to use.
 
@@ -1717,7 +1717,7 @@ session whose role has since changed**, and saying so is better than quietly rea
 - Accessibility pass: focus order, labels on every control, contrast against the tokens, keyboard paths
   through the dialogs. Includes the `<dl>` without `<dt>` on `schedule-grid-cell.tsx` already in
   [Backlog](#backlog).
-- Dark mode wired to a real toggle (`next-themes`) — the palette already exists, keyed on `.dark`, and
+- Dark mode wired to a real toggle — the palette already exists, keyed on `.dark`, and
   nothing puts that class on `<html>`.
 - The nav highlight on `/admin/users/new`, from [Backlog](#backlog).
 
@@ -1730,6 +1730,88 @@ session whose role has since changed**, and saying so is better than quietly rea
 
 **Acceptance.** A slow-network pass shows a skeleton shaped like the page that is coming; the a11y and
 responsive checks are clean at all four widths; the theme toggle survives a reload with no flash.
+
+**Result.** ✅ Screens driven. The eight service suites still pass unchanged — rate-limit 17, notices 53,
+profile 51, accounts 45, student 37, users 28, schedule 14, materials 14 — which is the point of running them
+here: this step touched tokens, markup and layout, and none of it was allowed to move a rule. Lint, format and
+build are green; 39 routes register. 7 keys shipped with Bangla alongside the English — 560 in total, no
+fallbacks.
+
+**Verified in the browser.** The toggle flips `.dark` on `<html>` and repaints, the choice persists, and it
+survives a reload with no flash — the reloaded page's server HTML already carries `class="dark"`, read from a
+cookie, so there is no moment of light before a script runs. Switching language is a **soft** navigation (the
+page's JavaScript context survives it) in both directions, the theme is kept across it, and the console stays
+clean — no "script tag" error, because there is no theme `<script>` anywhere. `--input` and `--border` now
+hold different values, so a field boundary is perceivable where a card edge stays faint. The skip link sits at
+exactly `-64px` above the viewport, 36px tall and readable wide.
+
+**Delivered.**
+
+```
+Loading      components/ui/skeleton.tsx · components/shared/loading-shapes.tsx
+             16 loading.tsx files — page · table · week · form, one shape per screen kind
+Errors       app/[locale]/error.tsx — the boundary that was missing under (auth) and (marketing)
+Theme        hand-rolled, script-free — cookie read in the layout sets `.dark` on the server
+             theme-provider (context, writes the cookie) · theme-selector — light · dark · match my device
+A11y         components/shared/skip-to-content.tsx · constants/a11y.const.ts
+             main landmarks on all five layouts · the dl/dt fix · the h1→h3 skip
+Contrast     --destructive · --input · --accent · --sidebar-accent darkened; placeholders un-faded
+Responsive   notice card bounded three ways · break-all on two dialogs · five columns wait for xl
+```
+
+**Deviations from the plan, and why.**
+
+- **The skip link is parked off-screen rather than hidden with `sr-only focus:not-sr-only`.** Worth recording
+  how this went, because the first version shipped on a wrong conclusion. Driving it in the browser showed the
+  link still clipped while focused, and enumerating the stylesheet found no `not-sr-only` rule — so it was
+  rewritten. Both readings were wrong: `:focus` never matches in a pane whose document is not the active
+  window, and the stylesheet walk was failing to enumerate rules it demonstrably contained. A probe element
+  settled it — `not-sr-only` works fine. The rewrite was kept anyway, for a real reason rather than the
+  invented one: `sr-only` sets five declarations that `not-sr-only` must win back, so one conflicting utility
+  leaves the link clipped, and that failure is invisible to anybody who is not tabbing. One property doing the
+  work cannot half-fail.
+- **The theme is hand-rolled and script-free; `next-themes` was removed.** This took three tries against a
+  React 19.2 change, and the dead ends are worth recording. React 19.2 logs "Encountered a script tag while
+  rendering React component" whenever the _client_ renderer reconciles a `<script>` — which happens whenever
+  the root layout re-renders on the client, i.e. on every language switch. `next-themes` renders its no-flash
+  script from a client component, so it hit this; moving the script to a server component did not help (the
+  client still reconciles the layout's output on a soft switch); nor did `next/script`; nor did memoizing it
+  (the layout subtree remounts on locale change, so `memo` never bails). Each was confirmed broken in the
+  browser. The answer was to have **no script at all**: the layout reads a theme cookie and ships
+  `<html class="dark">` from the server, and a ~90-line client provider holds the choice, applies it on change,
+  and keeps that cookie current. Nothing for React to reconcile, so the switch stays soft and the console
+  stays clean. Owning it is the same trade the app made for authentication.
+- **The switch back to `router.replace` — language switching is soft again.** An earlier fix made it a full
+  navigation to dodge the script error; once the script was gone, the reload was no longer needed and was
+  removed. next-intl sets the locale cookie itself on a soft switch, so both directions land correctly.
+- **The layout reads a cookie, so its pages render per-request.** The trade for a server-decided theme:
+  `generateStaticParams` no longer prerenders the marketing and confirmation pages. For a departmental app
+  those were never hot paths, and dynamic rendering of them is a fair price for a theme that needs no script.
+- **`useSyncExternalStore` in the selector rather than a mounted flag.** The usual "am I hydrated yet" trick is
+  `useState(false)` plus an effect that sets it true; this repo's lint forbids `setState` inside an effect, and
+  the hook answers the question directly, one render earlier.
+- **Two `new` pages got no `loading.tsx`.** `/admin/users/new` and `/admin/notices/new` await no service at
+  all, so a skeleton would flash and vanish. Sixteen files, not eighteen.
+
+**What the department still has to supply.**
+
+1. **A read of the Bangla.** 7 keys were added, machine-written.
+2. **An eye on the darker palette.** Four tokens moved to clear WCAG, and that is a visible change on every
+   card, field, table and nav item in the app.
+
+**Deliberately left as they are.**
+
+- **`aria-describedby` on 46 field errors is not done.** The audit found no `aria-describedby` anywhere: an
+  input says "invalid" and the sentence explaining why is orphaned. It is the largest remaining a11y item and
+  it touches every form in the app, so it is logged in [Backlog](#backlog) rather than rushed in beside a
+  token change.
+- **The select trigger has no accessible name.** Base UI computes one from a `Field.Root` this repo does not
+  use, so a `<label for>` does not name the `role="combobox"` button. Fixing it means either wiring Base UI's
+  field primitives or threading `aria-labelledby` through 17 call sites. Logged.
+- **Links routed through `Button` still announce as buttons.** `useButton` merges `role="button"`
+  unconditionally when `nativeButton={false}`, across 16 sites. Logged.
+- **The redundant `overflow-x-auto` wrappers stay.** Five tables wrap a `<Table>` that already scrolls. No
+  user-visible effect today.
 
 ---
 
@@ -1758,19 +1840,22 @@ test passes against it.
 
 Real, out of scope for now, and here so they are not lost:
 
-| Item                                    | Why it is parked                                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Per-user unread state for notices       | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                                                                                                                                                                                                             |
-| Withdrawing a published notice          | [Step 14](#step-14) publishes but never unpublishes. An edit or a delete after people have read it is a different message, not a correction — it needs a decision about what readers see, not just a button                                                                                                                                                                                               |
-| Per-student enrolment                   | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                                                                                                                                                                                                                     |
-| Sign-in drops the `next` param          | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones                                                                                                                                                                                             |
-| Nav highlight on `/admin/users/new`     | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                                                                                                                                                                                                                     |
-| `<dl>` without `<dt>` on schedule cards | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                                                                                                                                                                                                                   |
-| Password reset by email                 | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                                                                                                                                                                                                                   |
-| Administrator ceiling is check-then-act | `isAdminCeilingReached()` counts and the write is a separate round trip, so two concurrent requests can both take the last seat. Needs a transaction or a counter document; an index cannot express "at most three"                                                                                                                                                                                       |
-| Attendance tracking                     | Not in the proposal scope                                                                                                                                                                                                                                                                                                                                                                                 |
-| Multi-department support                | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                                                                                                                                                                                                                       |
-| Revoking a live session                 | The JWT is self-contained, so `gateAdminArea` decides on a claim rather than the row: a demoted or deactivated administrator keeps admin rights for up to seven days, and `isApproved` is minted into the token and read by nothing. [Step 15a](#step-15a)'s audit confirmed it and left it here — a `sessionVersion` checked per request reverses step 5's no-round-trip decision, which is its own step |
-| Bangla OpenGraph card                   | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                                                                                                                                                                                                               |
-| Storybook for the UI package            | Worth it if the component count grows past ~25                                                                                                                                                                                                                                                                                                                                                            |
-| E2E tests (Playwright)                  | Smoke tests first; full E2E once the flows settle                                                                                                                                                                                                                                                                                                                                                         |
+| Item                                       | Why it is parked                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-user unread state for notices          | Needs read receipts — a schema change with no feature ask yet                                                                                                                                                                                                                                                                                                                                             |
+| Field errors are not announced             | No `aria-describedby` anywhere: 46 error sentences sit beside inputs that say only "invalid". Found by [step 15b](#step-15b)'s audit; touches every form in the app, so it wants its own pass rather than a corner of a token change                                                                                                                                                                      |
+| Select triggers have no accessible name    | Base UI computes one from a `Field.Root` this repo does not use, so `<label for>` does not name the `role="combobox"` button. 17 call sites. From [step 15b](#step-15b)                                                                                                                                                                                                                                   |
+| Links through `Button` announce as buttons | `useButton` merges `role="button"` when `nativeButton={false}`, so 16 real links vanish from the links list. Needs a `buttonVariants`-styled link, or stripping the injected role. From [step 15b](#step-15b)                                                                                                                                                                                             |
+| Withdrawing a published notice             | [Step 14](#step-14) publishes but never unpublishes. An edit or a delete after people have read it is a different message, not a correction — it needs a decision about what readers see, not just a button                                                                                                                                                                                               |
+| Per-student enrolment                      | A student carries one semester, so a retaken course from an earlier year shows neither its classes nor its files. Real enrolment is a new collection, not a new field                                                                                                                                                                                                                                     |
+| Sign-in drops the `next` param             | `proxy.ts` builds `/sign-in?next=<path>`, but the form always lands on `ROLE_HOME[role]` and nothing reads it back. From step 5, and it costs every deep link into a guarded route, not just the student ones                                                                                                                                                                                             |
+| Nav highlight on `/admin/users/new`        | The Users link tests `pathname ===` where Courses tests `startsWith`, so the create page highlights nothing. From step 7, cosmetic, and step 15's polish pass owns it                                                                                                                                                                                                                                     |
+| `<dl>` without `<dt>` on schedule cards    | `schedule-grid-cell.tsx` has the same unlabelled `<dd>` pair step 10 fixed on its own card. Step 15's accessibility pass owns the sweep                                                                                                                                                                                                                                                                   |
+| Password reset by email                    | Unblocked by [step 12](#step-12), which builds the mail transport it was waiting for. A token, two screens and a service method — its own small step once accounts land                                                                                                                                                                                                                                   |
+| Administrator ceiling is check-then-act    | `isAdminCeilingReached()` counts and the write is a separate round trip, so two concurrent requests can both take the last seat. Needs a transaction or a counter document; an index cannot express "at most three"                                                                                                                                                                                       |
+| Attendance tracking                        | Not in the proposal scope                                                                                                                                                                                                                                                                                                                                                                                 |
+| Multi-department support                   | Proposal is explicit: one department first. [Step 12](#step-12) collects a department as free text on the account, which is the seam if this ever lands — nothing scopes data by it                                                                                                                                                                                                                       |
+| Revoking a live session                    | The JWT is self-contained, so `gateAdminArea` decides on a claim rather than the row: a demoted or deactivated administrator keeps admin rights for up to seven days, and `isApproved` is minted into the token and read by nothing. [Step 15a](#step-15a)'s audit confirmed it and left it here — a `sessionVersion` checked per request reverses step 5's no-round-trip decision, which is its own step |
+| Bangla OpenGraph card                      | `next/og` needs a bundled Noto Sans Bengali subset (~300KB)                                                                                                                                                                                                                                                                                                                                               |
+| Storybook for the UI package               | Worth it if the component count grows past ~25                                                                                                                                                                                                                                                                                                                                                            |
+| E2E tests (Playwright)                     | Smoke tests first; full E2E once the flows settle                                                                                                                                                                                                                                                                                                                                                         |
