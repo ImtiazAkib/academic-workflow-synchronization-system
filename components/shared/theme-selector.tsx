@@ -3,9 +3,14 @@
 import { useSyncExternalStore } from 'react';
 
 import { Monitor, Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes';
+
+import { AppTheme } from '@/types';
+
+import { APP_THEMES } from '@/constants/theme.const';
 
 import { cn } from '@/lib/utils';
+
+import { useTheme } from './theme-provider';
 
 export type ThemeSelectorLabels = {
   group: string;
@@ -57,13 +62,13 @@ export function ThemeSelector({ labels }: ThemeSelectorProps) {
     () => false
   );
 
-  const options = [
-    { value: 'light', label: labels.light, icon: Sun },
-    { value: 'dark', label: labels.dark, icon: Moon },
-    { value: 'system', label: labels.system, icon: Monitor },
+  const options: { value: AppTheme; label: string; icon: typeof Sun }[] = [
+    { value: APP_THEMES.LIGHT, label: labels.light, icon: Sun },
+    { value: APP_THEMES.DARK, label: labels.dark, icon: Moon },
+    { value: APP_THEMES.SYSTEM, label: labels.system, icon: Monitor },
   ];
 
-  const handleThemeClick = (value: string): void => {
+  const handleThemeClick = (value: AppTheme): void => {
     setTheme(value);
   };
 

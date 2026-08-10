@@ -1717,7 +1717,7 @@ session whose role has since changed**, and saying so is better than quietly rea
 - Accessibility pass: focus order, labels on every control, contrast against the tokens, keyboard paths
   through the dialogs. Includes the `<dl>` without `<dt>` on `schedule-grid-cell.tsx` already in
   [Backlog](#backlog).
-- Dark mode wired to a real toggle (`next-themes`) — the palette already exists, keyed on `.dark`, and
+- Dark mode wired to a real toggle — the palette already exists, keyed on `.dark`, and
   nothing puts that class on `<html>`.
 - The nav highlight on `/admin/users/new`, from [Backlog](#backlog).
 
@@ -1737,11 +1737,13 @@ here: this step touched tokens, markup and layout, and none of it was allowed to
 build are green; 39 routes register. 7 keys shipped with Bangla alongside the English — 560 in total, no
 fallbacks.
 
-**Verified in the browser.** The theme starts from the system preference, the toggle flips `.dark` to
-`.light` and repaints, the choice persists to `localStorage`, and it survives a reload — the server sends no
-theme class, and `next-themes`' pre-paint script is what applies it, which is the mechanism that avoids a
-flash. `--input` and `--border` now hold different values, so a field boundary is perceivable where a card
-edge stays faint. The skip link sits at exactly `-64px` above the viewport, 36px tall and readable wide.
+**Verified in the browser.** The toggle flips `.dark` on `<html>` and repaints, the choice persists, and it
+survives a reload with no flash — the reloaded page's server HTML already carries `class="dark"`, read from a
+cookie, so there is no moment of light before a script runs. Switching language is a **soft** navigation (the
+page's JavaScript context survives it) in both directions, the theme is kept across it, and the console stays
+clean — no "script tag" error, because there is no theme `<script>` anywhere. `--input` and `--border` now
+hold different values, so a field boundary is perceivable where a card edge stays faint. The skip link sits at
+exactly `-64px` above the viewport, 36px tall and readable wide.
 
 **Delivered.**
 
@@ -1749,8 +1751,8 @@ edge stays faint. The skip link sits at exactly `-64px` above the viewport, 36px
 Loading      components/ui/skeleton.tsx · components/shared/loading-shapes.tsx
              16 loading.tsx files — page · table · week · form, one shape per screen kind
 Errors       app/[locale]/error.tsx — the boundary that was missing under (auth) and (marketing)
-Theme        next-themes · components/shared/theme-provider.tsx · theme-selector.tsx
-             light · dark · match my device, beside the language selector on every layout
+Theme        hand-rolled, script-free — cookie read in the layout sets `.dark` on the server
+             theme-provider (context, writes the cookie) · theme-selector — light · dark · match my device
 A11y         components/shared/skip-to-content.tsx · constants/a11y.const.ts
              main landmarks on all five layouts · the dl/dt fix · the h1→h3 skip
 Contrast     --destructive · --input · --accent · --sidebar-accent darkened; placeholders un-faded
@@ -1768,9 +1770,26 @@ Responsive   notice card bounded three ways · break-all on two dialogs · five 
   invented one: `sr-only` sets five declarations that `not-sr-only` must win back, so one conflicting utility
   leaves the link clipped, and that failure is invisible to anybody who is not tabbing. One property doing the
   work cannot half-fail.
-- **`useSyncExternalStore` rather than the usual mounted flag.** The `next-themes` recipe for avoiding a
-  hydration mismatch is `useState(false)` plus an effect that sets it true; this repo's lint forbids `setState`
-  inside an effect, and it is right to — the hook answers "has this hydrated" directly, one render earlier.
+- **The theme is hand-rolled and script-free; `next-themes` was removed.** This took three tries against a
+  React 19.2 change, and the dead ends are worth recording. React 19.2 logs "Encountered a script tag while
+  rendering React component" whenever the _client_ renderer reconciles a `<script>` — which happens whenever
+  the root layout re-renders on the client, i.e. on every language switch. `next-themes` renders its no-flash
+  script from a client component, so it hit this; moving the script to a server component did not help (the
+  client still reconciles the layout's output on a soft switch); nor did `next/script`; nor did memoizing it
+  (the layout subtree remounts on locale change, so `memo` never bails). Each was confirmed broken in the
+  browser. The answer was to have **no script at all**: the layout reads a theme cookie and ships
+  `<html class="dark">` from the server, and a ~90-line client provider holds the choice, applies it on change,
+  and keeps that cookie current. Nothing for React to reconcile, so the switch stays soft and the console
+  stays clean. Owning it is the same trade the app made for authentication.
+- **The switch back to `router.replace` — language switching is soft again.** An earlier fix made it a full
+  navigation to dodge the script error; once the script was gone, the reload was no longer needed and was
+  removed. next-intl sets the locale cookie itself on a soft switch, so both directions land correctly.
+- **The layout reads a cookie, so its pages render per-request.** The trade for a server-decided theme:
+  `generateStaticParams` no longer prerenders the marketing and confirmation pages. For a departmental app
+  those were never hot paths, and dynamic rendering of them is a fair price for a theme that needs no script.
+- **`useSyncExternalStore` in the selector rather than a mounted flag.** The usual "am I hydrated yet" trick is
+  `useState(false)` plus an effect that sets it true; this repo's lint forbids `setState` inside an effect, and
+  the hook answers the question directly, one render earlier.
 - **Two `new` pages got no `loading.tsx`.** `/admin/users/new` and `/admin/notices/new` await no service at
   all, so a skeleton would flash and vanish. Sixteen files, not eighteen.
 

@@ -316,7 +316,7 @@ Typography helpers (`.tagline`, `.text-medium-normal`, `.text-regular-semibold`)
 (`.section-py`, `.section-px`) and `.surface-card` are defined alongside the tokens.
 
 The palette ships **light by default** with a complete `.dark` block already written. There is no theme toggle
-and `next-themes` puts that class on `<html>` from step 15b, with a three-way toggle — light, dark, or match the device.
+and from step 15b the root layout reads a theme cookie and ships that class on `<html>` from the server — no script, so the first paint is already right and switching language stays a soft navigation. A hand-rolled three-way toggle (light, dark, or match the device) writes the cookie and applies the class.
 
 ### Type
 

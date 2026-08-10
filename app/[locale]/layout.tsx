@@ -1,18 +1,19 @@
 import type { Metadata, Viewport } from 'next';
 
 import { Anek_Bangla, Inter, Noto_Sans_Bengali, Poppins } from 'next/font/google';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
-import { APP_DATA, getMessageLocale, I18N, SEO } from '@/constants';
+import { APP_DATA, APP_THEMES, getMessageLocale, I18N, SEO, THEME_COOKIE_NAME } from '@/constants';
 import { env } from '@/env/server';
 import { routing } from '@/l10n/routing';
 import { AppLocale } from '@/types';
 
-import { buildLocaleUrl } from '@/lib/utils';
+import { buildLocaleUrl, cn } from '@/lib/utils';
 
 import { SkipToContent, ThemeProvider } from '@/components/shared';
 
@@ -40,7 +41,11 @@ const anekBangla = Anek_Bangla({
 });
 
 /**
- * Prerender both locales at build time instead of resolving them per request.
+ * Enumerate the known locales for the `[locale]` segment.
+ *
+ * These no longer prerender: the layout reads the theme cookie, which opts the tree into
+ * per-request rendering. The list still bounds `[locale]` to real locales so an unknown
+ * one is a 404 rather than a render attempt.
  */
 export function generateStaticParams() {
   return routing.locales.map(locale => ({ locale }));
@@ -116,14 +121,13 @@ export async function generateMetadata({ params }: Omit<LocaleLayoutProps, 'chil
 
 export const viewport: Viewport = {
   themeColor: '#4f46e5',
-  colorScheme: 'light',
 };
 
 /*
-  The root layout carries the document and the locale, nothing else. Page chrome
-  belongs to the route groups — `(marketing)` has the site header and footer,
-  `(dashboard)` has the sidebar, `(auth)` has neither — because a dashboard nested
-  inside the marketing header would inherit navigation it has no use for.
+  The root layout carries the document and the locale, nothing else. Page chrome belongs to
+  the route groups — `(marketing)` has the site header and footer, `(dashboard)` has the
+  sidebar, `(auth)` has neither — because a dashboard nested inside the marketing header
+  would inherit navigation it has no use for.
 */
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const { locale } = await params;
@@ -134,33 +138,46 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   const l10n = await getTranslations();
 
+  /*
+    The theme is decided here, on the server, from a cookie the client keeps current —
+    which is why there is no theme `<script>` anywhere. A script that set the class before
+    paint had to live in this layout, and this layout re-renders on the client every time
+    the language changes; React 19.2 then errored on the reconciled `<script>`, on every
+    switch. Reading a cookie instead means `<html>` arrives already carrying `.dark`, with
+    nothing for React to reconcile. The cost is that this layout now reads a cookie, so the
+    pages under it render per-request rather than statically.
+
+    Only an explicit `dark` renders dark; an absent cookie (a first visit, or the `system`
+    choice before its resolved value has been written) renders light, and the provider
+    corrects it on mount — one flash on a first visit for a system-dark visitor, never
+    again.
+  */
+  const isDark = (await cookies()).get(THEME_COOKIE_NAME)?.value === APP_THEMES.DARK;
+
   return (
     /*
       The font variables sit on <html>, not <body>. `--font-body` is declared on <html>
-      too, and a custom property is resolved against the element that declares it — so
-      if the faces were declared one level down on <body>, the per-language swap in
-      globals.css would resolve to nothing.
+      too, and a custom property is resolved against the element that declares it — so if
+      the faces were declared one level down on <body>, the per-language swap in globals.css
+      would resolve to nothing.
 
-      `suppressHydrationWarning` because `next-themes` writes the `.dark` class onto this
-      element from an inline script before React hydrates — deliberately, since that is what
-      stops a light flash before the dark stylesheet applies. The server rendered no class,
-      so React would otherwise report the difference it was asked to allow.
+      `suppressHydrationWarning` because the provider may correct the theme on mount (the
+      `system` case above), and a corrected class on <html> is a difference React would
+      otherwise report.
     */
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${inter.variable} ${poppins.variable} ${notoSansBengali.variable} ${anekBangla.variable}`}>
+      className={cn(inter.variable, poppins.variable, notoSansBengali.variable, anekBangla.variable, isDark && 'dark')}
+      style={{ colorScheme: isDark ? 'dark' : 'light' }}>
       <body className="font-sans antialiased">
-        {/*
-          First in the tab order, before every provider, so it is reachable on the very
-          first press of Tab on any screen in the app.
-        */}
+        {/* First in the tab order, before every provider, so it is reachable on the first press of Tab. */}
         <SkipToContent label={l10n('SKIP_TO_CONTENT')} />
 
         {/*
-          `NuqsAdapter` teaches nuqs how this app routes. It wraps the whole tree rather
-          than the one screen that uses it, because the hooks read from context and a
-          later screen adding a URL filter should not have to remember this.
+          `NuqsAdapter` teaches nuqs how this app routes. It wraps the whole tree rather than
+          the one screen that uses it, because the hooks read from context and a later screen
+          adding a URL filter should not have to remember this.
         */}
         <ThemeProvider>
           <NextIntlClientProvider>
