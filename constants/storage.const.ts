@@ -1,3 +1,5 @@
+import type { FileConversionFailure, FileConversionStatus, FileConversionTarget } from '@/types';
+
 /**
  * How much the bucket may hold, and what is done to a file on the way in to keep it
  * under that.
@@ -72,3 +74,36 @@ export const STORAGE_INCOMPRESSIBLE_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ] as const;
+
+/**
+ * The states a background file conversion moves through.
+ *
+ * `processing` while the compression runs after the upload's response, then `done` or
+ * `failed`. The progress screen renders one badge per state.
+ */
+export const FILE_CONVERSION_STATUS = {
+  PROCESSING: 'processing',
+  DONE: 'done',
+  FAILED: 'failed',
+} as const satisfies Record<string, FileConversionStatus>;
+
+/** Which upload a conversion job belongs to — the row it swaps when it finishes. */
+export const FILE_CONVERSION_TARGET = {
+  MATERIAL: 'material',
+  NOTICE: 'notice',
+} as const satisfies Record<string, FileConversionTarget>;
+
+/** Why a conversion failed, stored as a code the screen localizes. */
+export const FILE_CONVERSION_FAILURE = {
+  TARGET_GONE: 'target_gone',
+  CONVERSION_FAILED: 'conversion_failed',
+} as const satisfies Record<string, FileConversionFailure>;
+
+/**
+ * How many conversion jobs the progress screen lists, newest first.
+ *
+ * A window rather than the whole history: the screen answers "did my uploads go through",
+ * which is a recent question, and the rows are never deleted, so an unbounded list would
+ * only grow.
+ */
+export const FILE_CONVERSION_FEED_LIMIT = 50;

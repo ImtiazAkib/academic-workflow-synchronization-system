@@ -4,6 +4,7 @@ export * from './course.service';
 export * from './class-session.service';
 export * from './material.service';
 export * from './notice.service';
+export * from './conversion.service';
 export * from './student.service';
 export * from './login-id.issuer';
 export * from './token.hash';

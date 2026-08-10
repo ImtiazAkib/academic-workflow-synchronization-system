@@ -4,6 +4,7 @@ import { MaterialDto, SessionUser, materialFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
+import { FILE_CONVERSION_TARGET } from '@/constants/storage.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
@@ -24,6 +25,7 @@ import { storage } from '@/lib/storage';
 import type { StoredFileStream } from '@/lib/storage';
 import { fileMatchesDeclaredType, toId } from '@/lib/utils';
 
+import { ConversionService } from './conversion.service';
 import { hasStorageRoomFor } from './storage.guard';
 
 import type { CourseEntity } from '@/models/course.model';
@@ -36,6 +38,8 @@ const DATABASE = CODES.DATABASE.MATERIALS;
 const VALIDATION = CODES.VALIDATION.MATERIALS;
 const AUTH = CODES.AUTH.MATERIALS;
 const BUSINESS = CODES.BUSINESS.COMMON;
+
+const conversions = new ConversionService();
 
 export class MaterialService {
   /**
@@ -123,6 +127,15 @@ export class MaterialService {
           size: stored.size,
           storageKey: stored.storageKey,
         });
+
+        /*
+          The file is stored raw and the row points at it; compressing it is booked to run
+          after the response so the upload does not wait. The job swaps the row to the
+          smaller file once it finishes — and if it fails, the raw file still serves.
+        */
+        const jobId = await conversions.enqueue(FILE_CONVERSION_TARGET.MATERIAL, toId(created._id), stored.fileName, stored.size, uploader.userId);
+
+        conversions.schedule(jobId);
 
         return singleSuccess(materialFromEntity(created));
       } catch (error) {

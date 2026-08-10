@@ -9,7 +9,7 @@ import { STORAGE, STORAGE_INCOMPRESSIBLE_MIME_TYPES } from '@/constants/storage.
 
 import { connectToDatabase } from '@/lib/mongodb';
 
-import type { StorageDriver, StoredFile, StoredFileStream } from './storage.types';
+import type { ConvertedFile, StorageDriver, StoredFile, StoredFileStream } from './storage.types';
 
 /*
   Files live in MongoDB rather than on disk.
@@ -24,11 +24,11 @@ import type { StorageDriver, StoredFile, StoredFileStream } from './storage.type
   `MATERIAL` is what keeps that honest; anything bigger belongs in object storage, which
   is a new driver rather than a change here.
 
-  Every file is shrunk on the way in — that is the whole reason `save` is no longer the
-  thin passthrough it started as. An image is re-encoded to WebP, bounded to a sane size;
-  a document that compresses is gzipped. What was squeezed is recorded in the file's
-  metadata so `read` can undo it, and `usage` sums what actually landed on disk — the
-  compressed sizes — because that, not the size the upload claimed, is what fills the cap.
+  Shrinking a file is split off from storing it. `save` writes the bytes as they arrive —
+  streamed, so the upload returns without a 25 MB file sitting in memory being re-encoded
+  while the caller waits — and `compress` does the re-encoding and gzipping afterwards, in
+  the background, then the caller swaps the row to the new file. What was squeezed rides in
+  the file's metadata so `read` can undo it, and `usage` sums what actually landed on disk.
 */
 
 const gzipAsync = promisify(zlib.gzip);
@@ -52,10 +52,10 @@ async function openBucket(): Promise<mongoose.mongo.GridFSBucket> {
 }
 
 /**
- * The name an image is stored and offered back under, once it is a WebP.
+ * The name a file is stored and offered back under, once it is a WebP.
  *
- * The extension has to follow the bytes: a file re-encoded to WebP but still called
- * `.png` would be saved by the browser under a name that lies about its contents.
+ * The extension has to follow the bytes: a file re-encoded to WebP but still called `.png`
+ * would be saved by the browser under a name that lies about its contents.
  *
  * @param fileName - Name as uploaded.
  *
@@ -82,11 +82,6 @@ function shouldGzip(mimeType: string): boolean {
 /**
  * Write a whole buffer to an open upload stream and wait for it to land.
  *
- * A buffer rather than the streaming, backpressured loop the driver started with:
- * compression needs the bytes in hand — `sharp` decodes a whole image and `gzip` sees the
- * whole document — so by this point they already are, and the 25 MB cap is what keeps that
- * safe to hold. Anything larger belongs in object storage, which is a new driver.
- *
  * @param upload - The GridFS write stream.
  * @param bytes - The bytes to store.
  */
@@ -99,74 +94,136 @@ async function writeBuffer(upload: mongoose.mongo.GridFSBucketWriteStream, bytes
 }
 
 /**
- * Re-encode an image to a bounded WebP and store it.
+ * Read a whole stored file into memory.
  *
- * `rotate()` with no argument bakes in the EXIF orientation before stripping it, so a
- * photo taken sideways on a phone is not served on its side once the metadata is gone.
- * The resize bounds the longest edge without ever enlarging a small image, and WebP at a
- * middling quality is a fraction of the JPEG or PNG that arrived.
- *
- * @param bucket - The opened bucket.
- * @param file - The uploaded image.
- * @param input - The image bytes.
- *
- * @returns The stored WebP's key and metadata.
- */
-async function storeImage(bucket: mongoose.mongo.GridFSBucket, file: File, input: Buffer): Promise<StoredFile> {
-  const output = await sharp(input)
-    .rotate()
-    .resize({ width: STORAGE.IMAGE_MAX_DIMENSION, height: STORAGE.IMAGE_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: STORAGE.IMAGE_WEBP_QUALITY })
-    .toBuffer();
-
-  const fileName = toWebpFileName(file.name);
-  const upload = bucket.openUploadStream(fileName, { metadata: { mimeType: 'image/webp', encoding: 'identity' } });
-
-  await writeBuffer(upload, output);
-
-  // The stored facts are the WebP's, not the upload's — the type changed and the size shrank.
-  return { storageKey: String(upload.id), size: output.length, mimeType: 'image/webp', fileName };
-}
-
-/**
- * Store a document, gzipped when that helps.
- *
- * The logical size and type reported back are the original's, because that is what the
- * material row records and what a download offers — the gzip is an on-disk detail undone
- * on the way out. `originalSize` rides in the metadata so `read` can report a correct
- * `Content-Length` for the decompressed stream.
+ * Only `compress` uses this, and only on files already bounded by the upload caps —
+ * `sharp` needs the whole image decoded and `gzip` sees the whole document, so by that
+ * point the bytes have to be in hand. The download path never buffers; it streams.
  *
  * @param bucket - The opened bucket.
- * @param file - The uploaded document.
- * @param input - The document bytes.
+ * @param id - The stored file's id.
  *
- * @returns The stored file's key and original metadata.
+ * @returns The file's bytes.
  */
-async function storeDocument(bucket: mongoose.mongo.GridFSBucket, file: File, input: Buffer): Promise<StoredFile> {
-  const gzip = shouldGzip(file.type);
-  const bytes = gzip ? await gzipAsync(input) : input;
+async function downloadToBuffer(bucket: mongoose.mongo.GridFSBucket, id: mongoose.Types.ObjectId): Promise<Buffer> {
+  const chunks: Buffer[] = [];
 
-  const metadata = gzip ? { mimeType: file.type, encoding: 'gzip', originalSize: file.size } : { mimeType: file.type, encoding: 'identity' };
+  for await (const chunk of bucket.openDownloadStream(id)) {
+    chunks.push(chunk as Buffer);
+  }
 
-  const upload = bucket.openUploadStream(file.name, { metadata });
-
-  await writeBuffer(upload, bytes);
-
-  return { storageKey: String(upload.id), size: file.size, mimeType: file.type, fileName: file.name };
+  return Buffer.concat(chunks);
 }
 
 export const gridFsStorage: StorageDriver = {
   async save(file: File): Promise<StoredFile> {
     const bucket = await openBucket();
 
-    // Buffered rather than streamed, because every branch below transforms the whole file.
-    const input = Buffer.from(await file.arrayBuffer());
+    // Stored as it arrives — `encoding: 'identity'` says nothing was done to it. `compress` changes that later.
+    const upload = bucket.openUploadStream(file.name, { metadata: { mimeType: file.type, encoding: 'identity' } });
 
-    if (file.type.startsWith('image/')) {
-      return storeImage(bucket, file, input);
+    /*
+      The web `File` gives a `ReadableStream`; GridFS wants a Node writable. Piping by hand
+      rather than reaching for `Readable.fromWeb` keeps this working on both the Node and
+      edge builds without a conversion helper.
+    */
+    const reader = file.stream().getReader();
+
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        // Backpressure: wait when the buffer is full rather than growing it.
+        if (!upload.write(value)) {
+          await new Promise(resolve => upload.once('drain', resolve));
+        }
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        upload.once('finish', () => resolve());
+        upload.once('error', reject);
+        upload.end();
+      });
+    } finally {
+      reader.releaseLock();
     }
 
-    return storeDocument(bucket, file, input);
+    return { storageKey: String(upload.id), size: file.size, mimeType: file.type, fileName: file.name };
+  },
+
+  async compress(storageKey: string): Promise<ConvertedFile | null> {
+    if (!mongoose.Types.ObjectId.isValid(storageKey)) {
+      return null;
+    }
+
+    const bucket = await openBucket();
+    const id = new mongoose.Types.ObjectId(storageKey);
+
+    const [record] = await bucket.find({ _id: id }).limit(1).toArray();
+
+    if (!record) {
+      return null;
+    }
+
+    const mimeType = String(record.metadata?.mimeType ?? 'application/octet-stream');
+    const fileName = record.filename;
+    const input = await downloadToBuffer(bucket, id);
+
+    if (mimeType.startsWith('image/')) {
+      /*
+        `rotate()` with no argument bakes in the EXIF orientation before it is stripped, so
+        a photo taken sideways on a phone is not served on its side. The resize bounds the
+        longest edge without enlarging a small image, and WebP at a middling quality is a
+        fraction of the JPEG or PNG that arrived.
+      */
+      const output = await sharp(input)
+        .rotate()
+        .resize({ width: STORAGE.IMAGE_MAX_DIMENSION, height: STORAGE.IMAGE_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: STORAGE.IMAGE_WEBP_QUALITY })
+        .toBuffer();
+
+      // A re-encode that did not shrink the file is not worth swapping the original for.
+      if (output.length >= input.length) {
+        return null;
+      }
+
+      const webpName = toWebpFileName(fileName);
+      const upload = bucket.openUploadStream(webpName, { metadata: { mimeType: 'image/webp', encoding: 'identity' } });
+
+      await writeBuffer(upload, output);
+
+      return {
+        stored: { storageKey: String(upload.id), size: output.length, mimeType: 'image/webp', fileName: webpName },
+        physicalSize: output.length,
+      };
+    }
+
+    if (shouldGzip(mimeType)) {
+      const compressed = await gzipAsync(input);
+
+      // Nothing gained means nothing swapped — a gzip that grew the file is left undone.
+      if (compressed.length >= input.length) {
+        return null;
+      }
+
+      const upload = bucket.openUploadStream(fileName, { metadata: { mimeType, encoding: 'gzip', originalSize: input.length } });
+
+      await writeBuffer(upload, compressed);
+
+      /*
+        The logical size stays the original's — a gzipped document is still that document,
+        unzipped on the way out — while the physical size is the compressed length, which is
+        what actually fills the disk.
+      */
+      return { stored: { storageKey: String(upload.id), size: input.length, mimeType, fileName }, physicalSize: compressed.length };
+    }
+
+    // An already-compressed document: nothing to do, and the caller keeps the original.
+    return null;
   },
 
   async read(storageKey: string): Promise<StoredFileStream | null> {
@@ -187,7 +244,7 @@ export const gridFsStorage: StorageDriver = {
     const gunzip = record.metadata?.encoding === 'gzip';
 
     /*
-      When the bytes were gzipped on the way in, they are unzipped on the way out — piped
+      When the bytes were gzipped by `compress`, they are unzipped on the way out — piped
       through a `gunzip` transform so the caller never learns the file was compressed. The
       length reported is then the original's, from metadata, not `record.length` (which is
       the compressed size the download and notice routes would otherwise send as
@@ -239,8 +296,7 @@ export const gridFsStorage: StorageDriver = {
       Summed straight off the `.files` collection rather than counted from the material and
       notice rows, because those record the logical size and can drift: a save that landed
       its bytes but failed its row leaves an orphan the rows never mention, and it is real
-      disk. The bucket's own tally cannot miss it. `length` is the stored byte count, so
-      this is the compressed total — the number the cap is meant to bound.
+      disk. `length` is the stored byte count, so this is what actually fills the cap.
     */
     const files = mongoose.connection.db.collection(`${MATERIAL.BUCKET}.files`);
     const [row] = await files.aggregate<{ total: number }>([{ $group: { _id: null, total: { $sum: '$length' } } }]).toArray();
