@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { USER_ROLES } from '@/constants/roles.const';
 
 import { requireRole } from '@/lib/auth';
-import { CourseService, MaterialService } from '@/lib/services';
+import { CourseService, MaterialService, getStorageStatus } from '@/lib/services';
 
 import { MaterialsScreen } from '@/components/materials';
 
@@ -31,7 +31,7 @@ export default async function TeacherMaterialsPage() {
 
   const l10n = await getTranslations();
 
-  const [courseResult, materialResult] = await Promise.all([courseService.list(), materialService.list()]);
+  const [courseResult, materialResult, storageStatus] = await Promise.all([courseService.list(), materialService.list(), getStorageStatus()]);
 
   /*
     Only the teacher's own courses reach the picker, and only their own files reach the
@@ -56,6 +56,8 @@ export default async function TeacherMaterialsPage() {
       <MaterialsScreen
         materials={materials}
         courses={courses}
+        storageBlocked={storageStatus.full}
+        storageNearFull={storageStatus.nearFull}
         labels={{
           title: l10n('MATERIALS_TITLE'),
           intro: l10n('MATERIALS_INTRO'),
@@ -67,6 +69,8 @@ export default async function TeacherMaterialsPage() {
           fieldFile: l10n('MATERIALS_FIELD_FILE_LABEL'),
           uploadSubmit: l10n('MATERIALS_UPLOAD_SUBMIT'),
           uploading: l10n('MATERIALS_UPLOADING'),
+          storageWarning: l10n('MATERIALS_STORAGE_WARNING'),
+          storageFull: l10n('MATERIALS_STORAGE_FULL'),
           tableLabel: l10n('MATERIALS_TABLE_LABEL'),
           columnTitle: l10n('MATERIALS_TABLE_TITLE'),
           columnCourse: l10n('MATERIALS_TABLE_COURSE'),
@@ -79,6 +83,7 @@ export default async function TeacherMaterialsPage() {
           deleteTitle: l10n('MATERIALS_DELETE_TITLE'),
           deleteDescription: l10n('MATERIALS_DELETE_DESCRIPTION'),
           deleteConfirm: l10n('MATERIALS_DELETE_CONFIRM'),
+          deleting: l10n('MATERIALS_DELETE_WORKING'),
           cancel: l10n('MATERIALS_DIALOG_CANCEL'),
           toastUploaded: l10n('MATERIALS_TOAST_UPLOADED'),
           toastDeleted: l10n('MATERIALS_TOAST_DELETED'),
@@ -91,6 +96,7 @@ export default async function TeacherMaterialsPage() {
             notOwnFile: l10n('MATERIALS_ERROR_NOT_OWN_FILE'),
             notFound: l10n('MATERIALS_ERROR_NOT_FOUND'),
             courseNotFound: l10n('MATERIALS_ERROR_COURSE_NOT_FOUND'),
+            storageFull: l10n('MATERIALS_ERROR_STORAGE_FULL'),
             generic: l10n('MATERIALS_ERROR_GENERIC'),
           },
         }}

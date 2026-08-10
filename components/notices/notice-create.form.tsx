@@ -20,6 +20,10 @@ import type { NoticeCreateFormLabels } from './notices.types';
 
 type NoticeCreateFormProps = {
   labels: NoticeCreateFormLabels;
+  /** The bucket is over the block line — an image cannot be attached, but text still publishes. */
+  storageBlocked: boolean;
+  /** Past the warn line but not the block line — attaching still works, but say so. */
+  storageNearFull: boolean;
 };
 
 /**
@@ -54,7 +58,7 @@ function revoke(url: string | null): void {
   notice might concern, so a slip of attention over-delivers rather than silently missing
   the people it was written for.
 */
-export function NoticeCreateForm({ labels }: NoticeCreateFormProps) {
+export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: NoticeCreateFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -223,6 +227,7 @@ export function NoticeCreateForm({ labels }: NoticeCreateFormProps) {
           accept={NOTICE_IMAGE_ACCEPT}
           ref={imageInputRef}
           aria-invalid={Boolean(errors.image)}
+          disabled={storageBlocked}
           className="py-1.5"
           onChange={handleImageChange}
         />
@@ -232,6 +237,22 @@ export function NoticeCreateForm({ labels }: NoticeCreateFormProps) {
           </p>
         )}
         <p className="text-muted-foreground text-xs">{labels.imageHint}</p>
+
+        {/*
+          Only the picture is refused when the bucket is full — a text notice still goes out,
+          so the message sits under the image field rather than at the top of the form.
+        */}
+        {storageBlocked ? (
+          <p role="status" className="text-destructive text-xs">
+            {labels.storageFull}
+          </p>
+        ) : (
+          storageNearFull && (
+            <p role="status" className="text-warning text-xs">
+              {labels.storageWarning}
+            </p>
+          )
+        )}
 
         {/*
           Shown before publishing, because a picture is the one field whose mistake is

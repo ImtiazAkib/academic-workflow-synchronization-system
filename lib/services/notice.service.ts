@@ -13,6 +13,8 @@ import { storage } from '@/lib/storage';
 import type { StoredFileStream } from '@/lib/storage';
 import { fileMatchesDeclaredType } from '@/lib/utils';
 
+import { hasStorageRoomFor } from './storage.guard';
+
 import type { NoticeAttributes, NoticeEntity, NoticeImage } from '@/models/notice.model';
 import type { QueryFilter } from 'mongoose';
 
@@ -21,6 +23,7 @@ const log = createLoggerWithContext('notice.service');
 const DATABASE = CODES.DATABASE.NOTICES;
 const VALIDATION = CODES.VALIDATION.NOTICES;
 const AUTH = CODES.AUTH.NOTICES;
+const BUSINESS = CODES.BUSINESS.COMMON;
 
 export class NoticeService {
   /**
@@ -88,6 +91,11 @@ export class NoticeService {
         // The one type check the client cannot fake — the declared type is only a claim.
         if (!(await fileMatchesDeclaredType(input.image))) {
           return singleFailure(createError(VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE, VALIDATION.IMAGE_TYPE_NOT_ALLOWED.MESSAGE, 'image'));
+        }
+
+        // Only the image spends the bucket. A text-only notice is never refused for room.
+        if (!(await hasStorageRoomFor(input.image.size))) {
+          return singleFailure(createError(BUSINESS.STORAGE_FULL.CODE, BUSINESS.STORAGE_FULL.MESSAGE, 'image'));
         }
 
         const stored = await storage.save(input.image);

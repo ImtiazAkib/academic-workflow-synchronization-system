@@ -80,6 +80,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             system: l10n('THEME_SYSTEM'),
           }}
           signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
+          signOutWorkingLabel={l10n('DASHBOARD_SIGNING_OUT')}
           locale={locale}
         />
 

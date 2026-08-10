@@ -3,11 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { withForbidden, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
+import { withForbidden, withInsufficientStorage, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
 import { getSessionUser } from '@/lib/auth';
 import { isSuccess } from '@/lib/result';
 import { MaterialUploadSchema } from '@/lib/schemas';
-import { MaterialService, consumeRateLimit } from '@/lib/services';
+import { MaterialService, consumeRateLimit, getStorageStatus } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
 const materialService = new MaterialService();
@@ -44,6 +44,16 @@ export async function POST(request: NextRequest) {
   */
   if (!(await consumeRateLimit('upload', sessionUser.userId, RATE_LIMIT.UPLOAD))) {
     return withTooManyRequests();
+  }
+
+  /*
+    Before `formData()`, alongside the rate-limit gate and for the same reason: refusing
+    after the body is read means a file the bucket cannot hold has already crossed the wire.
+    A material always carries a file, so a full bucket turns the whole request away here —
+    the exact "does this particular file fit" check still runs in the service.
+  */
+  if ((await getStorageStatus()).full) {
+    return withInsufficientStorage();
   }
 
   const form = await request.formData();

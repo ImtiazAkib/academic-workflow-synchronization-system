@@ -13,7 +13,7 @@ import { isSuccess } from '@/lib/result';
 import { SignInInput, SignInOutput, SignInSchema } from '@/lib/schemas';
 import { SignInErrorLabels, resolveSignInErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label } from '@/components/ui';
+import { Button, Input, Label, Spinner } from '@/components/ui';
 
 import { signInAction } from './actions';
 
@@ -36,6 +36,14 @@ type SignInFormProps = {
 export function SignInForm({ labels }: SignInFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  /*
+    `isSubmitting` goes false the moment the action resolves, but a successful sign-in then
+    navigates — and react-hook-form has already re-enabled the button by the time the new
+    page paints. This holds the busy state through the redirect, so the button never flicks
+    back to "Sign in" for the instant before the dashboard loads. It is never cleared,
+    because the only way out of a successful submit is the navigation that unmounts this.
+  */
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
     register,
@@ -45,12 +53,16 @@ export function SignInForm({ labels }: SignInFormProps) {
     resolver: zodResolver(SignInSchema),
   });
 
+  const isBusy = isSubmitting || isRedirecting;
+
   const handleFormSubmit = async (values: SignInOutput): Promise<void> => {
     setFormError(null);
 
     const result = await signInAction(values);
 
     if (isSuccess(result) && result.result) {
+      setIsRedirecting(true);
+
       // Each role lands in its own area; `refresh()` re-renders the server tree so
       // the new session is picked up.
       router.replace(ROLE_HOME[result.result]);
@@ -95,8 +107,9 @@ export function SignInForm({ labels }: SignInFormProps) {
         {errors.password && <p className="text-destructive text-sm">{labels.passwordRequired}</p>}
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="mt-1 w-full">
-        {isSubmitting ? labels.submitting : labels.submit}
+      <Button type="submit" variant="appPrimary" disabled={isBusy} className="mt-1 w-full">
+        {isBusy && <Spinner className="size-4" />}
+        {isBusy ? labels.submitting : labels.submit}
       </Button>
     </form>
   );

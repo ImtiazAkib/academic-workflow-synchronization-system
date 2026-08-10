@@ -561,6 +561,14 @@ declare const messages: {
   "THEME_DARK": "Dark",
   "THEME_SYSTEM": "Match my device",
   "NOTICES_PUBLISHED_TITLE": "Published",
-  "SKIP_TO_CONTENT": "Skip to content"
+  "SKIP_TO_CONTENT": "Skip to content",
+  "DASHBOARD_SIGNING_OUT": "Signing out…",
+  "MATERIALS_DELETE_WORKING": "Deleting…",
+  "MATERIALS_STORAGE_WARNING": "Storage is almost full — uploads may soon be blocked.",
+  "MATERIALS_STORAGE_FULL": "Storage is full. You cannot upload files until space is freed.",
+  "MATERIALS_ERROR_STORAGE_FULL": "There is not enough storage left to save this file.",
+  "NOTICES_STORAGE_WARNING": "Storage is almost full — attaching an image may soon be blocked.",
+  "NOTICES_STORAGE_FULL": "Storage is full, so an image cannot be attached right now. A text-only notice still works.",
+  "NOTICES_ERROR_STORAGE_FULL": "There is not enough storage left to save this image."
 };
 export default messages;

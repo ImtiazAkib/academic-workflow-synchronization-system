@@ -23,12 +23,14 @@ type MaterialsScreenProps = {
   materials: MaterialDto[];
   courses: MaterialCourseOption[];
   labels: MaterialsLabels;
+  storageBlocked: boolean;
+  storageNearFull: boolean;
 };
 
 /**
  * The teacher's repository: the upload form, then everything already published.
  */
-export function MaterialsScreen({ materials, courses, labels }: MaterialsScreenProps) {
+export function MaterialsScreen({ materials, courses, labels, storageBlocked, storageNearFull }: MaterialsScreenProps) {
   const router = useRouter();
   const [isWorking, startWorking] = useTransition();
 
@@ -76,7 +78,7 @@ export function MaterialsScreen({ materials, courses, labels }: MaterialsScreenP
           <p className="text-muted-foreground text-sm">{labels.uploadDescription}</p>
         </div>
 
-        <MaterialUploadForm courses={courses} labels={labels} />
+        <MaterialUploadForm courses={courses} labels={labels} storageBlocked={storageBlocked} storageNearFull={storageNearFull} />
       </div>
 
       {materials.length === 0 ? (
@@ -111,7 +113,7 @@ export function MaterialsScreen({ materials, courses, labels }: MaterialsScreenP
             </Button>
 
             <Button type="button" variant="appPrimary" disabled={isWorking} onClick={handleRemoveConfirm}>
-              {labels.deleteConfirm}
+              {isWorking ? labels.deleting : labels.deleteConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>

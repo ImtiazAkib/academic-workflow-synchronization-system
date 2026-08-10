@@ -22,6 +22,7 @@ type DashboardTopbarProps = {
   languageLabel: string;
   themeLabels: ThemeSelectorLabels;
   signOutLabel: string;
+  signOutWorkingLabel: string;
   locale: string;
 };
 
@@ -41,6 +42,7 @@ export function DashboardTopbar({
   languageLabel,
   themeLabels,
   signOutLabel,
+  signOutWorkingLabel,
   locale,
 }: DashboardTopbarProps) {
   return (
@@ -63,7 +65,7 @@ export function DashboardTopbar({
             <ThemeSelector labels={themeLabels} />
 
             <LanguageSelector label={languageLabel} />
-            <SignOutButton label={signOutLabel} locale={locale} />
+            <SignOutButton label={signOutLabel} workingLabel={signOutWorkingLabel} locale={locale} />
           </div>
         </div>
 

@@ -8,3 +8,4 @@ export * from './student.service';
 export * from './login-id.issuer';
 export * from './token.hash';
 export * from './rate-limit.guard';
+export * from './storage.guard';

@@ -8,6 +8,7 @@ import { Link } from '@/l10n/navigation';
 import { ROUTES } from '@/constants/routes.const';
 
 import { requireAdminArea } from '@/lib/auth';
+import { getStorageStatus } from '@/lib/services';
 
 import { NoticeCreateForm } from '@/components/notices';
 
@@ -31,6 +32,8 @@ export default async function AdminNoticeCreatePage() {
 
   const l10n = await getTranslations();
 
+  const storageStatus = await getStorageStatus();
+
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-3">
@@ -49,6 +52,8 @@ export default async function AdminNoticeCreatePage() {
 
       <div className="surface-card p-4 sm:p-6">
         <NoticeCreateForm
+          storageBlocked={storageStatus.full}
+          storageNearFull={storageStatus.nearFull}
           labels={{
             fields: {
               title: l10n('NOTICES_FIELD_TITLE_LABEL'),
@@ -74,6 +79,8 @@ export default async function AdminNoticeCreatePage() {
             imageHint: l10n('NOTICES_FIELD_IMAGE_HINT'),
             imagePreviewAlt: l10n('NOTICES_IMAGE_PREVIEW_ALT'),
             imageRemove: l10n('NOTICES_IMAGE_REMOVE'),
+            storageWarning: l10n('NOTICES_STORAGE_WARNING'),
+            storageFull: l10n('NOTICES_STORAGE_FULL'),
             submit: l10n('NOTICES_CREATE_SUBMIT'),
             working: l10n('NOTICES_DIALOG_WORKING'),
             cancel: l10n('NOTICES_DIALOG_CANCEL'),
@@ -84,6 +91,7 @@ export default async function AdminNoticeCreatePage() {
               audienceInvalid: l10n('NOTICES_ERROR_AUDIENCE'),
               imageTooLarge: l10n('NOTICES_ERROR_IMAGE_TOO_LARGE'),
               imageType: l10n('NOTICES_ERROR_IMAGE_TYPE'),
+              storageFull: l10n('NOTICES_ERROR_STORAGE_FULL'),
               generic: l10n('NOTICES_ERROR_GENERIC'),
             },
           }}

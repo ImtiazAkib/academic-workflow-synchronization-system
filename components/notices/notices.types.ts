@@ -62,6 +62,8 @@ export type NoticeCreateFormLabels = {
   imageHint: string;
   imagePreviewAlt: string;
   imageRemove: string;
+  storageWarning: string;
+  storageFull: string;
   submit: string;
   working: string;
   cancel: string;

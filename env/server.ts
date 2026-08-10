@@ -61,6 +61,22 @@ export const env = createEnv({
     AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
 
     /*
+      How many bytes of uploaded files the deployment is willing to hold. An env var and
+      not a constant because it differs per box the same way the database does — an Atlas
+      free tier holds around 512 MB, the self-hosted disk holds whatever it holds — and the
+      quota guard warns and then refuses uploads as usage approaches it. Coerced from the
+      string the environment hands over, exactly as `SMTP_PORT` is. The default is the
+      free-tier figure, so a clean clone has a sane ceiling without configuring one.
+    */
+    STORAGE_CAP_BYTES: blankAsAbsent(
+      z.coerce
+        .number()
+        .int()
+        .positive()
+        .default(512 * 1024 * 1024)
+    ),
+
+    /*
       Mail, from step 12. Deliberately optional, and the only place in this file where
       that is a feature rather than a leftover: with `SMTP_HOST` unset the mail layer
       falls back to a driver that writes every message to the log, so a clean clone can

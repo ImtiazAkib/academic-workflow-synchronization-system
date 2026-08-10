@@ -58,4 +58,17 @@ export type StorageDriver = {
    * @param storageKey - Key returned by `save`.
    */
   remove(storageKey: string): Promise<void>;
+
+  /**
+   * How many bytes the driver is currently holding, across every stored file.
+   *
+   * The one measurement the quota guard needs, kept behind the same contract as the rest
+   * so nothing above the storage layer has to know how the backend counts — a GridFS sum
+   * today, an S3 `ListObjects` total if the driver is ever swapped. It reports what is
+   * physically stored, which is the compressed size after `save` has done its work, so the
+   * cap is measured against real disk rather than the sizes the files logically claim.
+   *
+   * @returns The total stored size in bytes.
+   */
+  usage(): Promise<number>;
 };
