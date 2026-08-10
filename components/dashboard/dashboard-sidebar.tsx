@@ -8,6 +8,7 @@ import { DashboardNav } from './dashboard-nav';
 
 type DashboardSidebarProps = {
   role: UserRole;
+  logoLabel: string;
   navLabel: string;
   overviewLabel: string;
   usersLabel: string;
@@ -16,6 +17,7 @@ type DashboardSidebarProps = {
   materialsLabel: string;
   teachersLabel: string;
   noticesLabel: string;
+  uploadsLabel: string;
   profileLabel: string;
 };
 
@@ -25,6 +27,7 @@ type DashboardSidebarProps = {
 */
 export function DashboardSidebar({
   role,
+  logoLabel,
   navLabel,
   overviewLabel,
   usersLabel,
@@ -33,12 +36,13 @@ export function DashboardSidebar({
   materialsLabel,
   teachersLabel,
   noticesLabel,
+  uploadsLabel,
   profileLabel,
 }: DashboardSidebarProps) {
   return (
     <aside className="bg-sidebar border-sidebar-border hidden w-60 shrink-0 flex-col gap-6 border-r p-4 lg:flex">
       <Link href={ROUTES.HOME.HREF} className="flex items-center gap-2.5 px-2">
-        <AppLogo className="size-8" />
+        <AppLogo label={logoLabel} className="size-8" />
         <span className="font-heading text-regular-bold text-sidebar-foreground tracking-tight">{APP_DATA.SHORT_NAME}</span>
       </Link>
 
@@ -52,6 +56,7 @@ export function DashboardSidebar({
         materialsLabel={materialsLabel}
         teachersLabel={teachersLabel}
         noticesLabel={noticesLabel}
+        uploadsLabel={uploadsLabel}
         profileLabel={profileLabel}
         className="flex-col"
       />
