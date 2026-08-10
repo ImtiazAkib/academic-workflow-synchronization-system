@@ -45,7 +45,7 @@ export default async function UnauthorizedPage() {
     */
     <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex min-h-dvh items-center">
       <Container className="flex flex-col items-center gap-6 text-center">
-        <AppLogo className="size-11" />
+        <AppLogo label={l10n('APP_LOGO_ALT')} className="size-11" />
 
         <span className="text-gradient-brand font-heading text-6xl font-bold">403</span>
 

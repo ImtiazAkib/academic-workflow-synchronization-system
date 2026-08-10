@@ -19,7 +19,7 @@ export default async function NotFound() {
     <div className="flex min-h-dvh flex-col">
       <header className="border-border border-b">
         <Container className="flex h-16 items-center">
-          <AppLogo className="size-8" />
+          <AppLogo label={l10n('APP_LOGO_ALT')} className="size-8" />
         </Container>
       </header>
 

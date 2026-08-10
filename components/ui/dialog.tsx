@@ -9,6 +9,22 @@ import { cn } from '@/lib/utils/index';
 
 import { Button } from '@/components/ui/button';
 
+/*
+  The one word the dialog primitive renders on its own — the close button's label, which is
+  never passed in as `children` and so has nowhere to arrive from a call site. A client
+  component cannot look it up, and a prop for one string on every dialog in the app is eight
+  call sites of plumbing. So it rides a context: the area that renders dialogs provides the
+  translated value once, and both the corner close and the optional footer close read it.
+  Defaults to English, for a dialog rendered outside any provider.
+*/
+const DialogLabelsContext = React.createContext<{ close: string }>({ close: 'Close' });
+
+function DialogLabelsProvider({ close, children }: { close: string; children: React.ReactNode }) {
+  const value = React.useMemo(() => ({ close }), [close]);
+
+  return <DialogLabelsContext.Provider value={value}>{children}</DialogLabelsContext.Provider>;
+}
+
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
@@ -46,6 +62,8 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
 }) {
+  const { close } = React.useContext(DialogLabelsContext);
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -60,7 +78,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" render={<Button variant="ghost" className="absolute top-2 right-2" size="icon-sm" />}>
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{close}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
@@ -80,13 +98,15 @@ function DialogFooter({
 }: React.ComponentProps<'div'> & {
   showCloseButton?: boolean;
 }) {
+  const { close } = React.useContext(DialogLabelsContext);
+
   return (
     <div
       data-slot="dialog-footer"
       className={cn('bg-muted/50 -mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t p-4 sm:flex-row sm:justify-end', className)}
       {...props}>
       {children}
-      {showCloseButton && <DialogPrimitive.Close render={<Button variant="outline" />}>Close</DialogPrimitive.Close>}
+      {showCloseButton && <DialogPrimitive.Close render={<Button variant="outline" />}>{close}</DialogPrimitive.Close>}
     </div>
   );
 }
@@ -105,4 +125,16 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
   );
 }
 
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger };
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogLabelsProvider,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+};
