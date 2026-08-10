@@ -1,10 +1,25 @@
-import { NoticeAudience } from '@/types';
+import { NoticeAudience, NoticeCategory } from '@/types';
 
 export const NOTICE_AUDIENCES = {
   ALL: 'all',
   TEACHERS: 'teachers',
   STUDENTS: 'students',
 } as const satisfies Record<string, NoticeAudience>;
+
+export const NOTICE_CATEGORIES = {
+  GENERAL: 'general',
+  SESSION: 'session',
+} as const satisfies Record<string, NoticeCategory>;
+
+/**
+ * The most sessions one notice may target.
+ *
+ * A bound rather than a rule anybody asked for: a session notice names a handful of
+ * intakes, and an unbounded array is a request built by hand asking the database to match
+ * against a thousand strings. Generous enough that a real "every current batch" never hits
+ * it.
+ */
+export const NOTICE_MAX_SESSIONS = 20;
 
 /**
  * The picture a notice may carry.

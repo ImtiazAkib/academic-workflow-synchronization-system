@@ -9,12 +9,14 @@
 */
 export * from './class-name.utils';
 export * from './course.utils';
+export * from './conversion.utils';
 export * from './auth.utils';
 export * from './caller.utils';
 export * from './error.utils';
 export * from './file-signature.utils';
 export * from './material.utils';
 export * from './llms.utils';
+export * from './notice-labels.utils';
 export * from './register-labels.utils';
 export * from './login-id.utils';
 export * from './mongo.utils';

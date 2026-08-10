@@ -1,6 +1,7 @@
 import { toId } from '@/lib/utils';
 
 import { NoticeAudience } from './notice-audience';
+import { NoticeCategory } from './notice-category';
 
 import type { NoticeEntity } from '@/models/notice.model';
 
@@ -18,6 +19,9 @@ export type NoticeDto = {
    */
   hasImage: boolean;
   audience: NoticeAudience;
+  category: NoticeCategory;
+  /** The intake sessions a session notice targets — empty on a general one. */
+  sessions: string[];
   publishedById: string;
   publishedAt: string;
   createdAt: string;
@@ -38,6 +42,8 @@ export function noticeFromEntity(entity: NoticeEntity): NoticeDto {
     body: entity.body ?? '',
     hasImage: Boolean(entity.image),
     audience: entity.audience,
+    category: entity.category,
+    sessions: entity.sessions ?? [],
     publishedById: toId(entity.publishedBy),
     publishedAt: entity.publishedAt.toISOString(),
     createdAt: entity.createdAt.toISOString(),

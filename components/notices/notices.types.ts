@@ -1,5 +1,7 @@
 import type { NoticeAudienceLabels, NoticeErrorLabels } from '@/lib/utils';
 
+import type { NoticeCategory } from '@/types';
+
 /**
  * A notice reduced to what a card renders.
  *
@@ -24,6 +26,10 @@ export type NoticeView = {
   imageUrl: string | null;
   audience: string;
   audienceLabel: string;
+  /** `general` or `session` — decides whether the card shows the audience or the sessions. */
+  category: NoticeCategory;
+  /** The intake sessions a session notice targets. Empty on a general one. */
+  sessions: string[];
   publishedOn: string;
   publisherName: string | null;
 };
@@ -35,6 +41,13 @@ export type NoticeFieldLabels = {
   body: string;
   audience: string;
   image: string;
+  category: string;
+  sessions: string;
+};
+
+export type NoticeCategoryOptionLabels = {
+  general: string;
+  session: string;
 };
 
 export type NoticeFieldErrorLabels = {
@@ -45,6 +58,7 @@ export type NoticeFieldErrorLabels = {
   audienceInvalid: string;
   imageTooLarge: string;
   imageType: string;
+  sessionsRequired: string;
 };
 
 /**
@@ -58,7 +72,12 @@ export type NoticeCreateFormLabels = {
   fields: NoticeFieldLabels;
   fieldErrors: NoticeFieldErrorLabels;
   audiences: NoticeAudienceOptionLabels;
+  categories: NoticeCategoryOptionLabels;
   audienceHint: string;
+  categoryHint: string;
+  sessionsHint: string;
+  /** Shown in place of the picker when no student has a session set yet. */
+  noSessions: string;
   imageHint: string;
   imagePreviewAlt: string;
   imageRemove: string;
@@ -76,4 +95,6 @@ export type NoticeListLabels = {
   emptyDescription: string;
   publishedBy: string;
   unknownPublisher: string;
+  /** Prefix on a session notice's badge, before the intakes — "Sessions:". */
+  sessionsLabel: string;
 };

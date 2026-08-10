@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { useRouter } from '@/l10n/navigation';
 
-import { NOTICE_AUDIENCES, NOTICE_IMAGE_ACCEPT } from '@/constants/notice.const';
+import { NOTICE_AUDIENCES, NOTICE_CATEGORIES, NOTICE_IMAGE_ACCEPT } from '@/constants/notice.const';
 import { ROUTES } from '@/constants/routes.const';
 
 import { NoticeCreateInput, NoticeCreateOutput, NoticeCreateSchema } from '@/lib/schemas';
@@ -20,6 +20,15 @@ import type { NoticeCreateFormLabels } from './notices.types';
 
 type NoticeCreateFormProps = {
   labels: NoticeCreateFormLabels;
+  /** The intake sessions a session notice may target — the department's current batches. */
+  sessions: string[];
+  /**
+   * Whether the audience picker is offered. An administrator chooses it; a teacher does
+   * not — their general notices always go to students, so the field is simply absent.
+   */
+  canChooseAudience: boolean;
+  /** Where publishing or cancelling returns to — the admin or the teacher notices list. */
+  listHref: typeof ROUTES.ADMIN_NOTICES.HREF | typeof ROUTES.TEACHER_NOTICES.HREF;
   /** The bucket is over the block line — an image cannot be attached, but text still publishes. */
   storageBlocked: boolean;
   /** Past the warn line but not the block line — attaching still works, but say so. */
@@ -58,7 +67,7 @@ function revoke(url: string | null): void {
   notice might concern, so a slip of attention over-delivers rather than silently missing
   the people it was written for.
 */
-export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: NoticeCreateFormProps) {
+export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref, storageBlocked, storageNearFull }: NoticeCreateFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -79,8 +88,24 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
     formState: { errors, isSubmitting },
   } = useForm<NoticeCreateInput, undefined, NoticeCreateOutput>({
     resolver: zodResolver(NoticeCreateSchema),
-    defaultValues: { title: '', body: '', audience: NOTICE_AUDIENCES.ALL },
+    /*
+      `all` is the default audience for an administrator deliberately — it reaches everybody
+      the notice might concern, so a slip of attention over-delivers rather than silently
+      missing the people it was for. A teacher has no audience choice, so their default is
+      the only value it can take: students.
+    */
+    defaultValues: {
+      title: '',
+      body: '',
+      audience: canChooseAudience ? NOTICE_AUDIENCES.ALL : NOTICE_AUDIENCES.STUDENTS,
+      category: NOTICE_CATEGORIES.GENERAL,
+      sessions: [],
+    },
   });
+
+  // The audience picker and the session picker are alternatives, chosen by the category.
+  const category = useWatch({ control, name: 'category' });
+  const isSession = category === NOTICE_CATEGORIES.SESSION;
 
   // Only the last one can still be live; the rest were revoked as they were replaced.
   useEffect(() => () => revoke(previewUrlRef.current), []);
@@ -106,6 +131,11 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
     [NOTICE_AUDIENCES.ALL]: labels.audiences.all,
     [NOTICE_AUDIENCES.TEACHERS]: labels.audiences.teachers,
     [NOTICE_AUDIENCES.STUDENTS]: labels.audiences.students,
+  };
+
+  const categoryItems: Record<string, string> = {
+    [NOTICE_CATEGORIES.GENERAL]: labels.categories.general,
+    [NOTICE_CATEGORIES.SESSION]: labels.categories.session,
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -138,6 +168,9 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
     payload.set('title', values.title);
     payload.set('body', values.body ?? '');
     payload.set('audience', values.audience);
+    payload.set('category', values.category);
+    // One entry per session; the route reads them back with `getAll`.
+    values.sessions.forEach(session => payload.append('sessions', session));
 
     if (values.image) {
       payload.set('image', values.image);
@@ -147,7 +180,7 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
 
     if (response.ok) {
       toast.success(labels.published);
-      router.push(ROUTES.ADMIN_NOTICES.HREF);
+      router.push(listHref);
       router.refresh();
 
       return;
@@ -159,7 +192,7 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
   };
 
   const handleCancelClick = (): void => {
-    router.push(ROUTES.ADMIN_NOTICES.HREF);
+    router.push(listHref);
   };
 
   return (
@@ -181,17 +214,17 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="notice-audience">{labels.fields.audience}</Label>
+        <Label htmlFor="notice-category">{labels.fields.category}</Label>
         <Controller
           control={control}
-          name="audience"
+          name="category"
           render={({ field }) => (
-            <Select items={audienceItems} value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="notice-audience" className="w-full">
+            <Select items={categoryItems} value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="notice-category" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(audienceItems).map(([value, label]) => (
+                {Object.entries(categoryItems).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {label}
                   </SelectItem>
@@ -200,9 +233,71 @@ export function NoticeCreateForm({ labels, storageBlocked, storageNearFull }: No
             </Select>
           )}
         />
-        {errors.audience && <p className="text-destructive text-sm">{labels.fieldErrors.audienceInvalid}</p>}
-        <p className="text-muted-foreground text-xs">{labels.audienceHint}</p>
+        <p className="text-muted-foreground text-xs">{labels.categoryHint}</p>
       </div>
+
+      {/* A general notice is addressed by role, and only an administrator chooses which. */}
+      {!isSession && canChooseAudience && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="notice-audience">{labels.fields.audience}</Label>
+          <Controller
+            control={control}
+            name="audience"
+            render={({ field }) => (
+              <Select items={audienceItems} value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger id="notice-audience" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(audienceItems).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.audience && <p className="text-destructive text-sm">{labels.fieldErrors.audienceInvalid}</p>}
+          <p className="text-muted-foreground text-xs">{labels.audienceHint}</p>
+        </div>
+      )}
+
+      {/* A session notice is addressed by intake — the batches it should reach, and no others. */}
+      {isSession && (
+        <div className="flex flex-col gap-2">
+          <span className="text-foreground text-sm font-medium">{labels.fields.sessions}</span>
+
+          {sessions.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{labels.noSessions}</p>
+          ) : (
+            <Controller
+              control={control}
+              name="sessions"
+              render={({ field }) => (
+                <div role="group" aria-label={labels.fields.sessions} className="flex flex-wrap gap-x-4 gap-y-2">
+                  {sessions.map(session => (
+                    <label key={session} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={(field.value ?? []).includes(session)}
+                        onChange={event =>
+                          field.onChange(event.target.checked ? [...(field.value ?? []), session] : (field.value ?? []).filter(x => x !== session))
+                        }
+                        className="accent-primary size-4"
+                      />
+                      {session}
+                    </label>
+                  ))}
+                </div>
+              )}
+            />
+          )}
+
+          {errors.sessions && <p className="text-destructive text-sm">{labels.fieldErrors.sessionsRequired}</p>}
+          <p className="text-muted-foreground text-xs">{labels.sessionsHint}</p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="notice-body">{labels.fields.body}</Label>

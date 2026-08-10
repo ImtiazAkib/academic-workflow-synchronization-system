@@ -1,3 +1,7 @@
+import { NOTICE_CATEGORIES } from '@/constants/notice.const';
+
+import { Badge } from '@/components/ui';
+
 import { NoticeBadge } from './notice-badge';
 
 import type { NoticeListLabels, NoticeView } from './notices.types';
@@ -28,7 +32,19 @@ export function NoticeCard({ notice, labels }: NoticeCardProps) {
     <article className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="text-regular-semibold min-w-0 wrap-break-word">{notice.title}</h3>
-        <NoticeBadge audience={notice.audience} label={notice.audienceLabel} />
+
+        {/*
+          A session notice is not addressed by role, so its audience label ("students") would
+          say less than nothing — it shows which intakes it reached instead. A general notice
+          keeps the audience badge it always had.
+        */}
+        {notice.category === NOTICE_CATEGORIES.SESSION ? (
+          <Badge variant="secondary">
+            {labels.sessionsLabel} {notice.sessions.join(', ')}
+          </Badge>
+        ) : (
+          <NoticeBadge audience={notice.audience} label={notice.audienceLabel} />
+        )}
       </div>
 
       {/*
