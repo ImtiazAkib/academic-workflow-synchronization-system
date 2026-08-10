@@ -18,10 +18,12 @@ type DashboardTopbarProps = {
   materialsLabel: string;
   teachersLabel: string;
   noticesLabel: string;
+  uploadsLabel: string;
   profileLabel: string;
   languageLabel: string;
   themeLabels: ThemeSelectorLabels;
   signOutLabel: string;
+  signOutWorkingLabel: string;
   locale: string;
 };
 
@@ -37,10 +39,12 @@ export function DashboardTopbar({
   materialsLabel,
   teachersLabel,
   noticesLabel,
+  uploadsLabel,
   profileLabel,
   languageLabel,
   themeLabels,
   signOutLabel,
+  signOutWorkingLabel,
   locale,
 }: DashboardTopbarProps) {
   return (
@@ -63,7 +67,7 @@ export function DashboardTopbar({
             <ThemeSelector labels={themeLabels} />
 
             <LanguageSelector label={languageLabel} />
-            <SignOutButton label={signOutLabel} locale={locale} />
+            <SignOutButton label={signOutLabel} workingLabel={signOutWorkingLabel} locale={locale} />
           </div>
         </div>
 
@@ -81,6 +85,7 @@ export function DashboardTopbar({
           materialsLabel={materialsLabel}
           teachersLabel={teachersLabel}
           noticesLabel={noticesLabel}
+          uploadsLabel={uploadsLabel}
           profileLabel={profileLabel}
           className="border-border -mx-4 gap-1 overflow-x-auto border-t px-4 py-2 lg:hidden"
         />

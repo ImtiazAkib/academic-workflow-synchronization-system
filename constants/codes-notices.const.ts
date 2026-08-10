@@ -34,6 +34,9 @@ export const NOTICES_VALIDATION = {
   IMAGE_TOO_LARGE: createErrorDefinition(25006, 'That image is larger than the 5 MB limit.'),
   IMAGE_TYPE_NOT_ALLOWED: createErrorDefinition(25007, 'Attach a PNG, JPEG or WebP image.'),
   NOTICE_NOT_FOUND: createErrorDefinition(25008, 'That notice no longer exists.'),
+  CATEGORY_INVALID: createErrorDefinition(25009, 'Choose whether this is a general or a session notice.'),
+  SESSIONS_REQUIRED: createErrorDefinition(25010, 'Choose at least one session for a session notice.'),
+  TOO_MANY_SESSIONS: createErrorDefinition(25011, 'That is more sessions than one notice may target.'),
 } as const;
 
 /**
@@ -46,4 +49,11 @@ export const NOTICES_AUTH = {
     image URL is guessable, so it has to be refused outright.
   */
   NOT_IN_AUDIENCE: createErrorDefinition(55000, 'That notice was not addressed to you.'),
+  /*
+    A teacher publishes to students — a general notice to all of them, or a session notice
+    to the intakes they name. Posting to the staff room, or department-wide, is the
+    administrator's. The form never offers a teacher those, so this is the guard for a
+    request built by hand.
+  */
+  TEACHER_STUDENTS_ONLY: createErrorDefinition(55001, 'A teacher can only publish notices to students.'),
 } as const;

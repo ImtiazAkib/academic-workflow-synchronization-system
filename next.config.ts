@@ -16,8 +16,13 @@ const production = process.env.NODE_ENV === 'production';
 */
 const selfHosted = !process.env.VERCEL;
 
-const packagesForProduction = ['pino'];
-const packagesForDevelopment = ['pino', 'pino-pretty'];
+/*
+  `sharp` is a native module: its `.node` binaries cannot be bundled, so it has to be
+  required at runtime from `node_modules` on both targets. The storage layer re-encodes
+  every uploaded image through it.
+*/
+const packagesForProduction = ['pino', 'sharp'];
+const packagesForDevelopment = ['pino', 'pino-pretty', 'sharp'];
 
 const consoleForProduction = {
   exclude: ['error', 'warn'],

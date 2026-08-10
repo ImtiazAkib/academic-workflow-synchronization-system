@@ -14,6 +14,17 @@ type DashboardNoticesProps = {
   role: UserRole;
   /** How many to show. `null` is every one of them — the admin screen's archive. */
   limit?: number | null;
+  /**
+   * The viewer's intake, for a student. Threaded in because the session token does not
+   * carry it, and it is what lets a session notice reach the batch it names.
+   */
+  viewerSession?: string | null;
+  /**
+   * List one account's own notices rather than the viewer's feed. The teacher notices
+   * screen passes their id, so an author sees what they published even when it was
+   * addressed to students and would never come back through their own feed.
+   */
+  publisherId?: string;
 };
 
 const noticeService = new NoticeService();
@@ -40,11 +51,13 @@ const FEED_LIMIT = 5;
   three home pages render this identically, and threading three dozen strings through each
   of them would be three chances to pass the wrong one.
 */
-export async function DashboardNotices({ role, limit = FEED_LIMIT }: DashboardNoticesProps) {
+export async function DashboardNotices({ role, limit = FEED_LIMIT, viewerSession = null, publisherId }: DashboardNoticesProps) {
   const l10n = await getTranslations();
   const format = await getFormatter();
 
-  const noticeResult = await noticeService.listForRole(role, limit);
+  const noticeResult = publisherId
+    ? await noticeService.listForPublisher(publisherId, limit)
+    : await noticeService.listForRole(role, viewerSession, limit);
 
   /*
     A read that failed must not arrive at the same screen as a department with nothing to
@@ -91,6 +104,8 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT }: DashboardNo
     imageUrl: notice.hasImage ? `/api/notices/${notice.noticeId}/image` : null,
     audience: notice.audience,
     audienceLabel: resolveNoticeAudienceLabel(notice.audience, audiences),
+    category: notice.category,
+    sessions: notice.sessions,
     /*
       Formatted here and passed down as a string. `getFormatter()` knows the request's
       locale and the department's timezone; the browser knows the visitor's, which for a
@@ -108,6 +123,7 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT }: DashboardNo
         emptyDescription: l10n('NOTICES_EMPTY_DESCRIPTION'),
         publishedBy: l10n('NOTICES_PUBLISHED_BY'),
         unknownPublisher: l10n('NOTICES_PUBLISHER_UNKNOWN'),
+        sessionsLabel: l10n('NOTICES_SESSIONS_LABEL'),
       }}
     />
   );

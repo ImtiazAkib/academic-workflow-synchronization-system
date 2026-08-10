@@ -20,6 +20,8 @@ export type MaterialsLabels = {
   fieldFile: string;
   uploadSubmit: string;
   uploading: string;
+  storageWarning: string;
+  storageFull: string;
   tableLabel: string;
   columnTitle: string;
   columnCourse: string;
@@ -32,6 +34,7 @@ export type MaterialsLabels = {
   deleteTitle: string;
   deleteDescription: string;
   deleteConfirm: string;
+  deleting: string;
   cancel: string;
   toastUploaded: string;
   toastDeleted: string;

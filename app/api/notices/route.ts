@@ -1,15 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { RATE_LIMIT } from '@/constants/rate-limit.const';
+import { USER_ROLES } from '@/constants/roles.const';
 
 import { withForbidden, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
-import { gateAdminArea, getSessionUser } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
 import { isSuccess } from '@/lib/result';
 import { NoticeCreateSchema } from '@/lib/schemas';
 import { NoticeService, consumeRateLimit } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
-
-import type { NoticeDto } from '@/types';
 
 const noticeService = new NoticeService();
 
@@ -31,6 +30,11 @@ export async function POST(request: NextRequest) {
     Signed out and wrong-role are told apart, matching the materials upload. Collapsing
     both into 403 tells somebody who simply is not signed in that they are forbidden,
     which sends them looking for a permission problem instead of a sign-in link.
+
+    Teachers publish now too, not administrators alone — so the gate is "signed in and not
+    a student" rather than the admin-area gate. What a teacher is allowed to publish (to
+    students, general or session-specific) is the service's decision, checked against the
+    session rather than the screen that hid the option.
   */
   const sessionUser = await getSessionUser();
 
@@ -38,9 +42,7 @@ export async function POST(request: NextRequest) {
     return withUnauthorized();
   }
 
-  const gate = await gateAdminArea<NoticeDto>();
-
-  if (!gate.allowed) {
+  if (sessionUser.role === USER_ROLES.STUDENT) {
     return withForbidden();
   }
 
@@ -64,6 +66,9 @@ export async function POST(request: NextRequest) {
     body: form.get('body') ?? undefined,
     image,
     audience: form.get('audience'),
+    category: form.get('category'),
+    // One `sessions` entry per checkbox; a general notice sends none, and the schema defaults it to empty.
+    sessions: form.getAll('sessions'),
   });
 
   /*
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errors: mapZodErrorsToErrorDto(validation.error) }, { status: 400 });
   }
 
-  const result = await noticeService.create(validation.data, gate.requester);
+  const result = await noticeService.create(validation.data, sessionUser);
 
   if (!isSuccess(result)) {
     return NextResponse.json({ errors: result.errors }, { status: 400 });

@@ -167,6 +167,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     */
     <html
       lang={locale}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={cn(inter.variable, poppins.variable, notoSansBengali.variable, anekBangla.variable, isDark && 'dark')}
       style={{ colorScheme: isDark ? 'dark' : 'light' }}>

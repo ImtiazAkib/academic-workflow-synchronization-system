@@ -62,6 +62,8 @@ export type UserCreateFormLabels = {
   roleAdmin: string;
   roleTeacher: string;
   roleStudent: string;
+  showPassword: string;
+  hidePassword: string;
   submit: string;
   working: string;
   cancel: string;
@@ -106,6 +108,7 @@ export type UsersLabels = {
   revoke: string;
   deactivate: string;
   reactivate: string;
+  delete: string;
   actionsUnavailable: string;
   fields: UsersFieldLabels;
   fieldErrors: UsersFieldErrorLabels;
@@ -119,6 +122,7 @@ export type UsersLabels = {
   revokeDialog: UsersConfirmLabels;
   deactivateDialog: UsersConfirmLabels;
   reactivateDialog: UsersConfirmLabels;
+  deleteDialog: UsersConfirmLabels;
   cancel: string;
   working: string;
   toastCreated: string;
@@ -127,5 +131,6 @@ export type UsersLabels = {
   toastRevoked: string;
   toastDeactivated: string;
   toastReactivated: string;
+  toastDeleted: string;
   errors: UserErrorLabels;
 };

@@ -17,6 +17,7 @@ export const USERS_DATABASE = {
   FIND_BY_EMAIL_FAILED: createErrorDefinition(11002, 'Failed to find user by email'),
   CREATE_FAILED: createErrorDefinition(11003, 'Failed to create user'),
   UPDATE_FAILED: createErrorDefinition(11004, 'Failed to update user'),
+  DELETE_FAILED: createErrorDefinition(11005, 'Failed to delete user'),
 } as const;
 
 /**

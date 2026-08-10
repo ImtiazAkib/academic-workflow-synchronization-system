@@ -29,6 +29,8 @@ export default async function StudentDashboardPage() {
   const l10n = await getTranslations();
 
   const semester = await studentService.resolveSemester(sessionUser.userId);
+  // The intake, for scoping the notice feed to the session notices addressed to this batch.
+  const studentSession = await studentService.resolveSession(sessionUser.userId);
 
   const today = resolveDepartmentToday(new Date());
 
@@ -86,7 +88,7 @@ export default async function StudentDashboardPage() {
         <h2 className="text-regular-semibold">{l10n('DASHBOARD_NOTICES_TITLE')}</h2>
 
         {/* Addressed to `all` or `students` — the query cannot return a teachers-only notice. */}
-        <DashboardNotices role={USER_ROLES.STUDENT} />
+        <DashboardNotices role={USER_ROLES.STUDENT} viewerSession={studentSession} />
       </section>
 
       <section className="flex flex-col gap-3">

@@ -30,6 +30,8 @@ export function buildRegisterLabels(l10n: Translator): RegisterFormLabels {
     sessionPlaceholder: l10n('REGISTER_FIELD_SESSION_PLACEHOLDER'),
     department: l10n('REGISTER_FIELD_DEPARTMENT'),
     semester: l10n('REGISTER_FIELD_SEMESTER'),
+    showPassword: l10n('PASSWORD_SHOW'),
+    hidePassword: l10n('PASSWORD_HIDE'),
     submit: l10n('REGISTER_SUBMIT'),
     submitting: l10n('REGISTER_SUBMITTING'),
     fieldErrors: {

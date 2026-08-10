@@ -18,7 +18,7 @@ export async function SiteHeader() {
       */}
       <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
         <Link href={ROUTES.HOME.HREF} className="flex min-w-0 items-center gap-2.5">
-          <AppLogo className="size-8 shrink-0" />
+          <AppLogo label={l10n('APP_LOGO_ALT')} className="size-8 shrink-0" />
           <span className="font-heading text-regular-bold truncate tracking-tight">{APP_DATA.SHORT_NAME}</span>
         </Link>
 

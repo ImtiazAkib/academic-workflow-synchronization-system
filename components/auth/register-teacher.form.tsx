@@ -3,17 +3,18 @@
 import { useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { useRouter } from '@/l10n/navigation';
 
+import { DEPARTMENTS } from '@/constants/account.const';
 import { ROUTES } from '@/constants/routes.const';
 
 import { isSuccess } from '@/lib/result';
 import { TeacherRegistrationInput, TeacherRegistrationOutput, TeacherRegistrationSchema } from '@/lib/schemas';
 import { resolveRegistrationErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label } from '@/components/ui';
+import { Button, Input, Label, PasswordInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { registerTeacherAction } from './registration.actions';
 
@@ -39,10 +40,18 @@ export function RegisterTeacherForm({ labels }: RegisterTeacherFormProps) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TeacherRegistrationInput, undefined, TeacherRegistrationOutput>({
     resolver: zodResolver(TeacherRegistrationSchema),
     defaultValues: { name: '', email: '', password: '', department: '' },
+  });
+
+  // The value is the label — one department for now, so the map is one entry.
+  const departmentItems: Record<string, string> = {};
+
+  DEPARTMENTS.forEach(department => {
+    departmentItems[department] = department;
   });
 
   const handleFormSubmit = async (values: TeacherRegistrationOutput): Promise<void> => {
@@ -81,13 +90,37 @@ export function RegisterTeacherForm({ labels }: RegisterTeacherFormProps) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="register-department">{labels.department}</Label>
-        <Input id="register-department" aria-invalid={Boolean(errors.department)} {...register('department')} />
+        <Controller
+          control={control}
+          name="department"
+          render={({ field }) => (
+            <Select items={departmentItems} value={field.value ?? ''} onValueChange={field.onChange}>
+              <SelectTrigger id="register-department" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEPARTMENTS.map(department => (
+                  <SelectItem key={department} value={department}>
+                    {department}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
         {errors.department && <p className="text-destructive text-sm">{labels.fieldErrors.required}</p>}
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="register-password">{labels.password}</Label>
-        <Input id="register-password" type="password" autoComplete="new-password" aria-invalid={Boolean(errors.password)} {...register('password')} />
+        <PasswordInput
+          id="register-password"
+          autoComplete="new-password"
+          aria-invalid={Boolean(errors.password)}
+          showLabel={labels.showPassword}
+          hideLabel={labels.hidePassword}
+          {...register('password')}
+        />
         {errors.password && <p className="text-destructive text-sm">{labels.fieldErrors.passwordTooShort}</p>}
       </div>
 

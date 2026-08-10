@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Megaphone, UserRound, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Megaphone, UploadCloud, UserRound, Users } from 'lucide-react';
 
 import { Link, usePathname } from '@/l10n/navigation';
 import { UserRole } from '@/types';
@@ -20,6 +20,7 @@ type DashboardNavProps = {
   materialsLabel: string;
   teachersLabel: string;
   noticesLabel: string;
+  uploadsLabel: string;
   profileLabel: string;
   className?: string;
 };
@@ -39,6 +40,7 @@ export function DashboardNav({
   materialsLabel,
   teachersLabel,
   noticesLabel,
+  uploadsLabel,
   profileLabel,
   className,
 }: DashboardNavProps) {
@@ -68,13 +70,28 @@ export function DashboardNav({
   */
   const materialsHref = role === USER_ROLES.TEACHER ? ROUTES.TEACHER_MATERIALS.HREF : ROUTES.STUDENT_MATERIALS.HREF;
 
+  /*
+    Publishing is now the administrator's and the teacher's — at a route each. A student
+    still has none: they meet notices on their own home, where an announcement belongs.
+  */
+  const canPublishNotices = isAdminArea || role === USER_ROLES.TEACHER;
+  const noticesHref = isAdminArea ? ROUTES.ADMIN_NOTICES.HREF : ROUTES.TEACHER_NOTICES.HREF;
+
+  /*
+    Whoever uploads has an uploads screen — the administrator and the teacher, at a route
+    each — to watch a file's background compression finish or fail. A student uploads
+    nothing, so has none.
+  */
+  const canSeeUploads = isAdminArea || role === USER_ROLES.TEACHER;
+  const uploadsHref = isAdminArea ? ROUTES.ADMIN_UPLOADS.HREF : ROUTES.TEACHER_UPLOADS.HREF;
+
   return (
     <nav aria-label={navLabel} className={cn('flex gap-1', className)}>
       <Link
         href={overviewHref}
         aria-current={pathname === overviewHref ? 'page' : undefined}
         className={cn(
-          'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
           pathname === overviewHref
             ? 'bg-sidebar-accent text-sidebar-accent-foreground'
             : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -90,7 +107,7 @@ export function DashboardNav({
           // `startsWith`, like every other entry: `===` left /admin/users/new highlighting nothing.
           aria-current={pathname.startsWith(usersHref) ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
             pathname.startsWith(usersHref)
               ? 'bg-sidebar-accent text-sidebar-accent-foreground'
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -105,7 +122,7 @@ export function DashboardNav({
           href={coursesHref}
           aria-current={pathname.startsWith(coursesHref) ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
             pathname.startsWith(coursesHref)
               ? 'bg-sidebar-accent text-sidebar-accent-foreground'
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -119,7 +136,7 @@ export function DashboardNav({
         href={scheduleHref}
         aria-current={pathname.startsWith(scheduleHref) ? 'page' : undefined}
         className={cn(
-          'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
           pathname.startsWith(scheduleHref)
             ? 'bg-sidebar-accent text-sidebar-accent-foreground'
             : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -133,7 +150,7 @@ export function DashboardNav({
           href={materialsHref}
           aria-current={pathname.startsWith(materialsHref) ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
             pathname.startsWith(materialsHref)
               ? 'bg-sidebar-accent text-sidebar-accent-foreground'
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -149,7 +166,7 @@ export function DashboardNav({
           href={ROUTES.STUDENT_TEACHERS.HREF}
           aria-current={pathname.startsWith(ROUTES.STUDENT_TEACHERS.HREF) ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
             pathname.startsWith(ROUTES.STUDENT_TEACHERS.HREF)
               ? 'bg-sidebar-accent text-sidebar-accent-foreground'
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -160,22 +177,37 @@ export function DashboardNav({
       )}
 
       {/*
-        Publishing is the administrator's. Everybody else meets notices on their own home
-        screen, which is where an announcement belongs — a reader should not have to go
-        looking for one, so there is no reading route to link to.
+        Publishing is the administrator's and the teacher's. A student meets notices on
+        their own home screen, which is where an announcement belongs — a reader should not
+        have to go looking for one, so there is no reading route to link to.
       */}
-      {isAdminArea && (
+      {canPublishNotices && (
         <Link
-          href={ROUTES.ADMIN_NOTICES.HREF}
-          aria-current={pathname.startsWith(ROUTES.ADMIN_NOTICES.HREF) ? 'page' : undefined}
+          href={noticesHref}
+          aria-current={pathname.startsWith(noticesHref) ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-            pathname.startsWith(ROUTES.ADMIN_NOTICES.HREF)
+            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+            pathname.startsWith(noticesHref)
               ? 'bg-sidebar-accent text-sidebar-accent-foreground'
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
           )}>
           <Megaphone className="size-4 shrink-0" />
           {noticesLabel}
+        </Link>
+      )}
+
+      {canSeeUploads && (
+        <Link
+          href={uploadsHref}
+          aria-current={pathname.startsWith(uploadsHref) ? 'page' : undefined}
+          className={cn(
+            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+            pathname.startsWith(uploadsHref)
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+          )}>
+          <UploadCloud className="size-4 shrink-0" />
+          {uploadsLabel}
         </Link>
       )}
 
@@ -188,7 +220,7 @@ export function DashboardNav({
         href={ROUTES.PROFILE.HREF}
         aria-current={pathname.startsWith(ROUTES.PROFILE.HREF) ? 'page' : undefined}
         className={cn(
-          'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
           pathname.startsWith(ROUTES.PROFILE.HREF)
             ? 'bg-sidebar-accent text-sidebar-accent-foreground'
             : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'

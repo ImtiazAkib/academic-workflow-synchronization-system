@@ -1,8 +1,8 @@
 import mongoose, { Model, Schema, Types } from 'mongoose';
 
-import { NoticeAudience } from '@/types';
+import { NoticeAudience, NoticeCategory } from '@/types';
 
-import { NOTICE_AUDIENCES } from '@/constants/notice.const';
+import { NOTICE_AUDIENCES, NOTICE_CATEGORIES } from '@/constants/notice.const';
 
 /**
  * The picture a notice carries, if it carries one.
@@ -33,6 +33,16 @@ export type NoticeAttributes = {
   body?: string;
   image?: NoticeImage;
   audience: NoticeAudience;
+  /**
+   * `general` or `session`. A general notice is addressed by `audience`; a session notice
+   * is addressed by `sessions` and reaches the students of those intakes alone.
+   */
+  category: NoticeCategory;
+  /**
+   * The intake sessions a session notice is for — `['2021-22', '2022-23']`. Empty on a
+   * general notice, where the audience does the addressing instead.
+   */
+  sessions: string[];
   publishedBy: Types.ObjectId;
   publishedAt: Date;
   createdAt: Date;
@@ -65,6 +75,9 @@ const noticeSchema = new Schema<NoticeAttributes, NoticeModel>(
       required: false,
     },
     audience: { type: String, required: true, enum: Object.values(NOTICE_AUDIENCES), default: NOTICE_AUDIENCES.ALL },
+    category: { type: String, required: true, enum: Object.values(NOTICE_CATEGORIES), default: NOTICE_CATEGORIES.GENERAL },
+    // Trimmed and bounded to match the `session` a student's account carries.
+    sessions: { type: [{ type: String, trim: true, maxlength: 20 }], default: [] },
     publishedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     /*
       Separate from `createdAt` so a notice can be written now and dated later
@@ -76,5 +89,7 @@ const noticeSchema = new Schema<NoticeAttributes, NoticeModel>(
 );
 
 noticeSchema.index({ audience: 1, publishedAt: -1 });
+// The student feed: session notices for one intake, newest first.
+noticeSchema.index({ category: 1, sessions: 1, publishedAt: -1 });
 
 export const Notice = (mongoose.models.Notice as NoticeModel) ?? mongoose.model<NoticeAttributes, NoticeModel>('Notice', noticeSchema);

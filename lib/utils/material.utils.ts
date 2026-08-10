@@ -4,6 +4,7 @@ import type { MaterialDto } from '@/types';
 
 const VALIDATION = CODES.VALIDATION.MATERIALS;
 const AUTH = CODES.AUTH.MATERIALS;
+const BUSINESS = CODES.BUSINESS.COMMON;
 
 export type MaterialErrorLabels = {
   fileRequired: string;
@@ -14,6 +15,7 @@ export type MaterialErrorLabels = {
   notOwnFile: string;
   notFound: string;
   courseNotFound: string;
+  storageFull: string;
   generic: string;
 };
 
@@ -56,6 +58,10 @@ export function resolveMaterialErrorMessage(code: number, labels: MaterialErrorL
 
   if (code === AUTH.NOT_OWN_MATERIAL.CODE) {
     return labels.notOwnFile;
+  }
+
+  if (code === BUSINESS.STORAGE_FULL.CODE) {
+    return labels.storageFull;
   }
 
   return labels.generic;

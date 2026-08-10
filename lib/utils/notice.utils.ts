@@ -4,6 +4,7 @@ import { NOTICE_AUDIENCES } from '@/constants/notice.const';
 import type { NoticeAudience } from '@/types';
 
 const VALIDATION = CODES.VALIDATION.NOTICES;
+const BUSINESS = CODES.BUSINESS.COMMON;
 
 export type NoticeErrorLabels = {
   titleRequired: string;
@@ -11,6 +12,7 @@ export type NoticeErrorLabels = {
   audienceInvalid: string;
   imageTooLarge: string;
   imageType: string;
+  storageFull: string;
   generic: string;
 };
 
@@ -44,6 +46,10 @@ export function resolveNoticeErrorMessage(code: number, labels: NoticeErrorLabel
 
   if (code === VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE) {
     return labels.imageType;
+  }
+
+  if (code === BUSINESS.STORAGE_FULL.CODE) {
+    return labels.storageFull;
   }
 
   return labels.generic;

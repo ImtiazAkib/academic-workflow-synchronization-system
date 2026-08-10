@@ -1,10 +1,11 @@
 'use client';
 
-import { useWatch, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
+import { Controller, useWatch, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
 
+import { DEPARTMENTS } from '@/constants/account.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { Input, Label } from '@/components/ui';
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import type { UsersFieldErrorLabels, UsersFieldLabels } from './users.types';
 
@@ -44,6 +45,13 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
 
   const isStudent = role === USER_ROLES.STUDENT;
 
+  // The value is the label — one department for now, so the map is one entry.
+  const departmentItems: Record<string, string> = {};
+
+  DEPARTMENTS.forEach(department => {
+    departmentItems[department] = department;
+  });
+
   return (
     <>
       {isStudent && (
@@ -70,7 +78,24 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
         <Label htmlFor={`${idPrefix}-department`}>
           {labels.department} <span className="text-muted-foreground text-xs">({labels.optional})</span>
         </Label>
-        <Input id={`${idPrefix}-department`} aria-invalid={Boolean(errors.department)} {...register('department' as never)} />
+        <Controller
+          control={control}
+          name={'department' as never}
+          render={({ field }) => (
+            <Select items={departmentItems} value={(field.value as string | undefined) ?? ''} onValueChange={field.onChange}>
+              <SelectTrigger id={`${idPrefix}-department`} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEPARTMENTS.map(department => (
+                  <SelectItem key={department} value={department}>
+                    {department}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
         {errors.department && <p className="text-destructive text-sm">{fieldErrors.departmentTooLong}</p>}
       </div>
     </>

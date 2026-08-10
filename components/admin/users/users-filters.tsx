@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
 import { parseAsString, useQueryStates } from 'nuqs';
 
 import { FILTER_ALL, USER_ROLE_FILTERS, USER_STATUS_FILTERS } from '@/constants/users.const';
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner } from '@/components/ui';
 
 import type { UsersLabels } from './users.types';
 
@@ -22,13 +22,20 @@ type UsersFiltersProps = {
   the change reaches the server component, which re-runs the query.
 */
 export function UsersFilters({ labels }: UsersFiltersProps) {
+  /*
+    `startTransition` handed to nuqs so `isPending` follows the `shallow: false` round trip
+    that re-runs the server query — without it a filter change gives no sign the list is
+    refetching. The spinner by the search field and `aria-busy` on the group are that sign.
+  */
+  const [isPending, startTransition] = useTransition();
+
   const [filters, setFilters] = useQueryStates(
     {
       role: parseAsString.withDefault(FILTER_ALL),
       status: parseAsString.withDefault(FILTER_ALL),
       query: parseAsString.withDefault(''),
     },
-    { shallow: false, clearOnDefault: true }
+    { shallow: false, clearOnDefault: true, startTransition }
   );
 
   /*
@@ -79,9 +86,12 @@ export function UsersFilters({ labels }: UsersFiltersProps) {
       the two selects carried fixed widths to stay readable, which left a ragged gap
       beside the search box at the widths in between.
     */
-    <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto_auto]">
+    <div aria-busy={isPending} className="grid items-end gap-3 sm:grid-cols-[1fr_auto_auto]">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="users-search">{labels.search}</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="users-search">{labels.search}</Label>
+          {isPending && <Spinner className="text-muted-foreground size-3.5" />}
+        </div>
         <Input id="users-search" type="search" value={search} placeholder={labels.searchPlaceholder} onChange={handleSearchChange} />
       </div>
 

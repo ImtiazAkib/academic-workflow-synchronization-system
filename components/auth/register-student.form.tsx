@@ -7,6 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useRouter } from '@/l10n/navigation';
 
+import { DEPARTMENTS } from '@/constants/account.const';
 import { ROUTES } from '@/constants/routes.const';
 import { SEMESTER } from '@/constants/schedule.const';
 
@@ -14,7 +15,7 @@ import { isSuccess } from '@/lib/result';
 import { StudentRegistrationInput, StudentRegistrationOutput, StudentRegistrationSchema } from '@/lib/schemas';
 import { resolveRegistrationErrorMessage, resolveSemesterLabel } from '@/lib/utils';
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { Button, Input, Label, PasswordInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { registerStudentAction } from './registration.actions';
 
@@ -53,6 +54,13 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
   for (let semester = SEMESTER.MIN; semester <= SEMESTER.MAX; semester++) {
     semesterItems[String(semester)] = resolveSemesterLabel(semester);
   }
+
+  // The value is the label — one department for now, so the map is one entry.
+  const departmentItems: Record<string, string> = {};
+
+  DEPARTMENTS.forEach(department => {
+    departmentItems[department] = department;
+  });
 
   const handleFormSubmit = async (values: StudentRegistrationOutput): Promise<void> => {
     setFormError(null);
@@ -132,17 +140,35 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
 
         <div className="flex flex-col gap-2 sm:col-span-2">
           <Label htmlFor="register-department">{labels.department}</Label>
-          <Input id="register-department" aria-invalid={Boolean(errors.department)} {...register('department')} />
+          <Controller
+            control={control}
+            name="department"
+            render={({ field }) => (
+              <Select items={departmentItems} value={field.value ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger id="register-department" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENTS.map(department => (
+                    <SelectItem key={department} value={department}>
+                      {department}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.department && <p className="text-destructive text-sm">{labels.fieldErrors.required}</p>}
         </div>
 
         <div className="flex flex-col gap-2 sm:col-span-2">
           <Label htmlFor="register-password">{labels.password}</Label>
-          <Input
+          <PasswordInput
             id="register-password"
-            type="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.password)}
+            showLabel={labels.showPassword}
+            hideLabel={labels.hidePassword}
             {...register('password')}
           />
           {errors.password && <p className="text-destructive text-sm">{labels.fieldErrors.passwordTooShort}</p>}

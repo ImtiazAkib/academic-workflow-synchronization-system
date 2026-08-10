@@ -15,7 +15,7 @@ import { resolveUserErrorMessage } from '@/lib/utils';
 
 import { Button } from '@/components/ui';
 
-import { approveUserAction, deactivateUserAction } from './actions';
+import { approveUserAction, deactivateUserAction, deleteUserAction } from './actions';
 import { UserConfirmDialog } from './user-confirm.dialog';
 import { UserEditDialog } from './user-edit.dialog';
 import { UsersEmpty } from './users-empty';
@@ -46,6 +46,7 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
   const [editing, setEditing] = useState<UserDto | null>(null);
   const [approving, setApproving] = useState<UserDto | null>(null);
   const [activating, setActivating] = useState<UserDto | null>(null);
+  const [deleting, setDeleting] = useState<UserDto | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const handleEdit = (user: UserDto): void => {
@@ -66,6 +67,11 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
   const handleActivation = (user: UserDto): void => {
     setConfirmError(null);
     setActivating(user);
+  };
+
+  const handleDelete = (user: UserDto): void => {
+    setConfirmError(null);
+    setDeleting(user);
   };
 
   const handleApprovalConfirm = (): void => {
@@ -114,6 +120,28 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
     });
   };
 
+  const handleDeleteConfirm = (): void => {
+    if (!deleting) {
+      return;
+    }
+
+    const target = deleting;
+
+    startWorking(async () => {
+      const result = await deleteUserAction({ userId: target.userId });
+
+      if (!isSuccess(result)) {
+        setConfirmError(resolveUserErrorMessage(result.errors[0]?.code ?? 0, labels.errors));
+
+        return;
+      }
+
+      setDeleting(null);
+      toast.success(labels.toastDeleted);
+      router.refresh();
+    });
+  };
+
   const handleEditOpenChange = (open: boolean): void => {
     if (!open) {
       setEditing(null);
@@ -129,6 +157,12 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
   const handleActivatingOpenChange = (open: boolean): void => {
     if (!open) {
       setActivating(null);
+    }
+  };
+
+  const handleDeletingOpenChange = (open: boolean): void => {
+    if (!open) {
+      setDeleting(null);
     }
   };
 
@@ -153,7 +187,15 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
       {users.length === 0 ? (
         <UsersEmpty title={labels.emptyTitle} description={labels.emptyDescription} />
       ) : (
-        <UsersTable users={users} labels={labels} viewer={viewer} onEdit={handleEdit} onApproval={handleApproval} onActivation={handleActivation} />
+        <UsersTable
+          users={users}
+          labels={labels}
+          viewer={viewer}
+          onEdit={handleEdit}
+          onApproval={handleApproval}
+          onActivation={handleActivation}
+          onDelete={handleDelete}
+        />
       )}
 
       {editing && (
@@ -187,6 +229,18 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
         error={confirmError}
         onConfirm={handleActivationConfirm}
         onOpenChange={handleActivatingOpenChange}
+      />
+
+      <UserConfirmDialog
+        user={deleting}
+        labels={labels.deleteDialog}
+        cancelLabel={labels.cancel}
+        workingLabel={labels.working}
+        isWorking={isWorking}
+        error={confirmError}
+        destructive
+        onConfirm={handleDeleteConfirm}
+        onOpenChange={handleDeletingOpenChange}
       />
     </div>
   );
