@@ -655,6 +655,7 @@ declare const messages: {
   "USERS_FIELD_SESSION_UNSET": "Not set",
   "USERS_FIELD_PHONE_INVALID": "Enter a valid Bangladesh mobile number, e.g. 01712345678.",
   "USERS_ERROR_ROLE_LOCKED": "An account keeps the role it was created with; it cannot be changed here.",
-  "USERS_ERROR_SUPER_ADMIN_CREATES_ADMINS": "The super administrator can only create administrator accounts."
+  "USERS_ERROR_SUPER_ADMIN_CREATES_ADMINS": "The super administrator can only create administrator accounts.",
+  "NAV_DASHBOARD": "Dashboard"
 };
 export default messages;

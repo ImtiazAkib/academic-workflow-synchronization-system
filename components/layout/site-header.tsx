@@ -1,13 +1,24 @@
 import { getTranslations } from 'next-intl/server';
 
-import { APP_DATA, ROUTES, SECTION_IDS } from '@/constants';
+import { APP_DATA, ROLE_HOME, ROUTES, SECTION_IDS } from '@/constants';
 import { Link } from '@/l10n/navigation';
+
+import { getSessionUser } from '@/lib/auth';
 
 import { AppLogo, Container, LanguageSelector, ThemeSelector } from '@/components/shared';
 import { Button } from '@/components/ui';
 
+/*
+  Reads the session so the landing page knows the visitor is already signed in. Without
+  this the header only ever offered "Sign in", so somebody who closed the tab and came back
+  to the landing page was shown a sign-in button with no way back to their dashboard — even
+  though their session was still valid. Reading the cookie opts this route out of static
+  generation, which is the right trade for a header that has to reflect who is looking at it;
+  a crawler carries no cookie and still gets the public, signed-out version.
+*/
 export async function SiteHeader() {
   const l10n = await getTranslations();
+  const sessionUser = await getSessionUser();
 
   return (
     <header className="bg-background/80 border-border sticky top-0 z-50 border-b backdrop-blur-md">
@@ -52,9 +63,15 @@ export async function SiteHeader() {
 
           <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
 
-          <Button variant="appOutline" size="sm" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
-            {l10n('NAV_SIGN_IN')}
-          </Button>
+          {sessionUser ? (
+            <Button variant="appPrimary" size="sm" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} />}>
+              {l10n('NAV_DASHBOARD')}
+            </Button>
+          ) : (
+            <Button variant="appOutline" size="sm" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+              {l10n('NAV_SIGN_IN')}
+            </Button>
+          )}
         </div>
       </Container>
     </header>
