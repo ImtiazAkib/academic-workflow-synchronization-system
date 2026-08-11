@@ -7,7 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useRouter } from '@/l10n/navigation';
 
-import { DEPARTMENTS } from '@/constants/account.const';
+import { DEPARTMENTS, DEPARTMENT_LABELS } from '@/constants/account.const';
 import { ROUTES } from '@/constants/routes.const';
 
 import { isSuccess } from '@/lib/result';
@@ -47,11 +47,11 @@ export function RegisterTeacherForm({ labels }: RegisterTeacherFormProps) {
     defaultValues: { name: '', email: '', password: '', department: '' },
   });
 
-  // The value is the label — one department for now, so the map is one entry.
+  // The stored value stays the department code; the option shows its full name.
   const departmentItems: Record<string, string> = {};
 
   DEPARTMENTS.forEach(department => {
-    departmentItems[department] = department;
+    departmentItems[department] = DEPARTMENT_LABELS[department];
   });
 
   const handleFormSubmit = async (values: TeacherRegistrationOutput): Promise<void> => {
@@ -101,7 +101,7 @@ export function RegisterTeacherForm({ labels }: RegisterTeacherFormProps) {
               <SelectContent>
                 {DEPARTMENTS.map(department => (
                   <SelectItem key={department} value={department}>
-                    {department}
+                    {DEPARTMENT_LABELS[department]}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -80,6 +80,9 @@ export default async function SignInPage({ params }: SignInPageProps) {
                 {l10n('SIGN_IN_REGISTER_LINK')}
               </Link>
             </p>
+            <Link href={ROUTES.FORGOT_PASSWORD.HREF} className="text-muted-foreground hover:text-foreground text-xs transition-colors">
+              {l10n('SIGN_IN_FORGOT_LINK')}
+            </Link>
             <Link href={ROUTES.RESEND_CONFIRMATION.HREF} className="text-muted-foreground hover:text-foreground text-xs transition-colors">
               {l10n('SIGN_IN_RESEND_LINK')}
             </Link>

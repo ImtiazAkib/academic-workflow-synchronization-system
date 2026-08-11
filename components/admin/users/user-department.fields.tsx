@@ -2,8 +2,10 @@
 
 import { Controller, useWatch, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
 
-import { DEPARTMENTS } from '@/constants/account.const';
+import { DEPARTMENTS, DEPARTMENT_LABELS } from '@/constants/account.const';
 import { USER_ROLES } from '@/constants/roles.const';
+
+import { buildSessionValues } from '@/lib/utils';
 
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
@@ -30,9 +32,11 @@ type UserDepartmentFieldsProps = {
   who the applicant is, and a value they cannot fix is a value they have to write down
   and chase.
 
-  Department is asked of students and teachers alike; registration number and session are
-  a student's. An administrator's account has none of them, so the whole block is absent
-  for that role rather than showing three inputs that mean nothing.
+  Roll, registration number and session are a student's; department is asked of students
+  and teachers alike. An administrator's account has none of them — it signs in by email
+  and belongs to no cohort — so the whole block is absent for that role rather than showing
+  inputs that mean nothing. Roll lives here for the same reason: it identifies a student,
+  and an administrator or a teacher has no roll to show.
 
   Shared by the create page and the edit dialog, so the two cannot drift.
 */
@@ -45,22 +49,50 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
 
   const isStudent = role === USER_ROLES.STUDENT;
 
-  // The value is the label — one department for now, so the map is one entry.
+  // The stored value stays the department code; the option shows its full name.
   const departmentItems: Record<string, string> = {};
 
   DEPARTMENTS.forEach(department => {
-    departmentItems[department] = department;
+    departmentItems[department] = DEPARTMENT_LABELS[department];
+  });
+
+  // 2020-21 up to this year, newest first, with a blank entry for "not set yet".
+  const sessionItems: Record<string, string> = { '': labels.sessionUnset };
+
+  buildSessionValues().forEach(session => {
+    sessionItems[session] = session;
   });
 
   return (
     <>
       {isStudent && (
         <div className="flex flex-col gap-2">
+          <Label htmlFor={`${idPrefix}-roll`}>
+            {labels.roll} <span className="text-muted-foreground text-xs">({labels.optional})</span>
+          </Label>
+          <Input id={`${idPrefix}-roll`} inputMode="numeric" aria-invalid={Boolean(errors.roll)} {...register('roll' as never)} />
+          {errors.roll && (
+            <p className="text-destructive text-sm">{errors.roll.type === 'too_big' ? fieldErrors.rollTooLong : fieldErrors.rollDigitsOnly}</p>
+          )}
+        </div>
+      )}
+
+      {isStudent && (
+        <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-registration-no`}>
             {labels.registrationNo} <span className="text-muted-foreground text-xs">({labels.optional})</span>
           </Label>
-          <Input id={`${idPrefix}-registration-no`} aria-invalid={Boolean(errors.registrationNo)} {...register('registrationNo' as never)} />
-          {errors.registrationNo && <p className="text-destructive text-sm">{fieldErrors.registrationNoTooLong}</p>}
+          <Input
+            id={`${idPrefix}-registration-no`}
+            inputMode="numeric"
+            aria-invalid={Boolean(errors.registrationNo)}
+            {...register('registrationNo' as never)}
+          />
+          {errors.registrationNo && (
+            <p className="text-destructive text-sm">
+              {errors.registrationNo.type === 'too_big' ? fieldErrors.registrationNoTooLong : fieldErrors.registrationNoDigitsOnly}
+            </p>
+          )}
         </div>
       )}
 
@@ -69,7 +101,24 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
           <Label htmlFor={`${idPrefix}-session`}>
             {labels.session} <span className="text-muted-foreground text-xs">({labels.optional})</span>
           </Label>
-          <Input id={`${idPrefix}-session`} aria-invalid={Boolean(errors.session)} {...register('session' as never)} />
+          <Controller
+            control={control}
+            name={'session' as never}
+            render={({ field }) => (
+              <Select items={sessionItems} value={(field.value as string | undefined) ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger id={`${idPrefix}-session`} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(sessionItems).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.session && <p className="text-destructive text-sm">{fieldErrors.sessionTooLong}</p>}
         </div>
       )}
@@ -89,7 +138,7 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
               <SelectContent>
                 {DEPARTMENTS.map(department => (
                   <SelectItem key={department} value={department}>
-                    {department}
+                    {DEPARTMENT_LABELS[department]}
                   </SelectItem>
                 ))}
               </SelectContent>

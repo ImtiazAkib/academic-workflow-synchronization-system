@@ -29,6 +29,7 @@ export type UsersFieldLabels = {
   roll: string;
   registrationNo: string;
   session: string;
+  sessionUnset: string;
   department: string;
   semester: string;
   semesterUnset: string;
@@ -44,11 +45,13 @@ export type UsersFieldErrorLabels = {
   roleInvalid: string;
   designationTooLong: string;
   rollTooLong: string;
+  rollDigitsOnly: string;
   registrationNoTooLong: string;
+  registrationNoDigitsOnly: string;
   sessionTooLong: string;
   departmentTooLong: string;
   semesterInvalid: string;
-  phoneTooLong: string;
+  phoneInvalid: string;
 };
 
 /**

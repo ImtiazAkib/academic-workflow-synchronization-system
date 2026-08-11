@@ -26,7 +26,14 @@ import {
   singleFailure,
   singleSuccess,
 } from '@/lib/result';
-import type { ProfileUpdateOutput, UserActivateOutput, UserApproveOutput, UserCreateOutput, UserUpdateOutput } from '@/lib/schemas';
+import type {
+  ChangePasswordOutput,
+  ProfileUpdateOutput,
+  UserActivateOutput,
+  UserApproveOutput,
+  UserCreateOutput,
+  UserUpdateOutput,
+} from '@/lib/schemas';
 import { storage } from '@/lib/storage';
 import { escapeRegExp, isIssuableRole, toId } from '@/lib/utils';
 
@@ -206,6 +213,17 @@ export class UserService {
         return refusal;
       }
 
+      /*
+        The division of labour: the super administrator creates administrators, and an
+        ordinary administrator creates teachers and students. The gate above already refuses
+        an ordinary administrator the `admin` role, so this is its mirror — the one role the
+        super administrator may create is `admin`. (Super administrator itself is refused by
+        the gate, so it never reaches here.)
+      */
+      if (requester.role === USER_ROLES.SUPER_ADMIN && input.role !== USER_ROLES.ADMIN) {
+        return singleFailure(createError(BUSINESS.SUPER_ADMIN_CREATES_ADMINS_ONLY.CODE, BUSINESS.SUPER_ADMIN_CREATES_ADMINS_ONLY.MESSAGE, 'role'));
+      }
+
       const existing = await User.findOne({ email: input.email }).lean<UserEntity | null>();
 
       if (existing) {
@@ -275,6 +293,17 @@ export class UserService {
 
       if (refusal) {
         return refusal;
+      }
+
+      /*
+        A role is set once, at creation, and never moved on edit — not even between teacher
+        and student, and not for an administrator. The edit dialog locks the control, and
+        this is what makes the lock real for a request that skips the form. Checked after the
+        gate so that touching the seeded super administrator, or an administrator an ordinary
+        admin may not manage, still answers with its own more specific refusal first.
+      */
+      if (input.role !== target.role) {
+        return singleFailure(createError(BUSINESS.ROLE_IS_IMMUTABLE.CODE, BUSINESS.ROLE_IS_IMMUTABLE.MESSAGE, 'role'));
       }
 
       const updated = await User.findByIdAndUpdate(
@@ -398,6 +427,52 @@ export class UserService {
       log.error({ err: error }, 'Updating an own profile failed');
 
       return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * Change the password on the caller's own account.
+   *
+   * Self-service like `updateOwnProfile`, so there is no id to tamper with and no role to
+   * move — the account is the one the session names. Unlike that method it must read the
+   * stored hash, so it loads the hydrated document with `.select('+password')` rather than
+   * `.lean()`, checks the current password with the model's `comparePassword`, and assigns
+   * the new one. Hashing is the pre-save hook's job: assigning the plaintext and saving is
+   * the whole of it, and this never calls bcrypt itself.
+   *
+   * Returns nothing on success — there is no field the caller needs back, and an
+   * `EmptyResult` keeps the password hash off every return path.
+   *
+   * @param input - Validated current/new password.
+   * @param requester - The signed-in account making the request.
+   *
+   * @returns Empty success, or a failure — the current password was wrong, or the account
+   *   is gone.
+   */
+  public async changeOwnPassword(input: ChangePasswordOutput, requester: SessionUser): Promise<EmptyResult> {
+    try {
+      await connectToDatabase();
+
+      const user = await User.findById(requester.userId).select('+password');
+
+      if (!user) {
+        return emptyFailureWithError(createError(VALIDATION.USER_NOT_FOUND.CODE, VALIDATION.USER_NOT_FOUND.MESSAGE));
+      }
+
+      const matches = await user.comparePassword(input.currentPassword);
+
+      if (!matches) {
+        return emptyFailureWithError(createError(AUTH.CURRENT_PASSWORD_INCORRECT.CODE, AUTH.CURRENT_PASSWORD_INCORRECT.MESSAGE, 'currentPassword'));
+      }
+
+      user.password = input.newPassword;
+      await user.save();
+
+      return emptySuccess();
+    } catch (error) {
+      log.error({ err: error }, 'Changing an own password failed');
+
+      return emptyFailureWithError(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
     }
   }
 

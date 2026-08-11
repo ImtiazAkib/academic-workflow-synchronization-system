@@ -64,6 +64,14 @@ export type UserAttributes = {
    */
   pendingEmailTokenHash?: string;
   pendingEmailExpiresAt?: Date;
+  /**
+   * SHA-256 of the token in a password-reset link, never the token — the same reason the
+   * other two token hashes hold a hash. `select: false`, and cleared the moment the reset
+   * is applied so a link that leaks afterwards opens nothing. Absent means no reset is in
+   * flight, which is the normal state.
+   */
+  passwordResetTokenHash?: string;
+  passwordResetExpiresAt?: Date;
   designation?: string;
   /**
    * The department's own number for a student. Data, not a login — unique among
@@ -122,6 +130,8 @@ const userSchema = new Schema<UserAttributes, UserModel, UserMethods>(
     pendingEmail: { type: String, lowercase: true, trim: true, maxlength: 255 },
     pendingEmailTokenHash: { type: String, select: false },
     pendingEmailExpiresAt: { type: Date },
+    passwordResetTokenHash: { type: String, select: false },
+    passwordResetExpiresAt: { type: Date },
     designation: { type: String, trim: true, maxlength: 120 },
     roll: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.ROLL },
     registrationNo: { type: String, trim: true, maxlength: ACCOUNT_FIELD_LIMITS.REGISTRATION_NO },

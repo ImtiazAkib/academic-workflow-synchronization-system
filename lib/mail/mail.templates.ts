@@ -132,6 +132,49 @@ export function buildVerifyNewAddressMail(to: string, name: string, confirmUrl: 
 }
 
 /**
+ * Set a new password from a link.
+ *
+ * Sent only to an address that already belongs to an account, so it can speak plainly
+ * rather than hedging. It carries the link and one reassurance: the closing line is for
+ * somebody who did not ask — nothing changes until this link is followed, so an
+ * unexpected message is safe to ignore and the current password still works.
+ *
+ * @param to - The account's address.
+ * @param name - The account holder's name.
+ * @param resetUrl - Absolute URL carrying the token.
+ *
+ * @returns The rendered message.
+ */
+export function buildPasswordResetMail(to: string, name: string, resetUrl: string): MailMessage {
+  const safeName = escapeHtml(name);
+  const safeUrl = escapeHtml(resetUrl);
+
+  return {
+    to,
+    subject: `Reset your password — ${APP_DATA.SHORT_NAME}`,
+    text: [
+      `Hello ${name},`,
+      '',
+      'Use this link to set a new password. It works once and expires in a day:',
+      '',
+      resetUrl,
+      '',
+      'If you did not ask to reset your password, ignore this message — nothing changes and your current password still works.',
+    ].join('\n'),
+    html: wrap(
+      'Reset your password',
+      [
+        `<p>Hello ${safeName},</p>`,
+        '<p>Use this link to set a new password. It works once and expires in a day.</p>',
+        `<p><a href="${safeUrl}" style="display:inline-block;background:#4f46e5;color:#fff;padding:0.6rem 1.1rem;border-radius:6px;text-decoration:none">Set a new password</a></p>`,
+        `<p style="font-size:0.85rem;color:#666c85">Or paste this into your browser:<br>${safeUrl}</p>`,
+        '<p style="font-size:0.85rem;color:#666c85">If you did not ask to reset your password, ignore this message — nothing changes and your current password still works.</p>',
+      ].join('')
+    ),
+  };
+}
+
+/**
  * The second message: here is what you sign in with.
  *
  * It has three jobs and must do all of them. Name the identifier, say plainly that it —

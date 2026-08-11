@@ -1,4 +1,4 @@
-import type { UserErrorLabels } from '@/lib/utils';
+import type { PasswordChangeErrorLabels, UserErrorLabels } from '@/lib/utils';
 
 /**
  * One read-only fact about the account, already resolved to strings by the page.
@@ -34,7 +34,7 @@ export type ProfileFieldErrorLabels = {
   nameRequired: string;
   nameTooLong: string;
   emailInvalid: string;
-  phoneTooLong: string;
+  phoneInvalid: string;
   addressTooLong: string;
 };
 
@@ -57,6 +57,34 @@ export type ProfileEditLabels = {
   toastSaved: string;
   toastEmailSent: string;
   errors: UserErrorLabels;
+};
+
+/**
+ * Every string the change-password form renders.
+ *
+ * Its own bundle, apart from `ProfileEditLabels`, because it is its own form with its own
+ * action — the two share the screen and nothing else. The field errors are named per rule
+ * so the form can show the right one from the react-hook-form error type, the same way the
+ * edit form does.
+ */
+export type ProfilePasswordLabels = {
+  fields: {
+    current: string;
+    new: string;
+    confirm: string;
+  };
+  fieldErrors: {
+    currentRequired: string;
+    newTooShort: string;
+    newTooLong: string;
+    mismatch: string;
+  };
+  showPassword: string;
+  hidePassword: string;
+  submit: string;
+  working: string;
+  toastSaved: string;
+  errors: PasswordChangeErrorLabels;
 };
 
 export type ProfileLoginIdLabels = {

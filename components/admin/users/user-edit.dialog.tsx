@@ -5,13 +5,13 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 
-import { UserDto } from '@/types';
+import { UserDto, UserRole } from '@/types';
 
 import { USER_ROLES } from '@/constants/roles.const';
 
 import { isSuccess } from '@/lib/result';
 import { UserUpdateInput, UserUpdateOutput, UserUpdateSchema } from '@/lib/schemas';
-import { resolveUserErrorMessage } from '@/lib/utils';
+import { resolveUserErrorMessage, toBangladeshPhoneInput } from '@/lib/utils';
 
 import {
   Button,
@@ -23,6 +23,7 @@ import {
   DialogTitle,
   Input,
   Label,
+  PhoneInput,
   Select,
   SelectContent,
   SelectItem,
@@ -34,12 +35,11 @@ import { updateUserAction } from './actions';
 import { UserDepartmentFields } from './user-department.fields';
 import { UserSemesterField } from './user-semester.field';
 
-import type { UsersLabels, UsersViewer } from './users.types';
+import type { UsersLabels } from './users.types';
 
 type UserEditDialogProps = {
   user: UserDto;
   labels: UsersLabels;
-  viewer: UsersViewer;
   onUpdated: () => void;
   onOpenChange: (open: boolean) => void;
 };
@@ -50,7 +50,7 @@ type UserEditDialogProps = {
   the effect that would otherwise have to copy the user into the form — and it clears a
   stale error from the previous attempt for free.
 */
-export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }: UserEditDialogProps) {
+export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEditDialogProps) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -71,24 +71,26 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
       department: user.department ?? '',
       // Back to the string the select speaks; the schema turns it into a number again.
       semester: user.semester ? String(user.semester) : '',
-      phone: user.phone ?? '',
+      // The +880 field shows the local digits; the schema puts the dial code back on save.
+      phone: toBangladeshPhoneInput(user.phone),
     },
   });
 
-  /*
-    Same rule as the create form: only the super administrator is offered the
-    administrator option, and nobody is offered super administrator.
-
-    The row's current role is always included even when the viewer could not set it, so
-    the select can render what the account actually is rather than falling back to a
-    blank — a display concern, not a permission one. The service still refuses a move
-    the viewer may not make.
-  */
-  const roleItems: Record<string, string> = {
-    ...(viewer.isSuperAdmin || user.role === USER_ROLES.ADMIN ? { [USER_ROLES.ADMIN]: labels.roleAdmin } : {}),
+  const roleLabels: Record<UserRole, string> = {
+    [USER_ROLES.SUPER_ADMIN]: labels.roleSuperAdmin,
+    [USER_ROLES.ADMIN]: labels.roleAdmin,
     [USER_ROLES.TEACHER]: labels.roleTeacher,
     [USER_ROLES.STUDENT]: labels.roleStudent,
   };
+
+  /*
+    A role is set when the account is created and never moved on edit — not between teacher
+    and student, and not for an administrator. So the select is locked (see `disabled`
+    below) and lists only the role the account already has, rather than offering moves it
+    will not make. `UserService` refuses any request that tries to change it regardless of
+    what the form sends.
+  */
+  const roleItems: Record<string, string> = { [user.role]: roleLabels[user.role] };
 
   const handleFormSubmit = async (values: UserUpdateOutput): Promise<void> => {
     setFormError(null);
@@ -155,7 +157,7 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
                 control={control}
                 name="role"
                 render={({ field }) => (
-                  <Select items={roleItems} value={field.value} onValueChange={field.onChange}>
+                  <Select items={roleItems} value={field.value} onValueChange={field.onChange} disabled>
                     <SelectTrigger id="edit-role" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -180,14 +182,6 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
               {errors.designation && <p className="text-destructive text-sm">{labels.fieldErrors.designationTooLong}</p>}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-student-id">
-                {labels.fields.roll} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
-              </Label>
-              <Input id="edit-student-id" aria-invalid={Boolean(errors.roll)} {...register('roll')} />
-              {errors.roll && <p className="text-destructive text-sm">{labels.fieldErrors.rollTooLong}</p>}
-            </div>
-
             <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="edit" />
 
             <UserDepartmentFields
@@ -203,8 +197,8 @@ export function UserEditDialog({ user, labels, viewer, onUpdated, onOpenChange }
               <Label htmlFor="edit-phone">
                 {labels.fields.phone} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
               </Label>
-              <Input id="edit-phone" type="tel" aria-invalid={Boolean(errors.phone)} {...register('phone')} />
-              {errors.phone && <p className="text-destructive text-sm">{labels.fieldErrors.phoneTooLong}</p>}
+              <PhoneInput id="edit-phone" aria-invalid={Boolean(errors.phone)} {...register('phone')} />
+              {errors.phone && <p className="text-destructive text-sm">{labels.fieldErrors.phoneInvalid}</p>}
             </div>
           </div>
 

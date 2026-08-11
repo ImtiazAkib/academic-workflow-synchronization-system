@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
-import { ACCOUNT_FIELD_LIMITS } from '@/constants/account.const';
+import { ACCOUNT_FIELD_LIMITS, BANGLADESH_PHONE_STORED_PATTERN } from '@/constants/account.const';
 import { CODES } from '@/constants/codes.const';
 import { USER_ROLES } from '@/constants/roles.const';
 import { SEMESTER } from '@/constants/schedule.const';
 
-import { encodeZodMessage } from '@/lib/utils';
+import { encodeZodMessage, normalizeBangladeshPhone } from '@/lib/utils';
 
 const USERS = CODES.VALIDATION.USERS;
 
@@ -41,20 +41,31 @@ export const userFields = {
 
   designation: z.string().trim().max(120, encodeZodMessage(USERS.DESIGNATION_TOO_LONG.CODE, USERS.DESIGNATION_TOO_LONG.MESSAGE)),
 
-  roll: z.string().trim().max(ACCOUNT_FIELD_LIMITS.ROLL, encodeZodMessage(USERS.ROLL_TOO_LONG.CODE, USERS.ROLL_TOO_LONG.MESSAGE)),
-
   /*
-    The departmental fields registration collects. Bounded rather than patterned: a roll
-    number, a registration number and a session are written differently by different
-    departments, and a format nobody agreed on would reject legitimate applicants at the
-    one moment they cannot ask anybody for help. An administrator corrects them at
-    approval, which is the same moment they are already checking who the person is.
+    A roll number and a registration number are numbers the department issues, so they are
+    digits and nothing else — the regex refuses letters and dashes. The length bound stays
+    as a backstop against an absurd run of digits. Empty is not this field's problem: the
+    composing schemas add `.min(1)` where the value is required and `.or(z.literal(''))`
+    where it is optional, so a blank box is answered there rather than by the digit rule.
   */
+  roll: z
+    .string()
+    .trim()
+    .max(ACCOUNT_FIELD_LIMITS.ROLL, encodeZodMessage(USERS.ROLL_TOO_LONG.CODE, USERS.ROLL_TOO_LONG.MESSAGE))
+    .regex(/^\d*$/, encodeZodMessage(USERS.ROLL_DIGITS_ONLY.CODE, USERS.ROLL_DIGITS_ONLY.MESSAGE)),
+
   registrationNo: z
     .string()
     .trim()
-    .max(ACCOUNT_FIELD_LIMITS.REGISTRATION_NO, encodeZodMessage(USERS.REGISTRATION_NO_TOO_LONG.CODE, USERS.REGISTRATION_NO_TOO_LONG.MESSAGE)),
+    .max(ACCOUNT_FIELD_LIMITS.REGISTRATION_NO, encodeZodMessage(USERS.REGISTRATION_NO_TOO_LONG.CODE, USERS.REGISTRATION_NO_TOO_LONG.MESSAGE))
+    .regex(/^\d*$/, encodeZodMessage(USERS.REGISTRATION_NO_DIGITS_ONLY.CODE, USERS.REGISTRATION_NO_DIGITS_ONLY.MESSAGE)),
 
+  /*
+    Chosen from a dropdown the client builds from `buildSessionValues`, so the stored value
+    is always one of `2020-21 … <this year>`. Kept as a bounded string rather than an enum
+    of those values because the list is a moving target — it grows by one each year — and a
+    schema that hard-coded this year's list would reject next year's students.
+  */
   session: z.string().trim().max(ACCOUNT_FIELD_LIMITS.SESSION, encodeZodMessage(USERS.SESSION_TOO_LONG.CODE, USERS.SESSION_TOO_LONG.MESSAGE)),
 
   department: z
@@ -92,5 +103,23 @@ export const userFields = {
       message: encodeZodMessage(USERS.SEMESTER_INVALID.CODE, USERS.SEMESTER_INVALID.MESSAGE),
     }),
 
-  phone: z.string().trim().max(40, encodeZodMessage(USERS.PHONE_TOO_LONG.CODE, USERS.PHONE_TOO_LONG.MESSAGE)),
+  /*
+    A Bangladesh mobile number, one department in one country. `normalizeBangladeshPhone`
+    maps whatever is typed — the ten local digits the `+880` field takes, `01XXXXXXXXX`, or
+    the already-international form — onto the single stored shape, then the pattern checks
+    it. The transform is idempotent (its own output normalizes to itself), which is what
+    lets the Server Action re-validate the value the browser already normalized without it
+    failing on the second pass — the same property `semester` depends on.
+
+    An empty string stays empty rather than becoming a number-shaped error: the field is
+    optional in every schema that composes it.
+  */
+  phone: z
+    .string()
+    .trim()
+    .transform(value => normalizeBangladeshPhone(value))
+    .refine(
+      value => value === '' || BANGLADESH_PHONE_STORED_PATTERN.test(value),
+      encodeZodMessage(USERS.PHONE_INVALID.CODE, USERS.PHONE_INVALID.MESSAGE)
+    ),
 };

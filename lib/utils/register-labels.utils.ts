@@ -27,7 +27,6 @@ export function buildRegisterLabels(l10n: Translator): RegisterFormLabels {
     roll: l10n('REGISTER_FIELD_ROLL'),
     registrationNo: l10n('REGISTER_FIELD_REGISTRATION_NO'),
     session: l10n('REGISTER_FIELD_SESSION'),
-    sessionPlaceholder: l10n('REGISTER_FIELD_SESSION_PLACEHOLDER'),
     department: l10n('REGISTER_FIELD_DEPARTMENT'),
     semester: l10n('REGISTER_FIELD_SEMESTER'),
     showPassword: l10n('PASSWORD_SHOW'),
@@ -39,6 +38,7 @@ export function buildRegisterLabels(l10n: Translator): RegisterFormLabels {
       emailInvalid: l10n('USERS_FIELD_EMAIL_INVALID'),
       passwordTooShort: l10n('USERS_FIELD_PASSWORD_TOO_SHORT'),
       required: l10n('REGISTER_FIELD_REQUIRED'),
+      digitsOnly: l10n('REGISTER_FIELD_DIGITS_ONLY'),
     },
     errors: {
       emailTaken: l10n('REGISTER_ERROR_EMAIL_TAKEN'),
