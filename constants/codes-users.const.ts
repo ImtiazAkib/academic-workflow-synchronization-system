@@ -48,6 +48,23 @@ export const USERS_VALIDATION = {
   ADDRESS_TOO_LONG: createErrorDefinition(21021, 'Address cannot exceed 200 characters.'),
   VERIFICATION_LINK_INVALID: createErrorDefinition(21022, 'That confirmation link is not valid.'),
   VERIFICATION_LINK_EXPIRED: createErrorDefinition(21023, 'That confirmation link has expired.'),
+  // A confirmation with two password boxes: they have to agree before either is saved.
+  PASSWORD_MISMATCH: createErrorDefinition(21024, 'Both passwords must match.'),
+  // Distinct from the length rule on the new one: an empty current-password box is
+  // "you left this blank", not "too short".
+  CURRENT_PASSWORD_REQUIRED: createErrorDefinition(21025, 'Enter your current password.'),
+  /*
+    The resend and forgot-password screens name an unknown address on purpose — the
+    department asked for an explicit "no account here" over the silent, enumeration-proof
+    "check your inbox". It is a deliberate reversal of the anti-enumeration stance the rest
+    of the auth surface keeps (sign-in still refuses to say which addresses exist).
+  */
+  EMAIL_NOT_REGISTERED: createErrorDefinition(21026, 'No account is registered with that email address.'),
+  // A roll number is a number the department issues; letters and dashes were never part of it.
+  ROLL_DIGITS_ONLY: createErrorDefinition(21027, 'Roll number must be digits only.'),
+  REGISTRATION_NO_DIGITS_ONLY: createErrorDefinition(21028, 'Registration number must be digits only.'),
+  // One department, one country: a phone number here is a Bangladesh mobile number.
+  PHONE_INVALID: createErrorDefinition(21029, 'Enter a valid Bangladesh mobile number, e.g. 01712345678.'),
 } as const;
 
 /**
@@ -71,6 +88,19 @@ export const USERS_BUSINESS = {
     rather than merely contended — reported rather than looped forever.
   */
   LOGIN_ID_NOT_ISSUED: createErrorDefinition(31004, 'Could not issue a login ID. Try again.'),
+  /*
+    A role is set once, when the account is created, and never moved afterwards. Editing
+    an account corrects its name and its departmental fields; it does not turn a teacher
+    into an administrator or a student into a teacher. The edit form locks the control, and
+    this is the boundary that makes the lock real for a request that skips the form.
+  */
+  ROLE_IS_IMMUTABLE: createErrorDefinition(31005, 'An account keeps the role it was created with; it cannot be changed here.'),
+  /*
+    The division of labour: the super administrator creates administrators, and
+    administrators create teachers and students. So the one role the super administrator
+    may create is `admin` — anything else is somebody else's to make.
+  */
+  SUPER_ADMIN_CREATES_ADMINS_ONLY: createErrorDefinition(31006, 'The super administrator can only create administrator accounts.'),
 } as const;
 
 /**
@@ -101,4 +131,11 @@ export const USERS_AUTH = {
     account how to get in — rather than telling a stranger which addresses exist.
   */
   SIGN_IN_WITH_LOGIN_ID: createErrorDefinition(51006, 'Sign in with your login ID rather than your email address.'),
+  /*
+    Raised only after the account was found and the current password was checked, so it
+    tells the owner their entry was wrong rather than telling a stranger the account exists.
+    The change-password screen is reachable only with a live session, so there is no
+    enumeration to protect against here in the first place.
+  */
+  CURRENT_PASSWORD_INCORRECT: createErrorDefinition(51007, 'Your current password is incorrect.'),
 } as const;

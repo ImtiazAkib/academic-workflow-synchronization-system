@@ -7,13 +7,13 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useRouter } from '@/l10n/navigation';
 
-import { DEPARTMENTS } from '@/constants/account.const';
+import { DEPARTMENTS, DEPARTMENT_LABELS } from '@/constants/account.const';
 import { ROUTES } from '@/constants/routes.const';
 import { SEMESTER } from '@/constants/schedule.const';
 
 import { isSuccess } from '@/lib/result';
 import { StudentRegistrationInput, StudentRegistrationOutput, StudentRegistrationSchema } from '@/lib/schemas';
-import { resolveRegistrationErrorMessage, resolveSemesterLabel } from '@/lib/utils';
+import { buildSessionValues, resolveRegistrationErrorMessage, resolveSemesterLabel } from '@/lib/utils';
 
 import { Button, Input, Label, PasswordInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
@@ -55,11 +55,18 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
     semesterItems[String(semester)] = resolveSemesterLabel(semester);
   }
 
-  // The value is the label — one department for now, so the map is one entry.
+  // The stored value stays the department code; the option shows its full name.
   const departmentItems: Record<string, string> = {};
 
   DEPARTMENTS.forEach(department => {
-    departmentItems[department] = department;
+    departmentItems[department] = DEPARTMENT_LABELS[department];
+  });
+
+  // 2020-21 up to this year, newest first. Required at registration, so no blank entry.
+  const sessionItems: Record<string, string> = {};
+
+  buildSessionValues().forEach(session => {
+    sessionItems[session] = session;
   });
 
   const handleFormSubmit = async (values: StudentRegistrationOutput): Promise<void> => {
@@ -99,19 +106,44 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="register-roll">{labels.roll}</Label>
-          <Input id="register-roll" aria-invalid={Boolean(errors.roll)} {...register('roll')} />
-          {errors.roll && <p className="text-destructive text-sm">{labels.fieldErrors.required}</p>}
+          <Input id="register-roll" inputMode="numeric" aria-invalid={Boolean(errors.roll)} {...register('roll')} />
+          {errors.roll && (
+            <p className="text-destructive text-sm">
+              {errors.roll.type === 'too_small' ? labels.fieldErrors.required : labels.fieldErrors.digitsOnly}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="register-registration-no">{labels.registrationNo}</Label>
-          <Input id="register-registration-no" aria-invalid={Boolean(errors.registrationNo)} {...register('registrationNo')} />
-          {errors.registrationNo && <p className="text-destructive text-sm">{labels.fieldErrors.required}</p>}
+          <Input id="register-registration-no" inputMode="numeric" aria-invalid={Boolean(errors.registrationNo)} {...register('registrationNo')} />
+          {errors.registrationNo && (
+            <p className="text-destructive text-sm">
+              {errors.registrationNo.type === 'too_small' ? labels.fieldErrors.required : labels.fieldErrors.digitsOnly}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="register-session">{labels.session}</Label>
-          <Input id="register-session" placeholder={labels.sessionPlaceholder} aria-invalid={Boolean(errors.session)} {...register('session')} />
+          <Controller
+            control={control}
+            name="session"
+            render={({ field }) => (
+              <Select items={sessionItems} value={field.value ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger id="register-session" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(sessionItems).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.session && <p className="text-destructive text-sm">{labels.fieldErrors.required}</p>}
         </div>
 
@@ -151,7 +183,7 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
                 <SelectContent>
                   {DEPARTMENTS.map(department => (
                     <SelectItem key={department} value={department}>
-                      {department}
+                      {DEPARTMENT_LABELS[department]}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -199,14 +199,7 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
       )}
 
       {editing && (
-        <UserEditDialog
-          key={editing.userId}
-          user={editing}
-          labels={labels}
-          viewer={viewer}
-          onUpdated={handleUpdated}
-          onOpenChange={handleEditOpenChange}
-        />
+        <UserEditDialog key={editing.userId} user={editing} labels={labels} onUpdated={handleUpdated} onOpenChange={handleEditOpenChange} />
       )}
 
       <UserConfirmDialog

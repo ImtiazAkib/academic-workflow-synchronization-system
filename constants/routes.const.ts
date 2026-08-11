@@ -53,6 +53,21 @@ export const ROUTES = {
     LABEL: 'Confirm your new address',
     HREF: '/verify-email-change',
   },
+  /*
+    Password recovery, in two halves like email verification: one screen asks for the
+    address and mails a link, the other takes the link and sets a new password. Both are
+    public — a locked-out account has no session, and the reset link is opened from an
+    inbox as often on a phone that never signed in as in the browser that asked. Neither
+    belongs in `PROTECTED_SEGMENTS`.
+  */
+  FORGOT_PASSWORD: {
+    LABEL: 'Forgot password',
+    HREF: '/forgot-password',
+  },
+  RESET_PASSWORD: {
+    LABEL: 'Reset password',
+    HREF: '/reset-password',
+  },
 
   // --- The account somebody owns ---
   PROFILE: {

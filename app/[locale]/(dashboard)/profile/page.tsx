@@ -8,7 +8,7 @@ import { requireSession } from '@/lib/auth';
 import { CourseService, UserService } from '@/lib/services';
 import { resolveRoleLabel, resolveSemesterLabel, resolveUserStatus, resolveUserStatusLabel } from '@/lib/utils';
 
-import { ProfileEditForm, ProfileSummary } from '@/components/profile';
+import { ChangePasswordForm, ProfileEditForm, ProfileSummary } from '@/components/profile';
 import type { ProfileCourse, ProfileFact } from '@/components/profile';
 
 type ProfilePageProps = {
@@ -151,7 +151,7 @@ export default async function ProfilePage() {
               nameRequired: l10n('USERS_FIELD_NAME_REQUIRED'),
               nameTooLong: l10n('USERS_FIELD_NAME_TOO_LONG'),
               emailInvalid: l10n('USERS_FIELD_EMAIL_INVALID'),
-              phoneTooLong: l10n('USERS_FIELD_PHONE_TOO_LONG'),
+              phoneInvalid: l10n('USERS_FIELD_PHONE_INVALID'),
               addressTooLong: l10n('USERS_FIELD_ADDRESS_TOO_LONG'),
             },
             emailHint: l10n('PROFILE_EMAIL_HINT'),
@@ -168,8 +168,42 @@ export default async function ProfilePage() {
               ownAccess: l10n('USERS_ERROR_OWN_ACCESS'),
               superAdmin: l10n('USERS_ERROR_SUPER_ADMIN'),
               adminOnlySuperAdmin: l10n('USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN'),
+              roleLocked: l10n('USERS_ERROR_ROLE_LOCKED'),
+              superAdminCreatesAdmins: l10n('USERS_ERROR_SUPER_ADMIN_CREATES_ADMINS'),
               notFound: l10n('USERS_ERROR_NOT_FOUND'),
               generic: l10n('USERS_ERROR_GENERIC'),
+            },
+          }}
+        />
+      </section>
+
+      <section className="border-border bg-card flex flex-col gap-4 rounded-lg border p-4 sm:p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg">{l10n('PROFILE_PASSWORD_TITLE')}</h2>
+          <p className="text-muted-foreground text-sm">{l10n('PROFILE_PASSWORD_HINT')}</p>
+        </div>
+
+        <ChangePasswordForm
+          labels={{
+            fields: {
+              current: l10n('PROFILE_PASSWORD_CURRENT_LABEL'),
+              new: l10n('PROFILE_PASSWORD_NEW_LABEL'),
+              confirm: l10n('PROFILE_PASSWORD_CONFIRM_LABEL'),
+            },
+            fieldErrors: {
+              currentRequired: l10n('PROFILE_PASSWORD_CURRENT_REQUIRED'),
+              newTooShort: l10n('USERS_FIELD_PASSWORD_TOO_SHORT'),
+              newTooLong: l10n('PROFILE_PASSWORD_NEW_TOO_LONG'),
+              mismatch: l10n('PROFILE_PASSWORD_MISMATCH'),
+            },
+            showPassword: l10n('PASSWORD_SHOW'),
+            hidePassword: l10n('PASSWORD_HIDE'),
+            submit: l10n('PROFILE_PASSWORD_SUBMIT'),
+            working: l10n('USERS_DIALOG_WORKING'),
+            toastSaved: l10n('PROFILE_PASSWORD_TOAST_SAVED'),
+            errors: {
+              currentPasswordIncorrect: l10n('PROFILE_PASSWORD_ERROR_CURRENT_INCORRECT'),
+              generic: l10n('PROFILE_PASSWORD_ERROR_GENERIC'),
             },
           }}
         />

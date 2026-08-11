@@ -98,6 +98,42 @@ export function resolveRegistrationErrorMessage(code: number, labels: Registrati
   return labels.generic;
 }
 
+export type EmailRequestErrorLabels = {
+  notRegistered: string;
+  invalidEmail: string;
+  tooManyAttempts: string;
+  generic: string;
+};
+
+/**
+ * Turn a refusal from an email-request action — resend confirmation, forgot password —
+ * into a sentence the visitor reads.
+ *
+ * Both screens now name an unregistered address, the department's deliberate choice over
+ * the old silent "check your inbox". Shared because the two say the same four things; the
+ * copy differs and arrives as labels, so one resolver serves both.
+ *
+ * @param code - Error code from the failed request.
+ * @param labels - Translated messages, one per refusal.
+ *
+ * @returns The message to show.
+ */
+export function resolveEmailRequestErrorMessage(code: number, labels: EmailRequestErrorLabels): string {
+  if (code === VALIDATION.EMAIL_NOT_REGISTERED.CODE) {
+    return labels.notRegistered;
+  }
+
+  if (code === VALIDATION.EMAIL_INVALID.CODE) {
+    return labels.invalidEmail;
+  }
+
+  if (code === BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE) {
+    return labels.tooManyAttempts;
+  }
+
+  return labels.generic;
+}
+
 export type VerificationErrorLabels = {
   invalidTitle: string;
   invalidDescription: string;
