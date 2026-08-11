@@ -32,6 +32,8 @@ export type UserErrorLabels = {
   ownAccess: string;
   superAdmin: string;
   adminOnlySuperAdmin: string;
+  roleLocked: string;
+  superAdminCreatesAdmins: string;
   notFound: string;
   generic: string;
 };
@@ -68,8 +70,42 @@ export function resolveUserErrorMessage(code: number, labels: UserErrorLabels): 
     return labels.adminOnlySuperAdmin;
   }
 
+  if (code === BUSINESS.ROLE_IS_IMMUTABLE.CODE) {
+    return labels.roleLocked;
+  }
+
+  if (code === BUSINESS.SUPER_ADMIN_CREATES_ADMINS_ONLY.CODE) {
+    return labels.superAdminCreatesAdmins;
+  }
+
   if (code === VALIDATION.USER_NOT_FOUND.CODE) {
     return labels.notFound;
+  }
+
+  return labels.generic;
+}
+
+export type PasswordChangeErrorLabels = {
+  currentPasswordIncorrect: string;
+  generic: string;
+};
+
+/**
+ * Turn a refusal from the change-password action into a sentence the account holder reads.
+ *
+ * Only the wrong-current-password case is worth naming — it is the one thing the person can
+ * act on. The field-level refusals (too short, the two do not match) never reach here: the
+ * form's own resolver catches them before the action runs, so anything that gets this far
+ * is the current password being wrong or an unexpected fault.
+ *
+ * @param code - Error code from the failed change.
+ * @param labels - Translated messages.
+ *
+ * @returns The message to show.
+ */
+export function resolvePasswordChangeErrorMessage(code: number, labels: PasswordChangeErrorLabels): string {
+  if (code === AUTH.CURRENT_PASSWORD_INCORRECT.CODE) {
+    return labels.currentPasswordIncorrect;
   }
 
   return labels.generic;

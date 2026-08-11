@@ -8,6 +8,8 @@ export * from './user-delete.schema';
 export * from './user-filters.schema';
 export * from './state-change.schema';
 export * from './profile-update.schema';
+export * from './password-change.schema';
+export * from './password-reset.schema';
 export * from './sign-in.schema';
 export * from './registration.schema';
 export * from './verification-token.schema';

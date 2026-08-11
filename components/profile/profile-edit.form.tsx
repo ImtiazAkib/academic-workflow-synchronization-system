@@ -12,9 +12,9 @@ import { UserDto } from '@/types';
 
 import { isSuccess } from '@/lib/result';
 import { ProfileUpdateInput, ProfileUpdateOutput, ProfileUpdateSchema } from '@/lib/schemas';
-import { resolveUserErrorMessage } from '@/lib/utils';
+import { resolveUserErrorMessage, toBangladeshPhoneInput } from '@/lib/utils';
 
-import { Button, Input, Label } from '@/components/ui';
+import { Button, Input, Label, PhoneInput } from '@/components/ui';
 
 import { updateProfileAction } from './actions';
 
@@ -56,7 +56,8 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
     defaultValues: {
       name: user.name,
       email: user.email,
-      phone: user.phone ?? '',
+      // The +880 field shows the local digits; the schema puts the dial code back on save.
+      phone: toBangladeshPhoneInput(user.phone),
       address: user.address ?? '',
     },
   });
@@ -88,7 +89,7 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
       goes back to showing the address that is actually in force, with the pending one
       named in the notice below it.
     */
-    reset({ name: saved.name, email: saved.email, phone: saved.phone ?? '', address: saved.address ?? '' });
+    reset({ name: saved.name, email: saved.email, phone: toBangladeshPhoneInput(saved.phone), address: saved.address ?? '' });
 
     // The summary beside this form, and the greeting in the topbar, are both server-rendered.
     router.refresh();
@@ -124,8 +125,8 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
           <Label htmlFor="profile-phone">
             {labels.fields.phone} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
           </Label>
-          <Input id="profile-phone" type="tel" autoComplete="tel" aria-invalid={Boolean(errors.phone)} {...register('phone')} />
-          {errors.phone && <p className="text-destructive text-sm">{labels.fieldErrors.phoneTooLong}</p>}
+          <PhoneInput id="profile-phone" aria-invalid={Boolean(errors.phone)} {...register('phone')} />
+          {errors.phone && <p className="text-destructive text-sm">{labels.fieldErrors.phoneInvalid}</p>}
         </div>
 
         <div className="flex flex-col gap-2">

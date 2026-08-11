@@ -53,6 +53,32 @@ export type Verification = {
   loginId: string;
 };
 
+/**
+ * A reissued confirmation, and the token the caller has to mail.
+ *
+ * Returned inside a `SingleResult` whose failure is the one case the resend screen names —
+ * an address with no account. A success carrying `null` is the other side of that: the
+ * account exists, so it is not the not-registered error, but there was nothing to send
+ * (already confirmed, deactivated, or still inside the cooldown), and the screen says
+ * "check your inbox" without an email going out.
+ */
+export type Reissue = {
+  user: UserDto;
+  verificationToken: string;
+};
+
+/**
+ * A password-reset request, and the raw token to mail.
+ *
+ * The token leaves the service once and is never stored — only its hash is — the same
+ * discipline `Registration` keeps. Returned rather than mailed from here so the service
+ * stays free of the mail layer.
+ */
+export type PasswordReset = {
+  user: UserDto;
+  resetToken: string;
+};
+
 export class AuthService {
   /**
    * Check an identifier and password, and report why they were refused.
@@ -396,11 +422,13 @@ export class AuthService {
    * an account nobody can ever reach: the token is single-use, the identifier is only
    * delivered once, and there is no other way in.
    *
-   * Returns null for every case that is not "an unverified account exists here" —
-   * unknown address, already confirmed, deactivated. The caller reports the same thing
-   * either way, so this cannot be used to discover which addresses are registered. That
-   * is also why it returns a bare token rather than a Result: there is no refusal to
-   * report, only a message to send or not send.
+   * The department asked for an explicit answer over a silent one, so an address with no
+   * account is a failure carrying `EMAIL_NOT_REGISTERED` rather than a quiet nothing —
+   * which is a deliberate reversal of the anti-enumeration stance the rest of the auth
+   * surface keeps, and turns this screen into a way to probe which addresses exist. Every
+   * other non-sending case — already confirmed, deactivated, or still inside the cooldown —
+   * is a success carrying `null`: the account exists, there is simply nothing to send, and
+   * the screen says "check your inbox" without leaking which of those it was.
    *
    * The previous token stops working, because a new one replaces the stored hash. Asking
    * for a second link invalidates the first, which is what makes a leaked old email
@@ -408,16 +436,24 @@ export class AuthService {
    *
    * @param email - Address as typed.
    *
-   * @returns The account and its new token, or null when there is nothing to send.
+   * @returns The account and its new token; a null payload when the account exists but
+   *   nothing was sent; a failure when no account is registered.
    */
-  public async reissueVerification(email: string): Promise<{ user: UserDto; verificationToken: string } | null> {
+  public async reissueVerification(email: string): Promise<SingleResult<Reissue | null>> {
     try {
       await connectToDatabase();
 
       const user = await User.findOne({ email: email.trim().toLowerCase() });
 
-      if (!user || user.emailVerified || !user.isActive) {
-        return null;
+      // The one case the screen names out loud.
+      if (!user) {
+        return singleFailure(createError(VALIDATION.EMAIL_NOT_REGISTERED.CODE, VALIDATION.EMAIL_NOT_REGISTERED.MESSAGE, 'email'));
+      }
+
+      // Registered, but there is nothing to send. Success with a null payload, so the
+      // account's state (confirmed, switched off) is not disclosed the way not-found now is.
+      if (user.emailVerified || !user.isActive) {
+        return singleSuccess(null);
       }
 
       /*
@@ -426,15 +462,15 @@ export class AuthService {
         question the row can answer. An in-memory counter would reset on deploy and count
         separately per instance; this behaves the same however many are running.
 
-        Refused as a null, the same as every other case, so a caller cannot tell a
-        throttled address from an unregistered one by timing the answer.
+        A throttled repeat is a null success, not a failure — the last link is still in the
+        inbox and still works, so there is nothing to report and nothing new to send.
       */
       const issuedAt = user.emailVerificationExpiresAt
         ? user.emailVerificationExpiresAt.getTime() - EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000
         : null;
 
       if (issuedAt !== null && Date.now() - issuedAt < EMAIL_VERIFICATION.RESEND_COOLDOWN_MINUTES * 60 * 1000) {
-        return null;
+        return singleSuccess(null);
       }
 
       const token = randomBytes(EMAIL_VERIFICATION.TOKEN_BYTES).toString('hex');
@@ -446,11 +482,120 @@ export class AuthService {
 
       await user.save();
 
-      return { user: userFromEntity(user), verificationToken: token };
+      return singleSuccess({ user: userFromEntity(user), verificationToken: token });
     } catch (error) {
       log.error({ err: error }, 'Reissuing a verification token failed');
 
-      return null;
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * Mint a password-reset token for an account that can actually use one.
+   *
+   * The request half of forgot-password, and the closest sibling of `reissueVerification`.
+   * It acts only on a verified, active account — the address is the recovery channel, so an
+   * unverified one has no login to recover and its remedy is resend-confirmation instead;
+   * approval is not required, since a verified account waiting for approval may still set
+   * its password ahead of time.
+   *
+   * The department chose the same explicit answer here as on resend, so an unregistered
+   * address is a failure carrying `EMAIL_NOT_REGISTERED` — accepting the same enumeration
+   * trade in exchange for a screen that says "no account here" rather than a silent one. A
+   * registered-but-unusable account (unverified, deactivated, or inside the cooldown) is a
+   * null success: nothing is sent, and which of those it was is not disclosed.
+   *
+   * Minting a fresh token overwrites the stored hash, so an earlier reset link stops
+   * working — asking twice cannot leave two live links.
+   *
+   * @param email - Address as typed.
+   *
+   * @returns The account and its raw reset token; a null payload when there is nothing to
+   *   send; a failure when no account is registered.
+   */
+  public async issuePasswordReset(email: string): Promise<SingleResult<PasswordReset | null>> {
+    try {
+      await connectToDatabase();
+
+      const user = await User.findOne({ email: email.trim().toLowerCase() });
+
+      if (!user) {
+        return singleFailure(createError(VALIDATION.EMAIL_NOT_REGISTERED.CODE, VALIDATION.EMAIL_NOT_REGISTERED.MESSAGE, 'email'));
+      }
+
+      // Registered but with no recoverable login, or switched off — nothing to send, and
+      // the state is not disclosed.
+      if (!user.emailVerified || !user.isActive) {
+        return singleSuccess(null);
+      }
+
+      // The same row-derived cooldown as reissueVerification, on this token's own timestamp.
+      const issuedAt = user.passwordResetExpiresAt
+        ? user.passwordResetExpiresAt.getTime() - EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000
+        : null;
+
+      if (issuedAt !== null && Date.now() - issuedAt < EMAIL_VERIFICATION.RESEND_COOLDOWN_MINUTES * 60 * 1000) {
+        return singleSuccess(null);
+      }
+
+      const token = randomBytes(EMAIL_VERIFICATION.TOKEN_BYTES).toString('hex');
+
+      user.set({
+        passwordResetTokenHash: hashToken(token),
+        passwordResetExpiresAt: new Date(Date.now() + EMAIL_VERIFICATION.LIFETIME_HOURS * 60 * 60 * 1000),
+      });
+
+      await user.save();
+
+      return singleSuccess({ user: userFromEntity(user), resetToken: token });
+    } catch (error) {
+      log.error({ err: error }, 'Issuing a password reset failed');
+
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
+  /**
+   * Set a new password from a reset link.
+   *
+   * The apply half, cloning `verifyEmail`'s single-use consume: look the token up by its
+   * hash, refuse a missing one as invalid and a stale one as expired, then write the new
+   * password and clear the token so a second click opens nothing. Hashing is the model's
+   * pre-save hook — assigning the plaintext and saving is enough; this method never touches
+   * bcrypt itself.
+   *
+   * @param token - Raw token from the link.
+   * @param newPassword - The new password, already validated for length.
+   *
+   * @returns The account, or a failure naming the link's problem.
+   */
+  public async resetPassword(token: string, newPassword: string): Promise<SingleResult<UserDto>> {
+    try {
+      await connectToDatabase();
+
+      const user = await User.findOne({ passwordResetTokenHash: hashToken(token) }).select('+passwordResetTokenHash');
+
+      if (!user) {
+        return singleFailure(createError(VALIDATION.VERIFICATION_LINK_INVALID.CODE, VALIDATION.VERIFICATION_LINK_INVALID.MESSAGE));
+      }
+
+      if (!user.passwordResetExpiresAt || user.passwordResetExpiresAt.getTime() < Date.now()) {
+        return singleFailure(createError(VALIDATION.VERIFICATION_LINK_EXPIRED.CODE, VALIDATION.VERIFICATION_LINK_EXPIRED.MESSAGE));
+      }
+
+      user.set({
+        password: newPassword,
+        passwordResetTokenHash: undefined,
+        passwordResetExpiresAt: undefined,
+      });
+
+      await user.save();
+
+      return singleSuccess(userFromEntity(user));
+    } catch (error) {
+      log.error({ err: error }, 'Resetting a password failed');
+
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
     }
   }
 

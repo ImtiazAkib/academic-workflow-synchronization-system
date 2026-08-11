@@ -5,3 +5,5 @@ export * from './register-teacher.form';
 export * from './email-verification';
 export * from './email-change-verification';
 export * from './resend-confirmation.form';
+export * from './forgot-password.form';
+export * from './reset-password.form';

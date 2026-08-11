@@ -8,8 +8,18 @@ import { ROUTES } from '@/constants/routes.const';
 
 import { getSessionUser, setSessionCookie } from '@/lib/auth';
 import { buildVerifyNewAddressMail, mail } from '@/lib/mail';
-import { SingleResult, createError, isSuccess, singleFailure, singleFailureWithErrors, singleSuccess } from '@/lib/result';
-import { ProfileUpdateSchema } from '@/lib/schemas';
+import {
+  EmptyResult,
+  SingleResult,
+  createError,
+  emptyFailureWithError,
+  emptyFailureWithErrors,
+  isSuccess,
+  singleFailure,
+  singleFailureWithErrors,
+  singleSuccess,
+} from '@/lib/result';
+import { ChangePasswordSchema, ProfileUpdateSchema } from '@/lib/schemas';
 import { UserService } from '@/lib/services';
 import { mapZodErrorsToErrorDto } from '@/lib/utils';
 
@@ -98,4 +108,35 @@ export async function updateProfileAction(values: unknown): Promise<SingleResult
   }
 
   return singleSuccess(user);
+}
+
+/**
+ * Change the password on the caller's own account.
+ *
+ * Any signed-in account may change its own password, so — like `updateProfileAction` —
+ * there is nothing to authorize beyond having a session, and the session is re-read here
+ * rather than trusted from the page. The current password is verified against the stored
+ * hash inside the service; this action only proves who is asking and hands the values on.
+ *
+ * Nothing is re-issued or mailed. The session cookie carries a name and a role, neither of
+ * which a password change touches, so the cookie stays valid and no new one is minted.
+ *
+ * @param values - Raw form values, validated here rather than trusted.
+ *
+ * @returns Empty success, or a failure carrying the reason's code.
+ */
+export async function changePasswordAction(values: unknown): Promise<EmptyResult> {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return emptyFailureWithError(createError(AUTH.NOT_AUTHENTICATED.CODE, AUTH.NOT_AUTHENTICATED.MESSAGE));
+  }
+
+  const validation = ChangePasswordSchema.safeParse(values);
+
+  if (!validation.success) {
+    return emptyFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
+  }
+
+  return userService.changeOwnPassword(validation.data, sessionUser);
 }

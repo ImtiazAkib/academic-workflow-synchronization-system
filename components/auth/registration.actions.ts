@@ -10,16 +10,17 @@ import { CODES } from '@/constants/codes.const';
 import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { ROUTES } from '@/constants/routes.const';
 
-import { mail, buildLoginIdMail, buildVerifyAddressMail } from '@/lib/mail';
+import { mail, buildLoginIdMail, buildPasswordResetMail, buildVerifyAddressMail } from '@/lib/mail';
 import { EmptyResult, createError, emptyFailureWithError, emptySuccess, isSuccess, singleFailureWithErrors, singleSuccess } from '@/lib/result';
 import type { SingleResult } from '@/lib/result';
-import { StudentRegistrationSchema, TeacherRegistrationSchema, VerificationTokenSchema } from '@/lib/schemas';
+import { PasswordResetSchema, StudentRegistrationSchema, TeacherRegistrationSchema, VerificationTokenSchema } from '@/lib/schemas';
 import { AuthService, consumeRateLimit } from '@/lib/services';
 import type { RateLimitBudget } from '@/lib/services';
 import type { Registration } from '@/lib/services';
 import { mapZodErrorsToErrorDto, resolveCallerKey } from '@/lib/utils';
 
 const DATABASE = CODES.DATABASE.USERS;
+const VALIDATION = CODES.VALIDATION.USERS;
 const BUSINESS_COMMON = CODES.BUSINESS.COMMON;
 
 const authService = new AuthService();
@@ -237,39 +238,132 @@ export async function confirmEmailChangeAction(token: unknown): Promise<SingleRe
 /**
  * Send a fresh confirmation link to an address that has not confirmed one.
  *
- * Always reports success. Whether the address is registered, already confirmed, or
- * nothing at all, the screen says the same thing — otherwise this becomes a way for
- * anybody to test which addresses have accounts here, which is exactly what sign-in
- * refuses to disclose.
+ * Names an unregistered address rather than hiding it: the department asked for an explicit
+ * "no account here" over the silent "check your inbox", so an unknown address is a failure
+ * carrying `EMAIL_NOT_REGISTERED`. That is a deliberate reversal of the anti-enumeration
+ * stance sign-in keeps, and the trade — this screen can now be used to probe which
+ * addresses exist — was accepted for it. Every registered case still looks identical: an
+ * account that is already confirmed, switched off, or inside its cooldown gets the same
+ * "check your inbox", with no email sent and no state disclosed.
  *
  * Throttled in two dimensions, because one endpoint can be abused two ways. The account
  * cooldown lives in `AuthService.reissueVerification` and stops one address being mailed
- * over and over; the caller budget here stops one script walking five hundred addresses,
- * each of which is individually within its cooldown.
- *
- * The caller refusal is still reported as success, like every other outcome. A limit that
- * announced itself would be the disclosure this endpoint is built to avoid — it would say
- * "that address exists and I would have mailed it" one message earlier.
+ * over and over; the caller budget here stops one script walking many addresses, each of
+ * which is individually within its cooldown. A throttled caller is told so, the same as
+ * sign-in, rather than shown a false "sent".
  *
  * @param email - Address as typed.
  *
- * @returns Empty success, always.
+ * @returns Empty success when a link went out or the registered account had nothing to
+ *   send; a failure naming an unregistered address, a malformed one, or a throttled caller.
  */
 export async function resendVerificationAction(email: unknown): Promise<EmptyResult> {
   if (await refuseFloodedCaller('resend', RATE_LIMIT.RESEND)) {
-    return emptySuccess();
+    return emptyFailureWithError(createError(BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE, BUSINESS_COMMON.TOO_MANY_REQUESTS.MESSAGE));
   }
 
   const parsed = z.string().trim().toLowerCase().safeParse(email);
 
   if (!parsed.success) {
-    return emptySuccess();
+    return emptyFailureWithError(createError(VALIDATION.EMAIL_INVALID.CODE, VALIDATION.EMAIL_INVALID.MESSAGE, 'email'));
   }
 
-  const reissued = await authService.reissueVerification(parsed.data);
+  const result = await authService.reissueVerification(parsed.data);
 
-  if (reissued) {
-    await mail.send(buildVerifyAddressMail(reissued.user.email, reissued.user.name, buildVerifyUrl(reissued.verificationToken)));
+  if (!isSuccess(result)) {
+    return emptyFailureWithError(
+      result.errors[0] ?? createError(VALIDATION.EMAIL_NOT_REGISTERED.CODE, VALIDATION.EMAIL_NOT_REGISTERED.MESSAGE, 'email')
+    );
+  }
+
+  // A null payload is a registered account with nothing to send — reported as success.
+  if (result.result) {
+    await mail.send(buildVerifyAddressMail(result.result.user.email, result.result.user.name, buildVerifyUrl(result.result.verificationToken)));
+  }
+
+  return emptySuccess();
+}
+
+/**
+ * Build the absolute link that carries a password-reset token.
+ *
+ * Absolute and from `APP_BASE_URL` rather than a request header, the same reason
+ * `buildVerifyUrl` is: a `Host` the caller controls is how a link ends up pointing at
+ * somebody else's server.
+ *
+ * @param token - Raw reset token.
+ *
+ * @returns The URL to put in the message.
+ */
+function buildResetUrl(token: string): string {
+  const url = new URL(ROUTES.RESET_PASSWORD.HREF, env.APP_BASE_URL);
+
+  url.searchParams.set('token', token);
+
+  return url.toString();
+}
+
+/**
+ * The request half of forgot-password: mail a reset link to an account that can use one.
+ *
+ * Shaped exactly like `resendVerificationAction`, including the deliberate reversal — an
+ * unregistered address is named rather than hidden, because the department asked for the
+ * explicit answer here too. A registered-but-unusable account (unverified, deactivated, or
+ * inside the cooldown) is a silent success with nothing sent.
+ *
+ * @param email - Address as typed.
+ *
+ * @returns Empty success when a link went out or there was nothing to send; a failure
+ *   naming an unregistered or malformed address, or a throttled caller.
+ */
+export async function requestPasswordResetAction(email: unknown): Promise<EmptyResult> {
+  if (await refuseFloodedCaller('password-reset', RATE_LIMIT.PASSWORD_RESET)) {
+    return emptyFailureWithError(createError(BUSINESS_COMMON.TOO_MANY_REQUESTS.CODE, BUSINESS_COMMON.TOO_MANY_REQUESTS.MESSAGE));
+  }
+
+  const parsed = z.string().trim().toLowerCase().safeParse(email);
+
+  if (!parsed.success) {
+    return emptyFailureWithError(createError(VALIDATION.EMAIL_INVALID.CODE, VALIDATION.EMAIL_INVALID.MESSAGE, 'email'));
+  }
+
+  const result = await authService.issuePasswordReset(parsed.data);
+
+  if (!isSuccess(result)) {
+    return emptyFailureWithError(
+      result.errors[0] ?? createError(VALIDATION.EMAIL_NOT_REGISTERED.CODE, VALIDATION.EMAIL_NOT_REGISTERED.MESSAGE, 'email')
+    );
+  }
+
+  if (result.result) {
+    await mail.send(buildPasswordResetMail(result.result.user.email, result.result.user.name, buildResetUrl(result.result.resetToken)));
+  }
+
+  return emptySuccess();
+}
+
+/**
+ * The apply half of forgot-password: set a new password from a link.
+ *
+ * A form action rather than the auto-firing effect the email-verification screen uses,
+ * because the token is spent by the write — it must be spent on submit, not on the page
+ * loading, so a refresh or a link prefetch cannot burn it before the new password is typed.
+ *
+ * @param values - Raw form values — the token and the two password boxes.
+ *
+ * @returns Empty success, or a failure carrying the reason's code.
+ */
+export async function resetPasswordAction(values: unknown): Promise<EmptyResult> {
+  const validation = PasswordResetSchema.safeParse(values);
+
+  if (!validation.success) {
+    return emptyFailureWithError(mapZodErrorsToErrorDto(validation.error)[0]);
+  }
+
+  const result = await authService.resetPassword(validation.data.token, validation.data.password);
+
+  if (!isSuccess(result) || !result.result) {
+    return emptyFailureWithError(result.errors[0] ?? createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
   }
 
   return emptySuccess();

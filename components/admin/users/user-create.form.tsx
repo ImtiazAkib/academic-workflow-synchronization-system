@@ -15,7 +15,7 @@ import { isSuccess } from '@/lib/result';
 import { UserCreateInput, UserCreateOutput, UserCreateSchema } from '@/lib/schemas';
 import { resolveUserErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label, PasswordInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { Button, Input, Label, PasswordInput, PhoneInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { createUserAction } from './actions';
 import { UserDepartmentFields } from './user-department.fields';
@@ -50,7 +50,7 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
       name: '',
       email: '',
       password: '',
-      role: USER_ROLES.TEACHER,
+      role: viewer.isSuperAdmin ? USER_ROLES.ADMIN : USER_ROLES.TEACHER,
       designation: '',
       roll: '',
       registrationNo: '',
@@ -62,15 +62,15 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
   });
 
   /*
-    An administrator account is the super administrator's to create, so only they are
-    offered the option. Super administrator is offered to nobody — that account is
-    seeded, and `UserService` refuses the role whoever asks.
+    Who each creator may make: the super administrator creates administrators and only
+    administrators, an ordinary administrator creates teachers and students. Super
+    administrator is offered to nobody — that account is seeded — and `UserService` refuses
+    any request that steps outside this, so the single-option select a super administrator
+    sees is a courtesy rather than the control.
   */
-  const roleItems: Record<string, string> = {
-    ...(viewer.isSuperAdmin ? { [USER_ROLES.ADMIN]: labels.roleAdmin } : {}),
-    [USER_ROLES.TEACHER]: labels.roleTeacher,
-    [USER_ROLES.STUDENT]: labels.roleStudent,
-  };
+  const roleItems: Record<string, string> = viewer.isSuperAdmin
+    ? { [USER_ROLES.ADMIN]: labels.roleAdmin }
+    : { [USER_ROLES.TEACHER]: labels.roleTeacher, [USER_ROLES.STUDENT]: labels.roleStudent };
 
   const handleFormSubmit = async (values: UserCreateOutput): Promise<void> => {
     setFormError(null);
@@ -161,14 +161,6 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
           {errors.designation && <p className="text-destructive text-sm">{labels.fieldErrors.designationTooLong}</p>}
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="create-student-id">
-            {labels.fields.roll} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
-          </Label>
-          <Input id="create-student-id" aria-invalid={Boolean(errors.roll)} {...register('roll')} />
-          {errors.roll && <p className="text-destructive text-sm">{labels.fieldErrors.rollTooLong}</p>}
-        </div>
-
         <UserSemesterField control={control as never} errors={errors} labels={labels.fields} fieldErrors={labels.fieldErrors} idPrefix="create" />
 
         <UserDepartmentFields
@@ -184,8 +176,8 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
           <Label htmlFor="create-phone">
             {labels.fields.phone} <span className="text-muted-foreground text-xs">({labels.fields.optional})</span>
           </Label>
-          <Input id="create-phone" type="tel" aria-invalid={Boolean(errors.phone)} {...register('phone')} />
-          {errors.phone && <p className="text-destructive text-sm">{labels.fieldErrors.phoneTooLong}</p>}
+          <PhoneInput id="create-phone" aria-invalid={Boolean(errors.phone)} {...register('phone')} />
+          {errors.phone && <p className="text-destructive text-sm">{labels.fieldErrors.phoneInvalid}</p>}
         </div>
       </div>
 

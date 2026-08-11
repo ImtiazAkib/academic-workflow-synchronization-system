@@ -62,6 +62,16 @@ export const RATE_LIMIT = {
   RESEND: { LIMIT: 5, WINDOW_MINUTES: 60 },
 
   /**
+   * Password-reset requests per caller.
+   *
+   * The same shape as the resend budget, and for the same reason: the account-level
+   * cooldown in `EMAIL_VERIFICATION.RESEND_COOLDOWN_MINUTES` already stops one address
+   * being mailed a reset link on repeat, so this is the other dimension — one script
+   * walking many addresses, each individually inside its cooldown.
+   */
+  PASSWORD_RESET: { LIMIT: 5, WINDOW_MINUTES: 60 },
+
+  /**
    * Uploads per signed-in account.
    *
    * Keyed on the account rather than the caller, because these endpoints require a

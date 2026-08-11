@@ -13,7 +13,6 @@ export type RegisterFormLabels = {
   roll: string;
   registrationNo: string;
   session: string;
-  sessionPlaceholder: string;
   department: string;
   semester: string;
   showPassword: string;
@@ -25,6 +24,7 @@ export type RegisterFormLabels = {
     emailInvalid: string;
     passwordTooShort: string;
     required: string;
+    digitsOnly: string;
   };
   errors: RegistrationErrorLabels;
 };

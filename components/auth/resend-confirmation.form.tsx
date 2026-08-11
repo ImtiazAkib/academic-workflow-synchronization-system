@@ -4,6 +4,10 @@ import { useState } from 'react';
 
 import { MailCheck } from 'lucide-react';
 
+import { isSuccess } from '@/lib/result';
+import { resolveEmailRequestErrorMessage } from '@/lib/utils';
+import type { EmailRequestErrorLabels } from '@/lib/utils';
+
 import { Button, Input, Label } from '@/components/ui';
 
 import { resendVerificationAction } from './registration.actions';
@@ -14,6 +18,7 @@ type ResendConfirmationLabels = {
   submitting: string;
   sentTitle: string;
   sentDescription: string;
+  errors: EmailRequestErrorLabels;
 };
 
 type ResendConfirmationFormProps = {
@@ -21,28 +26,34 @@ type ResendConfirmationFormProps = {
 };
 
 /*
-  Deliberately says the same thing whatever happened. A form that reported "no account
-  with that address" would be a way for anybody to test which addresses are registered
-  here — which is precisely what sign-in refuses to disclose, so disclosing it one screen
-  over would be pointless.
-
-  There is no field-level validation either. A malformed address simply produces the same
-  confirmation, because telling somebody their typo was rejected is not worth a second
-  code path that behaves differently for known and unknown input.
+  Names an unregistered address rather than hiding it. The screen used to say the same thing
+  whatever happened, to keep anybody from testing which addresses have accounts — but the
+  department asked for the explicit "no account here" instead, accepting that trade. A
+  registered address that is already confirmed, switched off, or inside its cooldown still
+  gets the neutral "check your inbox", so only the not-registered case is disclosed.
 */
 export function ResendConfirmationForm({ labels }: ResendConfirmationFormProps) {
   const [email, setEmail] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+    setFormError(null);
     setIsSending(true);
 
-    await resendVerificationAction(email);
+    const result = await resendVerificationAction(email);
 
     setIsSending(false);
-    setIsSent(true);
+
+    if (isSuccess(result)) {
+      setIsSent(true);
+
+      return;
+    }
+
+    setFormError(resolveEmailRequestErrorMessage(result.errors[0]?.code ?? 0, labels.errors));
   };
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -61,6 +72,12 @@ export function ResendConfirmationForm({ labels }: ResendConfirmationFormProps) 
 
   return (
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {formError && (
+        <p role="alert" className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
+          {formError}
+        </p>
+      )}
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="resend-email">{labels.emailLabel}</Label>
         <Input id="resend-email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} />

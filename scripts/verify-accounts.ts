@@ -49,10 +49,10 @@ function studentInput(overrides: Partial<Record<string, string>> = {}) {
     name: 'Verify Student',
     email: `${TEMP}-student@department.edu`,
     password: PASSWORD,
-    roll: '2021-CSE-001',
-    registrationNo: 'REG-0001',
+    roll: '20210001',
+    registrationNo: '10001',
     session: '2021-22',
-    department: 'Computer Science',
+    department: 'ICT',
     semester: '7',
     ...overrides,
   });
@@ -97,7 +97,7 @@ async function run(): Promise<void> {
   );
 
   console.log('\n2. what registration refuses');
-  const duplicateEmail = await auth.registerStudent(studentInput({ roll: '2021-CSE-999' }));
+  const duplicateEmail = await auth.registerStudent(studentInput({ roll: '20219999' }));
   check('a duplicate email', !duplicateEmail.success && duplicateEmail.errors[0]?.code === VALIDATION.EMAIL_ALREADY_USED.CODE);
 
   const duplicateRoll = await auth.registerStudent(studentInput({ email: `${TEMP}-other@department.edu` }));
@@ -109,7 +109,7 @@ async function run(): Promise<void> {
     is what makes this safe rather than merely unlikely.
   */
   const smuggled = StudentRegistrationSchema.safeParse({
-    ...studentInput({ email: `${TEMP}-smuggle@department.edu`, roll: 'X-1' }),
+    ...studentInput({ email: `${TEMP}-smuggle@department.edu`, roll: '99991' }),
     semester: '7',
     role: USER_ROLES.ADMIN,
     isApproved: true,
@@ -186,16 +186,17 @@ async function run(): Promise<void> {
   check('and the refusal tells them what to use instead', byEmail.errors[0]?.code === AUTH.SIGN_IN_WITH_LOGIN_ID.CODE);
 
   console.log('\n6b. asking for another confirmation link');
-  const pending = await auth.registerStudent(studentInput({ email: `${TEMP}-resend@department.edu`, roll: 'RESEND-1' }));
+  const pending = await auth.registerStudent(studentInput({ email: `${TEMP}-resend@department.edu`, roll: '70001' }));
   check('a second account registers', pending.success, JSON.stringify(pending.errors));
 
   const firstResend = await auth.reissueVerification(`${TEMP}-resend@department.edu`);
 
   /*
     Straight after registering the token is seconds old, and the cooldown is what stops
-    this endpoint being used to send somebody a message per second.
+    this endpoint being used to send somebody a message per second. The account exists, so
+    this is a success carrying a null payload — nothing to send — rather than a failure.
   */
-  check('is throttled while the last one is fresh', firstResend === null);
+  check('is throttled while the last one is fresh', firstResend.success && firstResend.result === null);
 
   // Age the live token past the cooldown rather than waiting it out.
   await User.updateOne(
@@ -208,8 +209,8 @@ async function run(): Promise<void> {
   );
 
   const secondResend = await auth.reissueVerification(`${TEMP}-resend@department.edu`);
-  check('but allowed once the cooldown passes', secondResend !== null);
-  check('and the new token differs from the first', secondResend?.verificationToken !== pending.result?.verificationToken);
+  check('but allowed once the cooldown passes', secondResend.success && secondResend.result !== null);
+  check('and the new token differs from the first', secondResend.result?.verificationToken !== pending.result?.verificationToken);
 
   /*
     A fresh link invalidates the old one, so an earlier email leaking afterwards opens
@@ -218,9 +219,13 @@ async function run(): Promise<void> {
   const supersededLink = await auth.verifyEmail(pending.result?.verificationToken ?? '');
   check('the superseded link no longer works', !supersededLink.success);
 
-  // Every other case yields nothing to send, so the endpoint discloses no addresses.
-  check('an unknown address yields nothing', (await auth.reissueVerification(`${TEMP}-nobody@department.edu`)) === null);
-  check('an already-confirmed address yields nothing', (await auth.reissueVerification(`${TEMP}-student@department.edu`)) === null);
+  /*
+    An unregistered address is now named rather than hidden — the department's deliberate
+    reversal — so it is a failure. An address that exists but is already confirmed is still
+    a null success: nothing to send, and its state is not disclosed.
+  */
+  check('an unknown address is refused', !(await auth.reissueVerification(`${TEMP}-nobody@department.edu`)).success);
+  check('an already-confirmed address yields nothing to send', (await auth.reissueVerification(`${TEMP}-student@department.edu`)).result === null);
 
   console.log('\n7. teachers get their own prefix');
   const teacher = await auth.registerTeacher(

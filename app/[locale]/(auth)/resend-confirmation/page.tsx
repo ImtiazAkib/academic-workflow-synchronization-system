@@ -59,6 +59,12 @@ export default async function ResendConfirmationPage() {
               submitting: l10n('RESEND_SUBMITTING'),
               sentTitle: l10n('RESEND_SENT_TITLE'),
               sentDescription: l10n('RESEND_SENT_DESCRIPTION'),
+              errors: {
+                notRegistered: l10n('RESEND_ERROR_NOT_REGISTERED'),
+                invalidEmail: l10n('USERS_FIELD_EMAIL_INVALID'),
+                tooManyAttempts: l10n('ERROR_TOO_MANY_ATTEMPTS'),
+                generic: l10n('RESEND_ERROR_GENERIC'),
+              },
             }}
           />
         </div>
