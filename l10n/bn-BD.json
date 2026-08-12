@@ -690,5 +690,10 @@
   "DASHBOARD_TEACHER_MATERIALS_EMPTY_DESCRIPTION": "আপনার আপলোড করা ফাইল এখানে দেখা যাবে।",
   "DASHBOARD_TEACHER_COURSES_TITLE": "আমার কোর্স",
   "DASHBOARD_TEACHER_COURSES_EMPTY_TITLE": "কোনো কোর্স বরাদ্দ নেই",
-  "DASHBOARD_TEACHER_COURSES_EMPTY_DESCRIPTION": "আপনাকে বরাদ্দ করা কোর্স এখানে দেখা যাবে।"
+  "DASHBOARD_TEACHER_COURSES_EMPTY_DESCRIPTION": "আপনাকে বরাদ্দ করা কোর্স এখানে দেখা যাবে।",
+  "STUDENT_NEXT_TITLE": "আপনার পরবর্তী ক্লাস",
+  "STUDENT_DONE_TITLE": "আজকের মতো শেষ",
+  "STUDENT_DONE_DESCRIPTION": "আজ আপনার রুটিনে আর কোনো ক্লাস নেই।",
+  "STUDENT_RECENT_MATERIALS_EMPTY_TITLE": "কোনো সাম্প্রতিক আপলোড নেই",
+  "STUDENT_RECENT_MATERIALS_EMPTY_DESCRIPTION": "আপনার শিক্ষকদের নতুন ফাইল এখানে দেখা যাবে।"
 }

@@ -693,6 +693,11 @@ declare const messages: {
   "DASHBOARD_TEACHER_MATERIALS_EMPTY_DESCRIPTION": "Files you upload will appear here.",
   "DASHBOARD_TEACHER_COURSES_TITLE": "My courses",
   "DASHBOARD_TEACHER_COURSES_EMPTY_TITLE": "No courses assigned",
-  "DASHBOARD_TEACHER_COURSES_EMPTY_DESCRIPTION": "Courses you are assigned to teach will appear here."
+  "DASHBOARD_TEACHER_COURSES_EMPTY_DESCRIPTION": "Courses you are assigned to teach will appear here.",
+  "STUDENT_NEXT_TITLE": "Your next class",
+  "STUDENT_DONE_TITLE": "You're done for today",
+  "STUDENT_DONE_DESCRIPTION": "No more classes on your routine today.",
+  "STUDENT_RECENT_MATERIALS_EMPTY_TITLE": "No recent uploads",
+  "STUDENT_RECENT_MATERIALS_EMPTY_DESCRIPTION": "New files from your teachers will appear here."
 };
 export default messages;

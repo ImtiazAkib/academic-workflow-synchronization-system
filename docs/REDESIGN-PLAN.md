@@ -59,7 +59,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ✅ Done        |
 | [R4a](#r4a) | Dashboard foundation + admin dashboard | 6, 11, 12   | ✅ Done        |
 | [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ✅ Done        |
-| [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ⬜ Not started |
+| [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ✅ Done        |
 | [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
 | [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ⬜ Not started |
@@ -294,14 +294,22 @@ is auth-gated (built from these verified widgets + the R4a helpers over existing
 **Files.** `components/dashboard/{dashboard-next-class,dashboard-material-row}.tsx` (+ barrel),
 `app/[locale]/(dashboard)/teacher/page.tsx`, `l10n/l10n.csv`.
 
-### R4c — Student dashboard elevation ⬜ Not started
+### R4c — Student dashboard elevation ✅ Done
 
-**Goal.** Elevate the one real dashboard: next-class prominence (adopt `DashboardTodaySchedule` with the single
-current/next markers in place of the equal-box grid), add recent materials (`StudentService.listMaterials`), and
-the relative-time touches. Adopt `PageHeader`. Keep notices + course/teacher shortcuts.
+**Goal.** Elevate the one real dashboard so "where do I need to be next" is the first answer.
 
-**Done (R4b+c) when** the three dashboards genuinely differ and each role's "what's next" is the first thing on
-screen.
+- Adopted `PageHeader`; added the `DashboardNextClass` hero (now with the teacher's name) above a
+  `DashboardTodaySchedule` — **replacing the equal-box `StudentRoutineCard` grid** the audit flagged, so today
+  reads as a chronological list with current/next markers. Added recent materials
+  (`StudentService.listMaterials`, "uploaded X ago" via `getFormatter`). Kept notices (batch-scoped) + the
+  course/teacher shortcut cards (now in the narrow column). No-semester falls back to a single clear empty state.
+
+**Outcome.** `format`/`lint`/`build` (77/77) green; l10n +5 keys (Bengali flagged). **No new components** — this
+step assembles the R4a/R4b widgets (all already verified in isolation), so the build validates the assembly; the
+page itself is auth-gated. The three dashboards now genuinely differ: **admin** = departmental oversight,
+**teacher** = teaching-next, **student** = where-to-be-next — each leading with its own "what's next".
+
+**Files.** `app/[locale]/(dashboard)/student/page.tsx`, `l10n/l10n.csv`.
 
 ### R5 — Routine / timetable
 
