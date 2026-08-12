@@ -50,26 +50,26 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 
 ## Status at a glance
 
-| #           | Step                                   | Brief phase | Status         |
-| ----------- | -------------------------------------- | ----------- | -------------- |
-| [R1](#r1)   | Design tokens & type foundation        | 2, 39       | ✅ Done        |
-| [R2a](#r2a) | Consolidate existing primitives        | 3, 21–24    | ✅ Done        |
-| [R2b](#r2b) | Build missing primitives               | 3, 38       | ✅ Done        |
-| [R3a](#r3a) | Desktop shell (sidebar, topbar, nav)   | 4, 5, 7–10  | ✅ Done        |
-| [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ✅ Done        |
-| [R4a](#r4a) | Dashboard foundation + admin dashboard | 6, 11, 12   | ✅ Done        |
-| [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ✅ Done        |
-| [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ✅ Done        |
-| [R5a](#r5a) | Routine — grid refinements             | 7, 13, 14   | ✅ Done        |
-| [R5b](#r5b) | Routine — form conflicts + filters     | 7, 14       | ✅ Done        |
-| [R6](#r6)   | Courses                                | 8, 15       | ✅ Done        |
-| [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ✅ Done        |
-| [R8](#r8)   | Notices                                | 9, 18       | ✅ Done        |
-| [R9](#r9)   | Users & teacher directory              | 10, 19, 20  | ✅ Done        |
-| [R10](#r10) | Forms & dialogs consistency pass       | 11, 21–24   | ✅ Done        |
-| [R11](#r11) | Authentication screens                 | 12, 35      | ✅ Done        |
-| [R12](#r12) | Public landing page                    | 13, 34      | ✅ Done        |
-| [R13](#r13) | Responsive, a11y & interaction polish  | 14, 15, 16  | ⬜ Not started |
+| #           | Step                                   | Brief phase | Status  |
+| ----------- | -------------------------------------- | ----------- | ------- |
+| [R1](#r1)   | Design tokens & type foundation        | 2, 39       | ✅ Done |
+| [R2a](#r2a) | Consolidate existing primitives        | 3, 21–24    | ✅ Done |
+| [R2b](#r2b) | Build missing primitives               | 3, 38       | ✅ Done |
+| [R3a](#r3a) | Desktop shell (sidebar, topbar, nav)   | 4, 5, 7–10  | ✅ Done |
+| [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ✅ Done |
+| [R4a](#r4a) | Dashboard foundation + admin dashboard | 6, 11, 12   | ✅ Done |
+| [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ✅ Done |
+| [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ✅ Done |
+| [R5a](#r5a) | Routine — grid refinements             | 7, 13, 14   | ✅ Done |
+| [R5b](#r5b) | Routine — form conflicts + filters     | 7, 14       | ✅ Done |
+| [R6](#r6)   | Courses                                | 8, 15       | ✅ Done |
+| [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ✅ Done |
+| [R8](#r8)   | Notices                                | 9, 18       | ✅ Done |
+| [R9](#r9)   | Users & teacher directory              | 10, 19, 20  | ✅ Done |
+| [R10](#r10) | Forms & dialogs consistency pass       | 11, 21–24   | ✅ Done |
+| [R11](#r11) | Authentication screens                 | 12, 35      | ✅ Done |
+| [R12](#r12) | Public landing page                    | 13, 34      | ✅ Done |
+| [R13](#r13) | Responsive, a11y & interaction polish  | 14, 15, 16  | ✅ Done |
 
 ## Definition of done (every step)
 
