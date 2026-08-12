@@ -66,7 +66,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ✅ Done        |
 | [R8](#r8)   | Notices                                | 9, 18       | ✅ Done        |
 | [R9](#r9)   | Users & teacher directory              | 10, 19, 20  | ✅ Done        |
-| [R10](#r10) | Forms & dialogs consistency pass       | 11, 21–24   | ⬜ Not started |
+| [R10](#r10) | Forms & dialogs consistency pass       | 11, 21–24   | ✅ Done        |
 | [R11](#r11) | Authentication screens                 | 12, 35      | ⬜ Not started |
 | [R12](#r12) | Public landing page                    | 13, 34      | ⬜ Not started |
 | [R13](#r13) | Responsive, a11y & interaction polish  | 14, 15, 16  | ⬜ Not started |

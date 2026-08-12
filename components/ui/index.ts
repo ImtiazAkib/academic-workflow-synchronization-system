@@ -5,6 +5,7 @@ export * from './button';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './empty-state';
+export * from './form-message';
 export * from './input';
 export * from './label';
 export * from './page-header';

@@ -4,7 +4,7 @@ import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 
 import { SEMESTER } from '@/constants/schedule.const';
 
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { FormMessage, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import type { CoursesFieldErrorLabels, CoursesFieldLabels, TeacherOption } from './courses.types';
 import type { UseFormRegister } from 'react-hook-form';
@@ -45,17 +45,13 @@ export function CourseFields({ register, control, errors, teachers, labels, fiel
       <div className="flex flex-col gap-2">
         <Label htmlFor={`${idPrefix}-code`}>{labels.code}</Label>
         <Input id={`${idPrefix}-code`} aria-invalid={Boolean(errors.code)} {...register('code' as never)} />
-        {errors.code && (
-          <p className="text-destructive text-sm">{errors.code.type === 'too_big' ? fieldErrors.codeTooLong : fieldErrors.codeRequired}</p>
-        )}
+        {errors.code && <FormMessage>{errors.code.type === 'too_big' ? fieldErrors.codeTooLong : fieldErrors.codeRequired}</FormMessage>}
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor={`${idPrefix}-title`}>{labels.title}</Label>
         <Input id={`${idPrefix}-title`} aria-invalid={Boolean(errors.title)} {...register('title' as never)} />
-        {errors.title && (
-          <p className="text-destructive text-sm">{errors.title.type === 'too_big' ? fieldErrors.titleTooLong : fieldErrors.titleRequired}</p>
-        )}
+        {errors.title && <FormMessage>{errors.title.type === 'too_big' ? fieldErrors.titleTooLong : fieldErrors.titleRequired}</FormMessage>}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -78,7 +74,7 @@ export function CourseFields({ register, control, errors, teachers, labels, fiel
             </Select>
           )}
         />
-        {errors.semester && <p className="text-destructive text-sm">{fieldErrors.semesterInvalid}</p>}
+        {errors.semester && <FormMessage>{fieldErrors.semesterInvalid}</FormMessage>}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -92,7 +88,7 @@ export function CourseFields({ register, control, errors, teachers, labels, fiel
           aria-invalid={Boolean(errors.credits)}
           {...register('credits' as never)}
         />
-        {errors.credits && <p className="text-destructive text-sm">{fieldErrors.creditsInvalid}</p>}
+        {errors.credits && <FormMessage>{fieldErrors.creditsInvalid}</FormMessage>}
       </div>
 
       <div className="flex flex-col gap-2 sm:col-span-2">
