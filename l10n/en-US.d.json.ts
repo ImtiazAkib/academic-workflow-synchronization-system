@@ -719,6 +719,8 @@ declare const messages: {
   "MATERIALS_TYPE_SPREADSHEET": "Spreadsheet",
   "MATERIALS_TYPE_IMAGE": "Image",
   "MATERIALS_TYPE_ARCHIVE": "Archive",
-  "MATERIALS_TYPE_TEXT": "Text"
+  "MATERIALS_TYPE_TEXT": "Text",
+  "USERS_TABLE_DEPARTMENT_BATCH": "Department / batch",
+  "USERS_TABLE_JOINED": "Joined"
 };
 export default messages;

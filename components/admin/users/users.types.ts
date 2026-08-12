@@ -101,6 +101,8 @@ export type UsersLabels = {
   columnName: string;
   columnEmail: string;
   columnRole: string;
+  columnDepartmentBatch: string;
+  columnJoined: string;
   columnStatus: string;
   columnActions: string;
   count: string;

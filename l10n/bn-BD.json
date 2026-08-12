@@ -716,5 +716,7 @@
   "MATERIALS_TYPE_SPREADSHEET": "স্প্রেডশিট",
   "MATERIALS_TYPE_IMAGE": "ছবি",
   "MATERIALS_TYPE_ARCHIVE": "আর্কাইভ",
-  "MATERIALS_TYPE_TEXT": "টেক্সট"
+  "MATERIALS_TYPE_TEXT": "টেক্সট",
+  "USERS_TABLE_DEPARTMENT_BATCH": "বিভাগ / ব্যাচ",
+  "USERS_TABLE_JOINED": "যোগদানের তারিখ"
 }

@@ -107,6 +107,17 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
 
       <TableCell>{roleLabel}</TableCell>
 
+      <TableCell className="text-muted-foreground">
+        <span className="block">{user.department ?? '—'}</span>
+        {(user.session || user.semester) && (
+          <span className="block text-xs">
+            {[user.session, user.semester ? resolveSemesterLabel(user.semester) : null].filter(Boolean).join(' · ')}
+          </span>
+        )}
+      </TableCell>
+
+      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+
       <TableCell>
         <Badge variant={status === 'active' ? 'success' : status === 'pending' ? 'warning' : 'neutral'}>{statusLabel}</Badge>
       </TableCell>

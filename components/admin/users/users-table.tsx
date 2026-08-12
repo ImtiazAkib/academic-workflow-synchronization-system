@@ -24,12 +24,14 @@ export function UsersTable({ users, labels, viewer, onEdit, onApproval, onActiva
       which is what put three action buttons on top of each other on a phone.
     */
     <div className="border-border w-full overflow-x-auto rounded-lg border">
-      <Table aria-label={labels.tableLabel} className="min-w-3xl">
+      <Table aria-label={labels.tableLabel} className="min-w-4xl">
         <TableHeader>
           <TableRow>
             <TableHead>{labels.columnName}</TableHead>
             <TableHead>{labels.columnEmail}</TableHead>
             <TableHead>{labels.columnRole}</TableHead>
+            <TableHead>{labels.columnDepartmentBatch}</TableHead>
+            <TableHead>{labels.columnJoined}</TableHead>
             <TableHead>{labels.columnStatus}</TableHead>
             <TableHead className="text-end">{labels.columnActions}</TableHead>
           </TableRow>
