@@ -63,7 +63,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R5a](#r5a) | Routine — grid refinements             | 7, 13, 14   | ✅ Done        |
 | [R5b](#r5b) | Routine — form conflicts + filters     | 7, 14       | ✅ Done        |
 | [R6](#r6)   | Courses                                | 8, 15       | ✅ Done        |
-| [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ⬜ Not started |
+| [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ✅ Done        |
 | [R8](#r8)   | Notices                                | 9, 18       | ⬜ Not started |
 | [R9](#r9)   | Users & teacher directory              | 10, 19, 20  | ⬜ Not started |
 | [R10](#r10) | Forms & dialogs consistency pass       | 11, 21–24   | ⬜ Not started |

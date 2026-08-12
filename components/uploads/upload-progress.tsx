@@ -82,9 +82,7 @@ export function UploadProgress({ rows, labels }: UploadProgressProps) {
 
               <TableCell>
                 <Badge
-                  variant={
-                    x.status === FILE_CONVERSION_STATUS.DONE ? 'default' : x.status === FILE_CONVERSION_STATUS.FAILED ? 'destructive' : 'secondary'
-                  }
+                  variant={x.status === FILE_CONVERSION_STATUS.DONE ? 'success' : x.status === FILE_CONVERSION_STATUS.FAILED ? 'destructive' : 'info'}
                   className="inline-flex items-center gap-1.5">
                   {x.status === FILE_CONVERSION_STATUS.PROCESSING && <Spinner className="size-3" />}
                   {x.statusLabel}
