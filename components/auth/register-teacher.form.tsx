@@ -27,7 +27,7 @@ type RegisterTeacherFormProps = {
 /*
   Four fields. A teacher is identified by the department rather than by a roll and a
   session, so this asks for less than the student form and shares nothing with it beyond
-  the label bundle — two forms that differ by which inputs they render are clearer than
+  the label bundle - two forms that differ by which inputs they render are clearer than
   one form full of conditionals.
 
   There is no role input. Which action runs decides the role, so there is nothing here
@@ -124,7 +124,7 @@ export function RegisterTeacherForm({ labels }: RegisterTeacherFormProps) {
         {errors.password && <p className="text-destructive text-sm">{labels.fieldErrors.passwordTooShort}</p>}
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="mt-1 w-full">
+      <Button type="submit" variant="default" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

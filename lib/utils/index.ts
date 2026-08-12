@@ -20,6 +20,7 @@ export * from './notice-labels.utils';
 export * from './register-labels.utils';
 export * from './login-id.utils';
 export * from './mongo.utils';
+export * from './navigation.utils';
 export * from './notice.utils';
 export * from './phone.utils';
 export * from './role.utils';

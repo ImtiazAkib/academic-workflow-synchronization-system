@@ -24,12 +24,12 @@ export const NOTICE_MAX_SESSIONS = 20;
 /**
  * The picture a notice may carry.
  *
- * A notice is text, a picture, or both — a scanned circular and a routine photographed
+ * A notice is text, a picture, or both - a scanned circular and a routine photographed
  * off a noticeboard are how a department actually announces things, and retyping one into
  * a textarea is work nobody does.
  *
  * Enforced on the server. The `accept` attribute on the file input is a convenience for
- * the picker, not a control — anything can POST to the route handler.
+ * the picker, not a control - anything can POST to the route handler.
  */
 export const NOTICE_IMAGE = {
   /** 5 MB. A photograph of a page, not a scan archive. */
@@ -51,11 +51,11 @@ export const NOTICE_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
   Checked alongside the MIME type, for the same reason materials does it: the browser
   supplies the type and a request made by hand supplies whatever it likes. The two
   agreeing rules out the careless case at no cost, and neither is proof of what the bytes
-  are — only the magic number is, and that is checked in the service.
+  are - only the magic number is, and that is checked in the service.
 */
 export const NOTICE_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'] as const;
 
 /**
- * The file picker's `accept` attribute — a convenience for the picker, never a control.
+ * The file picker's `accept` attribute - a convenience for the picker, never a control.
  */
 export const NOTICE_IMAGE_ACCEPT = [...NOTICE_IMAGE_MIME_TYPES, ...NOTICE_IMAGE_EXTENSIONS].join(',');

@@ -31,7 +31,7 @@ const authService = new AuthService();
  *
  * @param values - Raw form values, validated here rather than trusted.
  *
- * @returns Empty result — success, or a failure carrying the reason's code.
+ * @returns Empty result - success, or a failure carrying the reason's code.
  */
 export async function signInAction(values: unknown): Promise<SingleResult<UserRole>> {
   const validation = SignInSchema.safeParse(values);
@@ -60,14 +60,14 @@ export async function signInAction(values: unknown): Promise<SingleResult<UserRo
 
   /*
     The role comes back rather than a destination. `ROLE_HOME` is a literal union, so
-    the client navigates to a route `typedRoutes` already knows — no string is built
+    the client navigates to a route `typedRoutes` already knows - no string is built
     from user input, which is what an open redirect is made of.
   */
   return singleSuccess(user.role);
 }
 
 /**
- * Sign out and return to the landing page in the current language.
+ * Sign out and return to the sign-in page in the current language.
  *
  * The locale arrives as a hidden form field rather than being looked up: Server
  * Actions cannot read `next/root-params`. It is validated here because a form field
@@ -81,5 +81,5 @@ export async function signOutAction(formData: FormData): Promise<void> {
   const submitted = formData.get(SESSION.LOCALE_FIELD);
   const locale = hasLocale(routing.locales, submitted) ? submitted : DEFAULT_APP_LOCALE;
 
-  redirect({ href: ROUTES.HOME.HREF, locale });
+  redirect({ href: ROUTES.SIGN_IN.HREF, locale });
 }

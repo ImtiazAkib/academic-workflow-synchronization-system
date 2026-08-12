@@ -26,7 +26,7 @@ export function NotFoundContent({ title, description, ctaLabel }: NotFoundConten
 
         <p className="text-medium-normal text-muted-foreground max-w-xl">{description}</p>
 
-        <Button variant="appPrimary" size="lg" nativeButton={false} render={<Link href={ROUTES.HOME.HREF} />}>
+        <Button variant="default" size="lg" nativeButton={false} render={<Link href={ROUTES.HOME.HREF} />}>
           {ctaLabel}
         </Button>
       </Container>

@@ -36,7 +36,7 @@ type UsersScreenProps = {
   would only mean lifting it back up again.
 
   Every mutation ends in `router.refresh()`: the list is server-rendered, so re-running
-  the server component is what makes the change appear — and it re-applies the current
+  the server component is what makes the change appear - and it re-applies the current
   URL filters for free.
 */
 export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
@@ -176,7 +176,7 @@ export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {
         </div>
 
         {/* Creating an account is its own page now, so this is a link, not a trigger. */}
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.ADMIN_USERS_NEW.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.ADMIN_USERS_NEW.HREF} />}>
           <UserPlus className="size-4" />
           {labels.createCta}
         </Button>

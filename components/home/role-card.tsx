@@ -15,8 +15,8 @@ export function RoleCard({ visual, title, summary, capabilities }: RoleCardProps
   const Icon = visual.icon;
 
   return (
-    <article className="surface-card flex flex-col gap-4 p-6">
-      <span className={cn('flex size-11 items-center justify-center rounded-lg', visual.surfaceClassName)}>
+    <article className="surface-card group flex flex-col gap-5 rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
+      <span className={cn('flex size-11 items-center justify-center rounded-xl', visual.surfaceClassName)}>
         <Icon className={cn('size-5', visual.accentClassName)} />
       </span>
 

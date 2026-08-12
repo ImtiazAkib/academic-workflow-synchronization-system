@@ -19,7 +19,7 @@ type StudentRoutineCardProps = {
   permission flags; rendering it here would mean handing a server component three
   functions that exist only to never be called.
 
-  The semester is absent on purpose — every card on this screen is in the student's own
+  The semester is absent on purpose - every card on this screen is in the student's own
   semester, so printing it on all of them says nothing.
 */
 export function StudentRoutineCard({ session, courses, teachers, labels }: StudentRoutineCardProps) {

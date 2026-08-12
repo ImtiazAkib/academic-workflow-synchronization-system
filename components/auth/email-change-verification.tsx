@@ -37,7 +37,7 @@ type EmailChangeVerificationProps = {
 
   A client component rather than page-render logic, because confirming *writes*. A page
   that wrote while rendering would fire again on every refresh, every back-navigation and
-  every link prefetch — and the second run would find the token already spent.
+  every link prefetch - and the second run would find the token already spent.
 
   Signing in again is offered but not demanded. The session already open in another tab
   keeps working: the address is not what the session is keyed on, and the account did not
@@ -50,7 +50,7 @@ export function EmailChangeVerification({ token, labels }: EmailChangeVerificati
   /*
     React runs effects twice in development's strict mode. The token is single-use, so the
     second call would find it spent and show a failure over a success that already
-    happened — this makes the request fire once per mount whatever the mode.
+    happened - this makes the request fire once per mount whatever the mode.
   */
   const hasRequested = useRef(false);
 
@@ -79,7 +79,7 @@ export function EmailChangeVerification({ token, labels }: EmailChangeVerificati
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
           {labels.signInCta}
         </Button>
       </div>
@@ -99,7 +99,7 @@ export function EmailChangeVerification({ token, labels }: EmailChangeVerificati
       {/* Shown back, because "which address did it land on" is the one thing worth confirming. */}
       <p className="border-border bg-muted/40 w-full rounded-lg border px-4 py-3 font-mono text-sm break-all">{email}</p>
 
-      <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+      <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
         {labels.signInCta}
       </Button>
     </div>

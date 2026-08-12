@@ -19,8 +19,8 @@ type SessionDeleteDialogProps = {
 };
 
 /**
- * Removal is permanent — a session has nothing hanging off it that needs a valid
- * author, unlike an account — so the class is named before it goes.
+ * Removal is permanent - a session has nothing hanging off it that needs a valid
+ * author, unlike an account - so the class is named before it goes.
  */
 export function SessionDeleteDialog({
   session,
@@ -71,7 +71,7 @@ export function SessionDeleteDialog({
             {cancelLabel}
           </Button>
 
-          <Button type="button" variant="appPrimary" disabled={isWorking} onClick={handleConfirmClick}>
+          <Button type="button" variant="default" disabled={isWorking} onClick={handleConfirmClick}>
             {isWorking ? workingLabel : labels.confirm}
           </Button>
         </DialogFooter>

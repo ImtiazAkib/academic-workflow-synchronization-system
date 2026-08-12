@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 
+import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useRouter } from '@/l10n/navigation';
 import { MaterialDto } from '@/types';
 
 import { isSuccess } from '@/lib/result';
-import { resolveMaterialErrorMessage } from '@/lib/utils';
+import { resolveMaterialErrorMessage, resolveMaterialType } from '@/lib/utils';
 
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 
@@ -16,6 +17,7 @@ import { deleteMaterialAction } from './actions';
 import { MaterialUploadForm } from './material-upload.form';
 import { MaterialsEmpty } from './materials-empty';
 import { MaterialsList } from './materials-list';
+import { MaterialsToolbar } from './materials-toolbar';
 
 import type { MaterialCourseOption, MaterialsLabels } from './materials.types';
 
@@ -28,7 +30,7 @@ type MaterialsScreenProps = {
 };
 
 /**
- * The teacher's repository: the upload form, then everything already published.
+ * The teacher's repository: a focused toolbar, then the files already published.
  */
 export function MaterialsScreen({ materials, courses, labels, storageBlocked, storageNearFull }: MaterialsScreenProps) {
   const router = useRouter();
@@ -36,6 +38,29 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
 
   const [removing, setRemoving] = useState<MaterialDto | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [courseId, setCourseId] = useState('all');
+  const [type, setType] = useState('all');
+  const [sort, setSort] = useState('date');
+
+  const visibleMaterials = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return materials
+      .filter(
+        material =>
+          (!query || `${material.title} ${material.fileName}`.toLocaleLowerCase().includes(query)) &&
+          (courseId === 'all' || material.courseId === courseId) &&
+          (type === 'all' || resolveMaterialType(material.mimeType, material.fileName) === type)
+      )
+      .sort((first, second) =>
+        sort === 'name'
+          ? first.title.localeCompare(second.title)
+          : sort === 'size'
+            ? second.size - first.size
+            : new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime()
+      );
+  }, [courseId, materials, search, sort, type]);
 
   const handleRemove = (material: MaterialDto): void => {
     setRemoveError(null);
@@ -72,20 +97,48 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="surface-card flex flex-col gap-4 p-4 sm:p-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-regular-semibold">{labels.uploadTitle}</h2>
-          <p className="text-muted-foreground text-sm">{labels.uploadDescription}</p>
-        </div>
-
-        <MaterialUploadForm courses={courses} labels={labels} storageBlocked={storageBlocked} storageNearFull={storageNearFull} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-muted-foreground text-sm">{labels.count}</p>
+        <Button type="button" onClick={() => setUploadOpen(true)} disabled={courses.length === 0 || storageBlocked}>
+          <Upload className="size-4" />
+          {labels.uploadCta}
+        </Button>
       </div>
+
+      <MaterialsToolbar
+        courses={courses}
+        labels={labels}
+        search={search}
+        courseId={courseId}
+        type={type}
+        sort={sort}
+        onSearchChange={setSearch}
+        onCourseChange={setCourseId}
+        onTypeChange={setType}
+        onSortChange={setSort}
+      />
 
       {materials.length === 0 ? (
         <MaterialsEmpty title={labels.emptyTitle} description={labels.emptyDescription} />
       ) : (
-        <MaterialsList materials={materials} courses={courses} labels={labels} onRemove={handleRemove} />
+        <MaterialsList materials={visibleMaterials} courses={courses} labels={labels} onRemove={handleRemove} />
       )}
+
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{labels.uploadTitle}</DialogTitle>
+            <DialogDescription>{labels.uploadDescription}</DialogDescription>
+          </DialogHeader>
+          <MaterialUploadForm
+            courses={courses}
+            labels={labels}
+            storageBlocked={storageBlocked}
+            storageNearFull={storageNearFull}
+            onUploaded={() => setUploadOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(removing)} onOpenChange={handleRemovingOpenChange}>
         <DialogContent>
@@ -112,7 +165,7 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
               {labels.cancel}
             </Button>
 
-            <Button type="button" variant="appPrimary" disabled={isWorking} onClick={handleRemoveConfirm}>
+            <Button type="button" variant="default" disabled={isWorking} onClick={handleRemoveConfirm}>
               {isWorking ? labels.deleting : labels.deleteConfirm}
             </Button>
           </DialogFooter>

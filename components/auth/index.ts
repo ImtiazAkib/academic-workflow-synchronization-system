@@ -1,3 +1,5 @@
+export * from './auth-card';
+export * from './form-error-alert';
 export * from './sign-in.form';
 export * from './register.types';
 export * from './register-student.form';

@@ -18,7 +18,7 @@ type ScheduleFiltersProps = {
 
 /*
   Filters live in the URL, so a filtered week can be bookmarked and survives a refresh.
-  `shallow: false` is what makes that work — the change reaches the server component,
+  `shallow: false` is what makes that work - the change reaches the server component,
   which re-runs the query.
 */
 export function ScheduleFilters({ teachers, labels }: ScheduleFiltersProps) {
@@ -67,7 +67,7 @@ export function ScheduleFilters({ teachers, labels }: ScheduleFiltersProps) {
           {isPending && <Spinner className="text-muted-foreground size-3.5" />}
         </div>
         <Select items={semesterItems} value={filters.semester} onValueChange={handleSemesterChange}>
-          <SelectTrigger id="schedule-semester" className="w-full sm:w-40">
+          <SelectTrigger id="schedule-semester" className="w-full sm:w-auto sm:min-w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +83,7 @@ export function ScheduleFilters({ teachers, labels }: ScheduleFiltersProps) {
       <div className="flex flex-col gap-2">
         <Label htmlFor="schedule-teacher">{labels.teacherFilter}</Label>
         <Select items={teacherItems} value={filters.teacher} onValueChange={handleTeacherChange}>
-          <SelectTrigger id="schedule-teacher" className="w-full sm:w-56">
+          <SelectTrigger id="schedule-teacher" className="w-full sm:w-auto sm:max-w-72 sm:min-w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -11,8 +11,8 @@ type SessionConflictNoticeProps = {
 };
 
 /*
-  Conflict detection reports every clash at once — room, teacher and course can all be
-  busy in the same slot — so this renders the whole list rather than the first one.
+  Conflict detection reports every clash at once - room, teacher and course can all be
+  busy in the same slot - so this renders the whole list rather than the first one.
   Fixing them one error at a time is the guessing game the service was built to avoid.
 */
 export function SessionConflictNotice({ errors, title, labels }: SessionConflictNoticeProps) {

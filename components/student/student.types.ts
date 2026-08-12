@@ -1,7 +1,7 @@
 import type { DayLabels } from '@/components/schedule';
 
 /**
- * A course as a student's screens need one — enough to name it, nothing more.
+ * A course as a student's screens need one - enough to name it, nothing more.
  */
 export type StudentCourseOption = {
   courseId: string;
@@ -18,7 +18,7 @@ export type StudentTeacherOption = {
   Deliberately small bundles, one per component, rather than the single large object the
   administrator's screens pass around. Those are client trees, so every string has to
   cross the boundary together; nothing under `components/student` is a client component,
-  so each piece can be handed only what it renders — and a label that stops being used
+  so each piece can be handed only what it renders - and a label that stops being used
   stops being passed.
 */
 export type StudentRoutineCardLabels = {

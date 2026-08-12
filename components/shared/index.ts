@@ -5,5 +5,6 @@ export * from './loading-shapes';
 export * from './language-selector';
 export * from './theme-provider';
 export * from './theme-selector';
+export * from './toaster';
 export * from './not-found-content';
 export * from './skip-to-content';

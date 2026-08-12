@@ -47,7 +47,7 @@ type UserEditDialogProps = {
 /*
   Mounted only while a row is selected, and keyed on that row's id. That is what fills
   the form: `defaultValues` is read once per mount, so a fresh mount per row replaces
-  the effect that would otherwise have to copy the user into the form — and it clears a
+  the effect that would otherwise have to copy the user into the form - and it clears a
   stale error from the previous attempt for free.
 */
 export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEditDialogProps) {
@@ -84,7 +84,7 @@ export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEd
   };
 
   /*
-    A role is set when the account is created and never moved on edit — not between teacher
+    A role is set when the account is created and never moved on edit - not between teacher
     and student, and not for an administrator. So the select is locked (see `disabled`
     below) and lists only the role the account already has, rather than offering moves it
     will not make. `UserService` refuses any request that tries to change it regardless of
@@ -207,7 +207,7 @@ export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEd
               {labels.cancel}
             </Button>
 
-            <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+            <Button type="submit" variant="default" disabled={isSubmitting}>
               {isSubmitting ? labels.working : labels.editSubmit}
             </Button>
           </DialogFooter>

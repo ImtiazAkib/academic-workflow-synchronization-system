@@ -19,13 +19,13 @@ const materialService = new MaterialService();
  * Uploading goes through a route handler because a 25 MB file has no business being
  * serialized as a Server Action argument. Deleting is just an id, so it stays here.
  *
- * The service re-checks ownership — a teacher may only delete what they uploaded.
+ * The service re-checks ownership - a teacher may only delete what they uploaded.
  *
  * The id is parsed rather than trusted, and `unknown` rather than `string` is the point
  * of it. A TypeScript annotation is erased at runtime, so it stops nothing: a Server
  * Action is a public endpoint, and a hand-built request may send an object. `{ $ne: null }`
  * arriving here would cast into a Mongo query that matches every material and hand the
- * service somebody else's row to consider — the ownership check would still refuse it,
+ * service somebody else's row to consider - the ownership check would still refuse it,
  * but the row it refused would have been chosen by the caller's operator rather than by
  * an id. Every other action in the app parses its input; this one was the exception.
  *

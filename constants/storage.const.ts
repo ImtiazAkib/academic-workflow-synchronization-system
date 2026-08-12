@@ -4,7 +4,7 @@ import type { FileConversionFailure, FileConversionStatus, FileConversionTarget 
  * How much the bucket may hold, and what is done to a file on the way in to keep it
  * under that.
  *
- * The cap itself is an environment variable, not a constant here — it differs per
+ * The cap itself is an environment variable, not a constant here - it differs per
  * deployment the same way `MONGODB_URI` does: an Atlas free tier holds ~512 MB where the
  * self-hosted box has a disk. See `STORAGE_CAP_BYTES` in `env/server.ts`. What lives here
  * is the policy that does not move between deployments: when to warn, when to refuse, and
@@ -24,8 +24,8 @@ export const STORAGE = {
    * Refuse new uploads once usage reaches this share of the cap.
    *
    * Short of 1.0 on purpose: the last slice is headroom, so a single upload straddling the
-   * line cannot tip the shared database — the one that also holds users, courses and the
-   * timetable — into a full disk that takes down every feature at once.
+   * line cannot tip the shared database - the one that also holds users, courses and the
+   * timetable - into a full disk that takes down every feature at once.
    */
   BLOCK_RATIO: 0.95,
 
@@ -33,7 +33,7 @@ export const STORAGE = {
    * How long a usage reading is trusted before it is measured again, in milliseconds.
    *
    * Measuring sums every file in the bucket, so it is not free to do on the render of
-   * every upload page. A few seconds of staleness is harmless here — the per-file caps
+   * every upload page. A few seconds of staleness is harmless here - the per-file caps
    * bound how far usage can move inside the window, and the block ratio leaves headroom
    * for exactly that drift.
    */
@@ -61,8 +61,8 @@ export const STORAGE = {
  * The MIME types stored as they arrive, never gzipped.
  *
  * Each is already a compressed container, so a second pass spends CPU only to grow the
- * file by a gzip header. Images never reach this list — they are re-encoded to WebP before
- * the compression branch runs — so this is the document channel alone: PDFs, ZIPs and the
+ * file by a gzip header. Images never reach this list - they are re-encoded to WebP before
+ * the compression branch runs - so this is the document channel alone: PDFs, ZIPs and the
  * Office Open XML formats, which are ZIP archives under their extensions. Everything not
  * listed here (plain text, the legacy `.doc`/`.ppt`/`.xls` binary formats) compresses well
  * and is gzipped on the way in.
@@ -87,7 +87,7 @@ export const FILE_CONVERSION_STATUS = {
   FAILED: 'failed',
 } as const satisfies Record<string, FileConversionStatus>;
 
-/** Which upload a conversion job belongs to — the row it swaps when it finishes. */
+/** Which upload a conversion job belongs to - the row it swaps when it finishes. */
 export const FILE_CONVERSION_TARGET = {
   MATERIAL: 'material',
   NOTICE: 'notice',

@@ -57,7 +57,7 @@ export async function updateUserAction(values: unknown): Promise<SingleResult<Us
 }
 
 /**
- * Approve an account, or take approval back — the boolean decides which.
+ * Approve an account, or take approval back - the boolean decides which.
  *
  * @param values - Raw values carrying the account id and the new approval flag.
  *
@@ -80,7 +80,7 @@ export async function approveUserAction(values: unknown): Promise<SingleResult<U
 }
 
 /**
- * Switch an account off, or back on — the boolean decides which.
+ * Switch an account off, or back on - the boolean decides which.
  *
  * Accounts are never deleted, so schedules and materials keep a valid author.
  *
@@ -108,7 +108,7 @@ export async function deactivateUserAction(values: unknown): Promise<SingleResul
  * Delete an account and everything it owns.
  *
  * Irreversible, and the cascade is the reason: the account's materials, notices and class
- * sessions go with it. Who may do this, and to whom, is the service's decision — this only
+ * sessions go with it. Who may do this, and to whom, is the service's decision - this only
  * admits the caller to the area and validates the id.
  *
  * @param values - Raw values carrying the account id.

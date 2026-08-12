@@ -54,7 +54,7 @@ export const USERS_VALIDATION = {
   // "you left this blank", not "too short".
   CURRENT_PASSWORD_REQUIRED: createErrorDefinition(21025, 'Enter your current password.'),
   /*
-    The resend and forgot-password screens name an unknown address on purpose — the
+    The resend and forgot-password screens name an unknown address on purpose - the
     department asked for an explicit "no account here" over the silent, enumeration-proof
     "check your inbox". It is a deliberate reversal of the anti-enumeration stance the rest
     of the auth surface keeps (sign-in still refuses to say which addresses exist).
@@ -76,7 +76,7 @@ export const USERS_BUSINESS = {
     department locking itself out of the admin area; a permanent super administrator who
     owns the whole administrator lifecycle makes that impossible, and administrators can
     no longer deactivate each other or themselves, so nothing could reach it. The number
-    is left unused rather than recycled — a stale code in an old log should decode to
+    is left unused rather than recycled - a stale code in an old log should decode to
     nothing, not to somebody else's message.
   */
   ADMIN_LIMIT_REACHED: createErrorDefinition(31001, 'The department already has three administrators.'),
@@ -85,7 +85,7 @@ export const USERS_BUSINESS = {
   /*
     The generator derives a sequence from a count and the unique index refuses a
     collision, so it retries. Exhausting the retries means something is genuinely wrong
-    rather than merely contended — reported rather than looped forever.
+    rather than merely contended - reported rather than looped forever.
   */
   LOGIN_ID_NOT_ISSUED: createErrorDefinition(31004, 'Could not issue a login ID. Try again.'),
   /*
@@ -98,7 +98,7 @@ export const USERS_BUSINESS = {
   /*
     The division of labour: the super administrator creates administrators, and
     administrators create teachers and students. So the one role the super administrator
-    may create is `admin` — anything else is somebody else's to make.
+    may create is `admin` - anything else is somebody else's to make.
   */
   SUPER_ADMIN_CREATES_ADMINS_ONLY: createErrorDefinition(31006, 'The super administrator can only create administrator accounts.'),
 } as const;
@@ -128,7 +128,7 @@ export const USERS_AUTH = {
   EMAIL_NOT_VERIFIED: createErrorDefinition(51005, 'Confirm your email address before signing in.'),
   /*
     Raised only after the password matched, so it tells somebody who already owns the
-    account how to get in — rather than telling a stranger which addresses exist.
+    account how to get in - rather than telling a stranger which addresses exist.
   */
   SIGN_IN_WITH_LOGIN_ID: createErrorDefinition(51006, 'Sign in with your login ID rather than your email address.'),
   /*

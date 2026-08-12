@@ -13,14 +13,14 @@ type UserConfirmDialogProps = {
   workingLabel: string;
   isWorking: boolean;
   error: string | null;
-  /** A red confirm button for the one action that cannot be taken back — delete. */
+  /** A red confirm button for the one action that cannot be taken back - delete. */
   destructive?: boolean;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
 };
 
 /*
-  Approve, revoke, deactivate and reactivate are the same dialog with different words —
+  Approve, revoke, deactivate and reactivate are the same dialog with different words -
   a title, a sentence, and one button. Four near-identical files would drift; this takes
   its copy as props instead.
 
@@ -73,7 +73,7 @@ export function UserConfirmDialog({
             {cancelLabel}
           </Button>
 
-          <Button type="button" variant={destructive ? 'destructive' : 'appPrimary'} disabled={isWorking} onClick={handleConfirmClick}>
+          <Button type="button" variant={destructive ? 'destructive' : 'default'} disabled={isWorking} onClick={handleConfirmClick}>
             {isWorking ? workingLabel : labels.confirm}
           </Button>
         </DialogFooter>

@@ -1,7 +1,7 @@
 import type { CourseErrorLabels } from '@/lib/utils';
 
 /**
- * A teacher as the assignee picker needs one — id and name, nothing else. The screen
+ * A teacher as the assignee picker needs one - id and name, nothing else. The screen
  * has no use for the rest of a `UserDto` and should not carry it across the boundary.
  */
 export type TeacherOption = {
@@ -35,7 +35,7 @@ export type CoursesConfirmLabels = {
 };
 
 /**
- * Everything the create screen renders — a slice of `CoursesLabels`, since that page
+ * Everything the create screen renders - a slice of `CoursesLabels`, since that page
  * has no table, filter or confirmation.
  */
 export type CourseCreateFormLabels = {

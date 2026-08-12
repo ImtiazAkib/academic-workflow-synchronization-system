@@ -4,4 +4,5 @@ export * from './material-upload.form';
 export * from './materials-empty';
 export * from './materials-list';
 export * from './materials-screen';
+export * from './materials-toolbar';
 export * from './materials.types';

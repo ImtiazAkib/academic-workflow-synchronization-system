@@ -40,7 +40,7 @@ export default function LocaleError({ reset }: LocaleErrorProps) {
 
         <p className="text-muted-foreground max-w-md">{l10n('DASHBOARD_ERROR_DESCRIPTION')}</p>
 
-        <Button variant="appPrimary" onClick={handleRetryClick}>
+        <Button variant="default" onClick={handleRetryClick}>
           {l10n('DASHBOARD_ERROR_RETRY')}
         </Button>
       </Container>

@@ -36,7 +36,7 @@ export default async function MarketingLayout({ children, params }: MarketingLay
 
       <SiteHeader />
 
-      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1">
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 pt-16">
         {children}
       </main>
 

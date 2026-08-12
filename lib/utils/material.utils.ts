@@ -19,6 +19,26 @@ export type MaterialErrorLabels = {
   generic: string;
 };
 
+export type MaterialType = 'pdf' | 'document' | 'presentation' | 'spreadsheet' | 'image' | 'archive' | 'text' | 'file';
+
+/**
+ * Categorize a stored material using only its persisted MIME type and filename. This is
+ * intentionally presentation-free, so every material surface can choose its own icon.
+ */
+export function resolveMaterialType(mimeType: string, fileName: string): MaterialType {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+
+  if (mimeType === 'application/pdf' || extension === 'pdf') return 'pdf';
+  if (mimeType.includes('word') || extension === 'doc' || extension === 'docx') return 'document';
+  if (mimeType.includes('powerpoint') || extension === 'ppt' || extension === 'pptx') return 'presentation';
+  if (mimeType.includes('excel') || extension === 'xls' || extension === 'xlsx') return 'spreadsheet';
+  if (mimeType.startsWith('image/') || extension === 'png' || extension === 'jpg' || extension === 'jpeg') return 'image';
+  if (mimeType === 'application/zip' || extension === 'zip') return 'archive';
+  if (mimeType === 'text/plain' || extension === 'txt') return 'text';
+
+  return 'file';
+}
+
 /**
  * Turn a refusal code from an upload or delete into a sentence the teacher reads.
  *

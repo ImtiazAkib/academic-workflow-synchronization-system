@@ -23,7 +23,7 @@ type ChangePasswordFormProps = {
 /*
   A second form on the profile screen, apart from the one that edits a name and an address.
   A password change proves the current password and confirms the new one, so it has its own
-  three boxes and its own action — none of which belongs beside a phone number.
+  three boxes and its own action - none of which belongs beside a phone number.
 
   Nothing on the page depends on the password, so there is no `router.refresh()` on success:
   the boxes are cleared and the toast is the whole confirmation. Available to every role,
@@ -111,7 +111,7 @@ export function ChangePasswordForm({ labels }: ChangePasswordFormProps) {
       </div>
 
       <div className="border-border flex border-t pt-5 sm:justify-end">
-        <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="w-full sm:w-auto">
+        <Button type="submit" variant="default" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? labels.working : labels.submit}
         </Button>
       </div>

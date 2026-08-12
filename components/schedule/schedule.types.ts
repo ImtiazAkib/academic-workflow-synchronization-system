@@ -3,7 +3,7 @@ import type { ScheduleErrorLabels } from '@/lib/utils';
 import type { DayOfWeek } from '@/types';
 
 /**
- * A course as the picker needs one — enough to identify it in a list, nothing more.
+ * A course as the picker needs one - enough to identify it in a list, nothing more.
  */
 export type CourseOption = {
   courseId: string;
@@ -67,7 +67,9 @@ export type ScheduleLabels = {
   today: string;
   count: string;
   statusCancelled: string;
-  /** The `dt` for the time row on a cell — visually hidden, read aloud. */
+  /** The small marker on a card whose teacher is double-booked in that slot. */
+  conflict: string;
+  /** The `dt` for the time row on a cell - visually hidden, read aloud. */
   timeLabel: string;
   cancel: string;
   restore: string;

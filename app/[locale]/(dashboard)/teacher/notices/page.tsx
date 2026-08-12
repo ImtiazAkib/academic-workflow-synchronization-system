@@ -47,7 +47,7 @@ export default async function TeacherNoticesPage() {
           <p className="text-muted-foreground text-sm">{l10n('TEACHER_NOTICES_INTRO')}</p>
         </div>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.TEACHER_NOTICES_NEW.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.TEACHER_NOTICES_NEW.HREF} />}>
           <Megaphone className="size-4" />
           {l10n('NOTICES_CREATE_CTA')}
         </Button>

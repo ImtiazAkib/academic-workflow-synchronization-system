@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils/index';
 import { Button } from '@/components/ui/button';
 
 /*
-  The one word the dialog primitive renders on its own — the close button's label, which is
+  The one word the dialog primitive renders on its own - the close button's label, which is
   never passed in as `children` and so has nowhere to arrive from a call site. A client
   component cannot look it up, and a prop for one string on every dialog in the app is eight
   call sites of plumbing. So it rides a context: the area that renders dialogs provides the
@@ -70,7 +70,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          'bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 text-sm ring-1 duration-100 outline-none sm:max-w-sm',
+          'bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 text-sm shadow-lg ring-1 duration-100 outline-none sm:max-w-sm',
           className
         )}
         {...props}>
@@ -112,7 +112,7 @@ function DialogFooter({
 }
 
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
-  return <DialogPrimitive.Title data-slot="dialog-title" className={cn('font-heading text-base leading-none font-medium', className)} {...props} />;
+  return <DialogPrimitive.Title data-slot="dialog-title" className={cn('font-heading text-base leading-none font-semibold', className)} {...props} />;
 }
 
 function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props) {

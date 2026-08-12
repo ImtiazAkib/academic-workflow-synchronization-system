@@ -27,7 +27,7 @@ type RegisterStudentFormProps = {
 
 /*
   The semester is the one field here an applicant declares about themselves that the
-  application later acts on — it decides which timetable and which files they see. It is
+  application later acts on - it decides which timetable and which files they see. It is
   unverified until an administrator approves the account, and the approval screen is
   where they correct it, which is the same moment they are already checking who the
   person is.
@@ -207,7 +207,7 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
         </div>
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="mt-1 w-full">
+      <Button type="submit" variant="default" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

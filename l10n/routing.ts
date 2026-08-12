@@ -7,7 +7,7 @@ import { APP_LOCALES, DEFAULT_APP_LOCALE, I18N } from '@/constants/i18n.const';
 
 /*
   `as-needed` keeps the default locale unprefixed: English at `/`, Bangla at `/bn`.
-  Two URLs means both languages can be indexed — the cookie only remembers a
+  Two URLs means both languages can be indexed - the cookie only remembers a
   returning visitor's choice, it never decides what renders.
 */
 export const routing = defineRouting({

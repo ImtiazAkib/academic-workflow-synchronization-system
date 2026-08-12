@@ -18,7 +18,7 @@ const noticeService = new NoticeService();
   `FormData` streams.
 
   Publishing moved here wholesale rather than splitting into "create the notice, then
-  attach the image". A notice is text, a picture, or both — one request either publishes
+  attach the image". A notice is text, a picture, or both - one request either publishes
   all of it or none of it, where two would leave a picture-only notice half-created if the
   second call failed, with no body and no image and nothing to say.
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     both into 403 tells somebody who simply is not signed in that they are forbidden,
     which sends them looking for a permission problem instead of a sign-in link.
 
-    Teachers publish now too, not administrators alone — so the gate is "signed in and not
+    Teachers publish now too, not administrators alone - so the gate is "signed in and not
     a student" rather than the admin-area gate. What a teacher is allowed to publish (to
     students, general or session-specific) is the service's decision, checked against the
     session rather than the screen that hid the option.
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     return withForbidden();
   }
 
-  // Before `formData()`, so a refusal costs nothing — see the materials upload.
+  // Before `formData()`, so a refusal costs nothing - see the materials upload.
   if (!(await consumeRateLimit('upload', sessionUser.userId, RATE_LIMIT.UPLOAD))) {
     return withTooManyRequests();
   }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   /*
     An untouched file picker submits a zero-byte file rather than nothing at all, so it is
-    turned back into an absence here — the schema's `image` is optional, and "absent" has to mean
+    turned back into an absence here - the schema's `image` is optional, and "absent" has to mean
     absent or a text-only notice would be refused for carrying an empty picture.
   */
   const submitted = form.get('image');

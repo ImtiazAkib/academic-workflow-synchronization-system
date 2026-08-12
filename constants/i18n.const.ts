@@ -32,7 +32,7 @@ export const I18N = {
 
 /**
  * Map a URL locale to the dictionary that backs it.
- * The only place the two-tier locale model is resolved — nothing else should
+ * The only place the two-tier locale model is resolved - nothing else should
  * reference `en-US` or `bn-BD` directly.
  *
  * @param locale - URL locale.

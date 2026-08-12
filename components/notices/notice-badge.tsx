@@ -15,9 +15,9 @@ type NoticeBadgeProps = {
   department-wide announcement from one aimed at them has lost the only piece of context
   the audience field carries.
 
-  `all` is the default variant and the other two are `secondary`, so a department-wide
-  notice reads as the louder of the two at a glance rather than needing the label read.
+  `all` is informational rather than primary: department-wide notices are important
+  context, not a call to action competing with the notice itself.
 */
 export function NoticeBadge({ audience, label }: NoticeBadgeProps) {
-  return <Badge variant={audience === NOTICE_AUDIENCES.ALL ? 'default' : 'secondary'}>{label}</Badge>;
+  return <Badge variant={audience === NOTICE_AUDIENCES.ALL ? 'info' : 'secondary'}>{label}</Badge>;
 }

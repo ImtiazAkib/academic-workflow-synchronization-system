@@ -27,7 +27,7 @@ export default function DashboardError({ reset }: DashboardErrorProps) {
 
       <p className="text-muted-foreground">{l10n('DASHBOARD_ERROR_DESCRIPTION')}</p>
 
-      <Button variant="appPrimary" onClick={handleRetryClick}>
+      <Button variant="default" onClick={handleRetryClick}>
         {l10n('DASHBOARD_ERROR_RETRY')}
       </Button>
     </div>

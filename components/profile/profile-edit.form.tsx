@@ -28,12 +28,12 @@ type ProfileEditFormProps = {
 /*
   The four fields that are actually somebody's own to correct: their name, the address to
   reach them at, a phone number and a postal address. Everything else on this screen is
-  read-only, and everything else is read-only because it is issued rather than chosen —
+  read-only, and everything else is read-only because it is issued rather than chosen -
   see `ProfileSummary`.
 
   Changing the address does not change it. The new one is stored as pending and a link
   goes to it; the account keeps signing in and receiving password recovery at the old one
-  until that link is clicked. That is not caution for its own sake — the address is the
+  until that link is clicked. That is not caution for its own sake - the address is the
   recovery channel, so an address change that took effect unproven would turn a borrowed
   session into a permanent theft: change it, ask for a reset, own the account.
 */
@@ -43,7 +43,7 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
 
   /*
     Seeded from the record rather than left blank, because this form edits something that
-    already exists — an empty name box on a profile invites somebody to retype what is
+    already exists - an empty name box on a profile invites somebody to retype what is
     already right, and clearing a field they never meant to touch.
   */
   const {
@@ -85,7 +85,7 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
 
     /*
       Reset to what came back rather than to what was submitted. The address is the field
-      where those differ — it is still the old one until the link is clicked — so the box
+      where those differ - it is still the old one until the link is clicked - so the box
       goes back to showing the address that is actually in force, with the pending one
       named in the notice below it.
     */
@@ -140,11 +140,11 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
 
       {/*
         Rendered from the saved record, so it survives a refresh and is still here tomorrow
-        — a change waiting on an inbox can wait a day, and a notice that only existed in
+        - a change waiting on an inbox can wait a day, and a notice that only existed in
         the tab that made it would be gone long before the person came back to it.
 
         It names the address, because the commonest reason a link never gets clicked is
-        that it went somewhere with a typo in it — and seeing the typo is the whole remedy.
+        that it went somewhere with a typo in it - and seeing the typo is the whole remedy.
       */}
       {user.pendingEmail && (
         <div className="border-border bg-muted/30 flex gap-3 rounded-lg border border-dashed p-4">
@@ -159,7 +159,7 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
       )}
 
       <div className="border-border flex border-t pt-5 sm:justify-end">
-        <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="w-full sm:w-auto">
+        <Button type="submit" variant="default" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? labels.working : labels.submit}
         </Button>
       </div>

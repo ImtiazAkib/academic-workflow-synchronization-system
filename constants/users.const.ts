@@ -24,8 +24,8 @@ export const USER_ROLE_FILTERS = {
 } as const satisfies Record<string, UserRoleFilter>;
 
 /**
- * Longest search string accepted from the URL. Not a security boundary — the value is
- * escaped before it reaches Mongo — just a bound on what a hand-edited query can ask
+ * Longest search string accepted from the URL. Not a security boundary - the value is
+ * escaped before it reaches Mongo - just a bound on what a hand-edited query can ask
  * the database to scan.
  */
 export const USER_QUERY_MAX_LENGTH = 120;

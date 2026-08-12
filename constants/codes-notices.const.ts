@@ -26,7 +26,7 @@ export const NOTICES_VALIDATION = {
   BODY_TOO_LONG: createErrorDefinition(25003, 'A notice cannot exceed 5000 characters.'),
   AUDIENCE_INVALID: createErrorDefinition(25004, 'Choose who this notice is for.'),
   /*
-    A notice is text, a picture, or both — but not neither. Raised against the body field
+    A notice is text, a picture, or both - but not neither. Raised against the body field
     so the message lands under the textarea, which is where somebody who announced nothing
     is already looking.
   */
@@ -50,7 +50,7 @@ export const NOTICES_AUTH = {
   */
   NOT_IN_AUDIENCE: createErrorDefinition(55000, 'That notice was not addressed to you.'),
   /*
-    A teacher publishes to students — a general notice to all of them, or a session notice
+    A teacher publishes to students - a general notice to all of them, or a session notice
     to the intakes they name. Posting to the staff room, or department-wide, is the
     administrator's. The form never offers a teacher those, so this is the guard for a
     request built by hand.

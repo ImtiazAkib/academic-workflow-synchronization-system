@@ -76,6 +76,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         columnName: l10n('USERS_TABLE_NAME'),
         columnEmail: l10n('USERS_TABLE_EMAIL'),
         columnRole: l10n('USERS_TABLE_ROLE'),
+        columnDepartmentBatch: l10n('USERS_TABLE_DEPARTMENT_BATCH'),
+        columnJoined: l10n('USERS_TABLE_JOINED'),
         columnStatus: l10n('USERS_TABLE_STATUS'),
         columnActions: l10n('USERS_TABLE_ACTIONS'),
         count: l10n('USERS_TABLE_COUNT', { count: users.length }),

@@ -13,6 +13,7 @@ import { SEMESTER, TEACHING_DAYS } from '@/constants/schedule.const';
 
 import { ErrorDto, isSuccess } from '@/lib/result';
 import { ClassSessionCreateInput, ClassSessionCreateOutput, ClassSessionCreateSchema } from '@/lib/schemas';
+import { resolveScheduleErrorMessage } from '@/lib/utils';
 
 import { Button } from '@/components/ui';
 
@@ -70,9 +71,16 @@ export function SessionCreateForm({ courses, teachers, labels }: SessionCreateFo
     router.push(ROUTES.ADMIN_SCHEDULE.HREF);
   };
 
+  // The clashes the service reports carry the field they concern, so each lands under its own control.
+  const fieldConflicts = {
+    course: conflicts.filter(x => x.field === 'courseId').map(x => resolveScheduleErrorMessage(x.code, labels.errors)),
+    teacher: conflicts.filter(x => x.field === 'teacherId').map(x => resolveScheduleErrorMessage(x.code, labels.errors)),
+  };
+  const genericConflicts = conflicts.filter(x => x.field !== 'courseId' && x.field !== 'teacherId');
+
   return (
     <form noValidate onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
-      <SessionConflictNotice errors={conflicts} title={labels.conflictTitle} labels={labels.errors} />
+      <SessionConflictNotice errors={genericConflicts} title={labels.conflictTitle} labels={labels.errors} />
 
       <SessionFields
         register={register as never}
@@ -83,6 +91,7 @@ export function SessionCreateForm({ courses, teachers, labels }: SessionCreateFo
         labels={labels.fields}
         fieldErrors={labels.fieldErrors}
         days={labels.days}
+        conflicts={fieldConflicts}
         idPrefix="create-session"
       />
 
@@ -91,7 +100,7 @@ export function SessionCreateForm({ courses, teachers, labels }: SessionCreateFo
           {labels.cancel}
         </Button>
 
-        <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+        <Button type="submit" variant="default" disabled={isSubmitting}>
           {isSubmitting ? labels.working : labels.submit}
         </Button>
       </div>
