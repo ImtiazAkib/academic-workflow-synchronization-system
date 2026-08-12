@@ -61,7 +61,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ✅ Done        |
 | [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ✅ Done        |
 | [R5a](#r5a) | Routine — grid refinements             | 7, 13, 14   | ✅ Done        |
-| [R5b](#r5b) | Routine — form conflicts + filters     | 7, 14       | ⬜ Not started |
+| [R5b](#r5b) | Routine — form conflicts + filters     | 7, 14       | ✅ Done        |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
 | [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ⬜ Not started |
 | [R8](#r8)   | Notices                                | 9, 18       | ⬜ Not started |
@@ -333,18 +333,29 @@ with the "Conflict" badge, non-clashing normal, cancelled neutral and not flagge
 **Files.** `components/schedule/{schedule-week-view,schedule-grid-cell}.tsx`, `schedule.types.ts`,
 `lib/utils/schedule-labels.utils.ts`, `l10n/l10n.csv`.
 
-### R5b — Routine form conflicts + filters ⬜ Not started
+### R5b — Routine form conflicts + filters ✅ Done
 
-**Goal.** Make a clash legible _at the point of scheduling_, and finish the filter bar.
+**Goal.** Make a clash legible _at the point of scheduling_.
 
-- **Field-anchored conflicts** — route each `ErrorDto` conflict message beside the Teacher/Course field it
-  concerns (the DTO carries `field`), in `SessionFields`/the create+edit forms, instead of only the top alert.
-- **Filters + view** — add a day filter (`dayOfWeek` is in the DTO) and a compact list/week view toggle beside
-  semester/teacher; replace fixed `w-40`/`w-56` select widths with min+max so Bengali fits.
-- _Deferred:_ room in the block, and "view conflicting class" specifics (need model/service changes).
+- **Field-anchored conflicts (§14 core)** — the create + edit forms group the server's `ErrorDto[]` by its
+  `field` (`courseId`/`teacherId`, set by `findConflicts`), resolve each to a sentence, and pass them to
+  `SessionFields`, which renders them as `role="alert"` lines **under the field they concern** and sets that
+  select `aria-invalid` (destructive border). The top `SessionConflictNotice` now only carries any field-less
+  clash. So "that teacher is busy" lands under the teacher, not just a notice at the top.
+- **Filter widths** — the semester/teacher selects moved off fixed `w-40`/`w-56` to `sm:w-auto` + min/max, so a
+  long Bengali teacher name grows into the space instead of truncating.
 
-**Files.** `components/schedule/{session-fields,session-create.form,session-edit.dialog,schedule-filters,schedule-screen}.tsx`,
-l10n keys.
+**Outcome.** `format`/`lint`/`build` (77/77) green (no new l10n — conflict sentences reuse the existing error
+labels). Verified in isolation (deleted `/ui-preview`, real `useForm` + mock clashes): both messages render under
+their own field, both selects `aria-invalid` with the red border.
+
+**Deferred (were in R5's plan):** the **day filter** and the **week/list view toggle** — intertwined (a selected
+day is really a single-day list) and needing column-count branching in `ScheduleWeekView` for meaningful value;
+lower priority than the §14 conflict work, and the agenda already collapses to one column on mobile. Fold into
+R13 (responsive polish) or a follow-up. Still deferred too: room in the block, "view conflicting class"
+(need model/service changes).
+
+**Files.** `components/schedule/{session-fields,session-create.form,session-edit.dialog,schedule-filters}.tsx`.
 
 ### R6 — Courses
 

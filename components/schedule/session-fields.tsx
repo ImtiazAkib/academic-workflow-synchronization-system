@@ -1,5 +1,6 @@
 'use client';
 
+import { TriangleAlert } from 'lucide-react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 
 import { SEMESTER, TEACHING_DAYS } from '@/constants/schedule.const';
@@ -26,10 +27,15 @@ type SessionFieldsProps = {
   labels: ScheduleFieldLabels;
   fieldErrors: ScheduleFieldErrorLabels;
   days: DayLabels;
+  /**
+   * Server-side clash messages already resolved to sentences, split by the field each concerns —
+   * so a "that teacher is busy" lands under the teacher, not only in a notice at the top.
+   */
+  conflicts: { course: string[]; teacher: string[] };
   idPrefix: string;
 };
 
-export function SessionFields({ register, control, errors, courses, teachers, labels, fieldErrors, days, idPrefix }: SessionFieldsProps) {
+export function SessionFields({ register, control, errors, courses, teachers, labels, fieldErrors, days, conflicts, idPrefix }: SessionFieldsProps) {
   const courseItems: Record<string, string> = {};
 
   courses.forEach(x => {
@@ -63,7 +69,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           name={'courseId' as never}
           render={({ field }) => (
             <Select items={courseItems} value={String(field.value ?? '')} onValueChange={field.onChange}>
-              <SelectTrigger id={`${idPrefix}-course`} className="w-full">
+              <SelectTrigger id={`${idPrefix}-course`} className="w-full" aria-invalid={Boolean(errors.courseId) || conflicts.course.length > 0}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -77,6 +83,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           )}
         />
         {errors.courseId && <p className="text-destructive text-sm">{fieldErrors.courseRequired}</p>}
+        <FieldConflicts messages={conflicts.course} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -86,7 +93,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           name={'teacherId' as never}
           render={({ field }) => (
             <Select items={teacherItems} value={String(field.value ?? '')} onValueChange={field.onChange}>
-              <SelectTrigger id={`${idPrefix}-teacher`} className="w-full">
+              <SelectTrigger id={`${idPrefix}-teacher`} className="w-full" aria-invalid={Boolean(errors.teacherId) || conflicts.teacher.length > 0}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -100,6 +107,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           )}
         />
         {errors.teacherId && <p className="text-destructive text-sm">{fieldErrors.teacherRequired}</p>}
+        <FieldConflicts messages={conflicts.teacher} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -159,4 +167,14 @@ export function SessionFields({ register, control, errors, courses, teachers, la
       </div>
     </div>
   );
+}
+
+/** The clash sentences for one field, rendered as alerts right under it. */
+function FieldConflicts({ messages }: { messages: string[] }) {
+  return messages.map((message, index) => (
+    <p key={index} role="alert" className="text-destructive flex items-start gap-1.5 text-sm">
+      <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+      {message}
+    </p>
+  ));
 }
