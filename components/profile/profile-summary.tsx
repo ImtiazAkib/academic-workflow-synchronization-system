@@ -54,8 +54,8 @@ export function ProfileSummary({ loginId, facts, courses, labels }: ProfileSumma
             {courses.length === 0 ? (
               <p className="text-muted-foreground text-sm">{labels.coursesEmpty}</p>
             ) : (
-              <ul className="flex flex-wrap gap-1.5">
-                {courses.map(x => (
+              <ul className="flex flex-wrap gap-1">
+                {courses.slice(0, 4).map(x => (
                   <li key={x.courseId}>
                     {/* Code and year, matching the teacher directory — the titles wrap badly at this size. */}
                     <Badge variant="secondary">
@@ -63,6 +63,11 @@ export function ProfileSummary({ loginId, facts, courses, labels }: ProfileSumma
                     </Badge>
                   </li>
                 ))}
+                {courses.length > 4 && (
+                  <li>
+                    <Badge variant="neutral">+{courses.length - 4}</Badge>
+                  </li>
+                )}
               </ul>
             )}
           </div>

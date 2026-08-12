@@ -18,7 +18,7 @@ type TeacherDirectoryProps = {
  */
 export function TeacherDirectory({ teachers, listLabel, labels }: TeacherDirectoryProps) {
   return (
-    <ul aria-label={listLabel} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <ul aria-label={listLabel} className="border-border divide-border divide-y overflow-hidden rounded-lg border">
       {teachers.map(x => (
         <li key={x.userId}>
           <TeacherProfileCard teacher={x} labels={labels} />
