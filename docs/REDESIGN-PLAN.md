@@ -55,7 +55,8 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R1](#r1)   | Design tokens & type foundation        | 2, 39       | ✅ Done        |
 | [R2a](#r2a) | Consolidate existing primitives        | 3, 21–24    | ✅ Done        |
 | [R2b](#r2b) | Build missing primitives               | 3, 38       | ✅ Done        |
-| [R3](#r3)   | Application shell                      | 4, 5, 7–10  | ⬜ Not started |
+| [R3a](#r3a) | Desktop shell (sidebar, topbar, nav)   | 4, 5, 7–10  | ✅ Done        |
+| [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ⬜ Not started |
 | [R4](#r4)   | Dashboards (admin / teacher / student) | 6, 11, 12   | ⬜ Not started |
 | [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
@@ -168,23 +169,51 @@ floating pattern. `format`/`lint`/`build` (77/77) green.
 **Files.** new `components/ui/{avatar,breadcrumb,dropdown-menu,empty-state,tabs,tooltip}.tsx`,
 `components/ui/index.ts`.
 
-### R3 — Application shell
+> **R3 was split** into **R3a** (desktop shell — nav restructure, breadcrumb, account menu) and **R3b** (mobile
+> drawer + the `PageHeader` primitive), so the desktop shell lands and stays green before the mobile work.
 
-**Goal.** Give the shell the location + identity + account affordances a dense ERP needs.
+### R3a — Desktop shell ✅ Done
 
-- **`PageHeader` primitive** (title 600 + optional description at 14px muted + optional actions slot), adopted
-  across pages to replace the header pattern duplicated in ~32 files. Plain JSX, inline Tailwind.
-- **Breadcrumb in the topbar** (area › page from pathname) replacing the "Welcome, {name}" greeting.
-- **Account menu** — fold the naked sign-out button into a proper user menu (avatar + name + role, Profile +
-  Sign out) using the new `DropdownMenu`.
-- **Sidebar** — group nav under muted uppercase section labels (ACADEMIC / COMMUNICATION / ADMINISTRATION) and
-  add a bottom user block (`mt-auto`: avatar, name, role). Keep the existing correct role-based hiding.
-- **Solid topbar** (drop `bg-background/80 backdrop-blur-md` glass for a solid surface + 1px border) and a
-  **mobile nav drawer** (Base UI dialog behind a hamburger) so the full nav is reachable below `lg`.
+**Goal.** Give the shell the location + identity + account affordances a dense ERP needs, on desktop.
 
-**Files.** `components/dashboard/*`, `components/layout/*`, `components/shared/language-selector.tsx` /
-`theme-selector.tsx`, `app/[locale]/(dashboard)/layout.tsx`, new `components/ui/breadcrumb`, l10n keys for
-section labels. **Done when** every dashboard page shows a breadcrumb + account menu and the sidebar is grouped.
+- **Nav as data.** New `resolveNavModel(role, labels)` in `lib/utils/navigation.utils.ts` turns the flat nav
+  into the sectioned model (Overview, then ACADEMIC / COMMUNICATION / DIRECTORY / ADMINISTRATION), deciding
+  role visibility once so entries are hidden (never disabled) and empty sections drop. `DashboardNav` now renders
+  from it — sectioned+stacked for the sidebar, flat+scrolling for the below-`lg` bar (`variant` prop).
+- **Breadcrumb** (`DashboardBreadcrumb`) replaces the "Welcome, {name}" greeting: section › page, derived from the
+  same model via `resolveBreadcrumbTrail`, so the crumb and the highlighted sidebar entry always agree.
+- **Account menu** (`AccountMenu`) folds the naked sign-out button into an avatar+name dropdown (name/role header,
+  Profile link, Sign out) built on the new `DropdownMenu`/`Avatar`. Sign out stays the server-action form — the
+  menu item submits a hidden always-mounted form via `requestSubmit`.
+- **Sidebar** — three bands: a logo header the height of the topbar (so they line up), the scrolling sectioned
+  nav, and a bottom user block (avatar + name + role) linking to the profile.
+- **Solid topbar** — dropped `bg-background/80 backdrop-blur-md` for a solid `bg-background` + 1px border.
+- **Cleanup** — removed the now-orphaned `sign-out-button`/`sign-out-submit` and their barrel export; added
+  `resolveInitials`. New l10n keys: the four section labels + `DASHBOARD_BREADCRUMB_LABEL` (Bengali alongside,
+  flagged for review). `DASHBOARD_WELCOME`/`DASHBOARD_SIGNING_OUT` are now unused (left in the CSV).
+
+**Outcome.** `format`/`lint`/`build` (77/77) green; l10n regenerated (660 keys). The pure logic was unit-verified
+(deleted temp script): nav model correct for all four roles, breadcrumbs correct incl. sub-pages
+(`/admin/users/new` → "ADMINISTRATION / Users"), initials correct incl. Bengali (`ইমতিয়াজ আকিব` → `ইআ`). The
+`/admin` route redirects cleanly to sign-in with no runtime/hydration errors. **Not visually confirmed:** the
+assembled shell sits behind `requireSession()` and can't be viewed without a login — the components are
+compositions of the R2b-verified primitives + this verified logic. Known minor: `/profile` (the one page outside
+the nav model) shows the "Overview" fallback crumb — to refine when the profile screen gets its header.
+
+**Files.** `lib/utils/navigation.utils.ts` (+ barrel), `components/dashboard/{dashboard-nav,dashboard-sidebar,dashboard-topbar,account-menu,dashboard-breadcrumb}.tsx`
+(+ barrel, − sign-out files), `app/[locale]/(dashboard)/layout.tsx`, `l10n/l10n.csv`.
+
+### R3b — Mobile drawer + PageHeader ⬜ Not started
+
+**Goal.** The responsive half of the shell, plus the page-header primitive screens adopt from R4 on.
+
+- **`PageHeader` primitive** (title 600 + optional description at 14px muted + optional actions slot), plain JSX,
+  inline Tailwind. Adopted per-screen from R4 on (not a 32-file sweep here). Refine the `/profile` breadcrumb.
+- **Mobile nav drawer** (Base UI `Dialog` as a left drawer behind a hamburger) replacing the below-`lg`
+  horizontal nav strip, reusing `resolveNavModel` so the drawer lists exactly what the sidebar does.
+
+**Files.** new `components/ui/page-header.tsx` (or shared), new mobile-drawer component, `components/dashboard/*`,
+l10n keys (menu open/close). **Done when** the full nav is reachable below `lg` and `PageHeader` is exported.
 
 ### R4 — Dashboards (admin / teacher / student)
 

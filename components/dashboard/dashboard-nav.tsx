@@ -1,233 +1,76 @@
 'use client';
 
-import { BookOpen, CalendarDays, FolderOpen, LayoutDashboard, Megaphone, UploadCloud, UserRound, Users } from 'lucide-react';
-
 import { Link, usePathname } from '@/l10n/navigation';
-import { UserRole } from '@/types';
 
-import { ADMIN_AREA_ROLES, USER_ROLES } from '@/constants/roles.const';
-import { ROLE_HOME, ROUTES } from '@/constants/routes.const';
+import { cn, isNavItemActive, resolveNavModel } from '@/lib/utils';
+import type { NavLabels } from '@/lib/utils';
 
-import { cn } from '@/lib/utils';
+import type { UserRole } from '@/types';
+import type { LucideIcon } from 'lucide-react';
 
 type DashboardNavProps = {
   role: UserRole;
-  navLabel: string;
-  overviewLabel: string;
-  usersLabel: string;
-  coursesLabel: string;
-  scheduleLabel: string;
-  materialsLabel: string;
-  teachersLabel: string;
-  noticesLabel: string;
-  uploadsLabel: string;
-  profileLabel: string;
+  labels: NavLabels;
+  ariaLabel: string;
+  /**
+   * `sidebar` groups the entries under their section headers, stacked; `bar` flattens them
+   * into one horizontally-scrolling row for the below-`lg` topbar. One model, rendered two
+   * ways, so the placements cannot list different things.
+   */
+  variant?: 'sidebar' | 'bar';
   className?: string;
 };
 
 /*
-  A client component only so the active link can be derived from the real pathname.
-  Hard-coding "overview is current" would start lying the moment a second entry lands
-  underneath it — which is what step 7 did.
+  A client component only so the active entry can be read from the real pathname — hard-coding
+  it would start lying the moment a second entry landed under it. Which entries appear, and in
+  what section, is decided by `resolveNavModel`, so this file holds only rendering and the
+  active-state read.
 */
-export function DashboardNav({
-  role,
-  navLabel,
-  overviewLabel,
-  usersLabel,
-  coursesLabel,
-  scheduleLabel,
-  materialsLabel,
-  teachersLabel,
-  noticesLabel,
-  uploadsLabel,
-  profileLabel,
-  className,
-}: DashboardNavProps) {
+export function DashboardNav({ role, labels, ariaLabel, variant = 'sidebar', className }: DashboardNavProps) {
   const pathname = usePathname();
-  const overviewHref = ROLE_HOME[role];
-  const usersHref = ROUTES.ADMIN_USERS.HREF;
-  const coursesHref = ROUTES.ADMIN_COURSES.HREF;
+  const sections = resolveNavModel(role, labels);
 
-  /*
-    Every entry below asks whether this account is in the admin area rather than whether
-    it is an administrator. The super administrator holds every administrator power, so
-    a `role === ADMIN` test would take the Users and Courses links away from the one
-    account that needs them most, and route it to the student timetable it cannot open.
-  */
-  const isAdminArea = ADMIN_AREA_ROLES.some(x => x === role);
-
-  // The timetable exists for every role, at a different route each.
-  const scheduleHref = isAdminArea
-    ? ROUTES.ADMIN_SCHEDULE.HREF
-    : role === USER_ROLES.TEACHER
-      ? ROUTES.TEACHER_SCHEDULE.HREF
-      : ROUTES.STUDENT_SCHEDULE.HREF;
-
-  /*
-    A teacher's repository and a student's reading list are the same files from opposite
-    ends — one publishes, the other downloads. The admin area still has no equivalent.
-  */
-  const materialsHref = role === USER_ROLES.TEACHER ? ROUTES.TEACHER_MATERIALS.HREF : ROUTES.STUDENT_MATERIALS.HREF;
-
-  /*
-    Publishing is now the administrator's and the teacher's — at a route each. A student
-    still has none: they meet notices on their own home, where an announcement belongs.
-  */
-  const canPublishNotices = isAdminArea || role === USER_ROLES.TEACHER;
-  const noticesHref = isAdminArea ? ROUTES.ADMIN_NOTICES.HREF : ROUTES.TEACHER_NOTICES.HREF;
-
-  /*
-    Whoever uploads has an uploads screen — the administrator and the teacher, at a route
-    each — to watch a file's background compression finish or fail. A student uploads
-    nothing, so has none.
-  */
-  const canSeeUploads = isAdminArea || role === USER_ROLES.TEACHER;
-  const uploadsHref = isAdminArea ? ROUTES.ADMIN_UPLOADS.HREF : ROUTES.TEACHER_UPLOADS.HREF;
+  if (variant === 'bar') {
+    return (
+      <nav aria-label={ariaLabel} className={cn('flex gap-1', className)}>
+        {sections.flatMap(section =>
+          section.items.map(item => <NavLink key={item.href} item={item} active={isNavItemActive(pathname, item.href, section.id === 'overview')} />)
+        )}
+      </nav>
+    );
+  }
 
   return (
-    <nav aria-label={navLabel} className={cn('flex gap-1', className)}>
-      <Link
-        href={overviewHref}
-        aria-current={pathname === overviewHref ? 'page' : undefined}
-        className={cn(
-          'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-          pathname === overviewHref
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-        )}>
-        <LayoutDashboard className="size-4 shrink-0" />
-        {overviewLabel}
-      </Link>
+    <nav aria-label={ariaLabel} className={cn('flex flex-col gap-5', className)}>
+      {sections.map(section => (
+        <div key={section.id} className="flex flex-col gap-1">
+          {section.label && <p className="text-muted-foreground px-3 pb-1 text-xs font-medium tracking-wider uppercase">{section.label}</p>}
 
-      {/* Accounts are the administrator's alone — nobody else may list the department. */}
-      {isAdminArea && (
-        <Link
-          href={usersHref}
-          // `startsWith`, like every other entry: `===` left /admin/users/new highlighting nothing.
-          aria-current={pathname.startsWith(usersHref) ? 'page' : undefined}
-          className={cn(
-            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-            pathname.startsWith(usersHref)
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}>
-          <Users className="size-4 shrink-0" />
-          {usersLabel}
-        </Link>
-      )}
-
-      {isAdminArea && (
-        <Link
-          href={coursesHref}
-          aria-current={pathname.startsWith(coursesHref) ? 'page' : undefined}
-          className={cn(
-            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-            pathname.startsWith(coursesHref)
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}>
-          <BookOpen className="size-4 shrink-0" />
-          {coursesLabel}
-        </Link>
-      )}
-
-      <Link
-        href={scheduleHref}
-        aria-current={pathname.startsWith(scheduleHref) ? 'page' : undefined}
-        className={cn(
-          'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-          pathname.startsWith(scheduleHref)
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-        )}>
-        <CalendarDays className="size-4 shrink-0" />
-        {scheduleLabel}
-      </Link>
-
-      {!isAdminArea && (
-        <Link
-          href={materialsHref}
-          aria-current={pathname.startsWith(materialsHref) ? 'page' : undefined}
-          className={cn(
-            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-            pathname.startsWith(materialsHref)
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}>
-          <FolderOpen className="size-4 shrink-0" />
-          {materialsLabel}
-        </Link>
-      )}
-
-      {/* The directory answers a student's question; a teacher already has the staff list. */}
-      {role === USER_ROLES.STUDENT && (
-        <Link
-          href={ROUTES.STUDENT_TEACHERS.HREF}
-          aria-current={pathname.startsWith(ROUTES.STUDENT_TEACHERS.HREF) ? 'page' : undefined}
-          className={cn(
-            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-            pathname.startsWith(ROUTES.STUDENT_TEACHERS.HREF)
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}>
-          <Users className="size-4 shrink-0" />
-          {teachersLabel}
-        </Link>
-      )}
-
-      {/*
-        Publishing is the administrator's and the teacher's. A student meets notices on
-        their own home screen, which is where an announcement belongs — a reader should not
-        have to go looking for one, so there is no reading route to link to.
-      */}
-      {canPublishNotices && (
-        <Link
-          href={noticesHref}
-          aria-current={pathname.startsWith(noticesHref) ? 'page' : undefined}
-          className={cn(
-            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-            pathname.startsWith(noticesHref)
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}>
-          <Megaphone className="size-4 shrink-0" />
-          {noticesLabel}
-        </Link>
-      )}
-
-      {canSeeUploads && (
-        <Link
-          href={uploadsHref}
-          aria-current={pathname.startsWith(uploadsHref) ? 'page' : undefined}
-          className={cn(
-            'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-            pathname.startsWith(uploadsHref)
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}>
-          <UploadCloud className="size-4 shrink-0" />
-          {uploadsLabel}
-        </Link>
-      )}
-
-      {/*
-        Last, and unconditional. Every role has one profile at one route — it is the only
-        entry here that needs no test, because it is the only screen whose content is
-        decided by who is looking rather than by which area they are allowed into.
-      */}
-      <Link
-        href={ROUTES.PROFILE.HREF}
-        aria-current={pathname.startsWith(ROUTES.PROFILE.HREF) ? 'page' : undefined}
-        className={cn(
-          'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-          pathname.startsWith(ROUTES.PROFILE.HREF)
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-        )}>
-        <UserRound className="size-4 shrink-0" />
-        {profileLabel}
-      </Link>
+          {section.items.map(item => (
+            <NavLink key={item.href} item={item} active={isNavItemActive(pathname, item.href, section.id === 'overview')} />
+          ))}
+        </div>
+      ))}
     </nav>
+  );
+}
+
+function NavLink({ item, active }: { item: { href: string; icon: LucideIcon; label: string }; active: boolean }) {
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+        active
+          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+      )}>
+      <Icon className="size-4 shrink-0" />
+      {item.label}
+    </Link>
   );
 }

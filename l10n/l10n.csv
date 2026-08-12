@@ -654,3 +654,8 @@ USERS_FIELD_PHONE_INVALID,"Enter a valid Bangladesh mobile number, e.g. 01712345
 USERS_ERROR_ROLE_LOCKED,"An account keeps the role it was created with; it cannot be changed here.","একটি অ্যাকাউন্ট তৈরির সময়ের ভূমিকাই ধরে রাখে; এটি এখানে পরিবর্তন করা যায় না।"
 USERS_ERROR_SUPER_ADMIN_CREATES_ADMINS,"The super administrator can only create administrator accounts.","প্রধান প্রশাসক কেবল প্রশাসকের অ্যাকাউন্ট তৈরি করতে পারেন।"
 NAV_DASHBOARD,"Dashboard","ড্যাশবোর্ড"
+DASHBOARD_NAV_SECTION_ACADEMIC,"Academic","একাডেমিক"
+DASHBOARD_NAV_SECTION_COMMUNICATION,"Communication","যোগাযোগ"
+DASHBOARD_NAV_SECTION_DIRECTORY,"Directory","ডিরেক্টরি"
+DASHBOARD_NAV_SECTION_ADMINISTRATION,"Administration","প্রশাসন"
+DASHBOARD_BREADCRUMB_LABEL,"Breadcrumb","পথনির্দেশ"
