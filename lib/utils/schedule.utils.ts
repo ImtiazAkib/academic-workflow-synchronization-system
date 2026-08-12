@@ -165,3 +165,111 @@ export function resolveScheduleBounds(sessions: ClassSessionDto[]): { startHour:
     endHour: Math.max(...ends),
   };
 }
+
+/** Minutes since midnight for a bare `HH:mm`, so two wall-clock times can be diffed as numbers. */
+function toMinutes(hhmm: string): number {
+  return Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+}
+
+/**
+ * The current time of day in the department's timezone, as a bare `HH:mm`.
+ *
+ * The sibling of `resolveDepartmentToday`: that answers "which weekday", this answers "what
+ * time" — both in `Asia/Dhaka`, because the dashboards say "your next class is in 25 minutes"
+ * and a UTC clock is off by six hours. Stored session times are already bare `Asia/Dhaka`
+ * `HH:mm`, so this returns the same shape and the two compare as plain strings/numbers.
+ * `hourCycle: 'h23'` — not `hour12: false`, which renders midnight as `24:00` and would sort
+ * after everything.
+ *
+ * @param now - The instant to resolve, passed in so the caller owns the clock.
+ *
+ * @returns The wall-clock time in `Asia/Dhaka` as `HH:mm`.
+ */
+export function resolveDepartmentNow(now: Date): string {
+  return new Intl.DateTimeFormat('en-US', { timeZone: DEFAULT_TIMEZONE, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' }).format(now);
+}
+
+export type ClassStatus = {
+  /** The class happening right now, if any. */
+  current: ClassSessionDto | null;
+  /** The next class still to start today, if any. */
+  next: ClassSessionDto | null;
+  /** Whole minutes until `next` begins, or null when there is no next class today. */
+  minutesUntilNext: number | null;
+};
+
+/**
+ * Where a person stands in today's classes: the one on now, the one up next, and how long
+ * until it starts — the "in 25 min" / "now" the dashboards lead with.
+ *
+ * Cancelled classes are skipped: a called-off class holds its slot on the timetable but is
+ * not where anybody needs to be. Half-open like `timeRangesOverlap`, so a class is "current"
+ * up to but not including its end minute, and the class starting exactly then is "next".
+ *
+ * @param todaySessions - Today's sessions (any order; already scoped to the viewer).
+ * @param now - The current `Asia/Dhaka` `HH:mm`, from `resolveDepartmentNow`.
+ *
+ * @returns The current and next class and the wait until next.
+ */
+export function resolveClassStatus(todaySessions: ClassSessionDto[], now: string): ClassStatus {
+  const live = todaySessions.filter(x => !x.isCancelled).sort((first, second) => first.startTime.localeCompare(second.startTime));
+  const nowMinutes = toMinutes(now);
+
+  const current = live.find(x => toMinutes(x.startTime) <= nowMinutes && nowMinutes < toMinutes(x.endTime)) ?? null;
+  const next = live.find(x => toMinutes(x.startTime) > nowMinutes) ?? null;
+
+  return { current, next, minutesUntilNext: next ? toMinutes(next.startTime) - nowMinutes : null };
+}
+
+export type ScheduleConflict = {
+  day: DayOfWeek;
+  /** The teacher booked into both classes at once. */
+  teacherId: string;
+  first: ClassSessionDto;
+  second: ClassSessionDto;
+};
+
+/**
+ * Every teacher double-booking already on the timetable — two live classes on the same day
+ * whose times overlap and whose teacher is the same person.
+ *
+ * The read-only companion to the create/update conflict check: that stops a new clash being
+ * saved, this surfaces the ones already there (including cross-semester clashes, which the
+ * write-time check narrows by semester and so does not catch). Room clashes are not detectable
+ * — the model carries no room. Cancelled classes are excluded; a called-off class clashes with
+ * nothing. O(n²) within a day, which is nothing at a department's scale.
+ *
+ * @param sessions - The sessions to scan (a week, a semester, or the whole timetable).
+ *
+ * @returns One entry per overlapping same-teacher pair.
+ */
+export function findScheduleConflicts(sessions: ClassSessionDto[]): ScheduleConflict[] {
+  const byDay = new Map<DayOfWeek, ClassSessionDto[]>();
+
+  for (const session of sessions) {
+    if (session.isCancelled) {
+      continue;
+    }
+
+    const bucket = byDay.get(session.dayOfWeek) ?? [];
+    bucket.push(session);
+    byDay.set(session.dayOfWeek, bucket);
+  }
+
+  const conflicts: ScheduleConflict[] = [];
+
+  for (const [day, daySessions] of byDay) {
+    for (let outer = 0; outer < daySessions.length; outer++) {
+      for (let inner = outer + 1; inner < daySessions.length; inner++) {
+        const first = daySessions[outer];
+        const second = daySessions[inner];
+
+        if (first.teacherId === second.teacherId && timeRangesOverlap(first.startTime, first.endTime, second.startTime, second.endTime)) {
+          conflicts.push({ day, teacherId: first.teacherId, first, second });
+        }
+      }
+    }
+  }
+
+  return conflicts;
+}

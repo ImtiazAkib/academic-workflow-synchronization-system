@@ -663,6 +663,26 @@ declare const messages: {
   "DASHBOARD_NAV_SECTION_ADMINISTRATION": "Administration",
   "DASHBOARD_BREADCRUMB_LABEL": "Breadcrumb",
   "DASHBOARD_MENU_OPEN": "Open menu",
-  "DASHBOARD_MENU_CLOSE": "Close menu"
+  "DASHBOARD_MENU_CLOSE": "Close menu",
+  "DASHBOARD_QUICK_PUBLISH_NOTICE": "Publish notice",
+  "DASHBOARD_QUICK_CREATE_USER": "Create account",
+  "DASHBOARD_QUICK_ADD_CLASS": "Add class",
+  "DASHBOARD_STAT_TODAY_CLASSES": "Today's classes",
+  "DASHBOARD_STAT_CONFLICTS": "Conflicts",
+  "DASHBOARD_STAT_PENDING": "Pending approvals",
+  "DASHBOARD_STAT_ACTIVE_COURSES": "Active courses",
+  "DASHBOARD_TODAY_SCHEDULE_TITLE": "Today's schedule",
+  "DASHBOARD_VIEW_SCHEDULE": "Full schedule",
+  "DASHBOARD_TODAY_EMPTY_TITLE": "No classes today",
+  "DASHBOARD_TODAY_EMPTY_ADMIN": "Nothing is scheduled across the department today.",
+  "DASHBOARD_CLASS_NOW": "Now",
+  "DASHBOARD_NEXT_IN": "in {minutes} min",
+  "DASHBOARD_CONFLICTS_TITLE": "Schedule conflicts",
+  "DASHBOARD_CONFLICTS_EMPTY_TITLE": "No conflicts",
+  "DASHBOARD_CONFLICTS_EMPTY_DESCRIPTION": "No teacher is double-booked in the current timetable.",
+  "DASHBOARD_PENDING_TITLE": "Pending approvals",
+  "DASHBOARD_PENDING_EMPTY_TITLE": "All caught up",
+  "DASHBOARD_PENDING_EMPTY_DESCRIPTION": "No accounts are waiting for approval.",
+  "DASHBOARD_VIEW_ALL": "View all"
 };
 export default messages;

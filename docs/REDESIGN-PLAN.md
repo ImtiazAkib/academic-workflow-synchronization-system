@@ -57,7 +57,9 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R2b](#r2b) | Build missing primitives               | 3, 38       | ✅ Done        |
 | [R3a](#r3a) | Desktop shell (sidebar, topbar, nav)   | 4, 5, 7–10  | ✅ Done        |
 | [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ✅ Done        |
-| [R4](#r4)   | Dashboards (admin / teacher / student) | 6, 11, 12   | ⬜ Not started |
+| [R4a](#r4a) | Dashboard foundation + admin dashboard | 6, 11, 12   | ✅ Done        |
+| [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ⬜ Not started |
+| [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ⬜ Not started |
 | [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
 | [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ⬜ Not started |
@@ -237,25 +239,54 @@ them too). Verified live on `/en/sign-in` (public, same components): both open w
 Light/Dark/Match-my-device; language English/বাংলা with the active one checked) and the page has zero horizontal
 overflow at 375px.
 
-### R4 — Dashboards (admin / teacher / student)
+> **R4 was split** into **R4a** (foundation helpers + shared read-only widgets + the admin dashboard), **R4b**
+> (teacher), **R4c** (student). A 4-agent data-map workflow first confirmed every need is read-only via existing
+> methods or pure composition — no schema/API changes; the two "new" pieces are both pure `lib` helpers.
 
-**Goal.** Build the two stub dashboards and elevate the third. Biggest construction step; read-only data via
-existing services only.
+### R4a — Dashboard foundation + admin dashboard ✅ Done
 
-- **Admin** — an asymmetric layout: primary region with today's departmental schedule (read-only routine),
-  schedule conflicts and pending user approvals; secondary column with recent notices and quick actions
-  (add class / publish notice / create user). Drop the `max-w-2xl` cap.
-- **Teacher** — "Teaching today / next" as the top answer (mirror the read-only routine card), the current/next
-  class made unmistakable, then courses + recent material activity + notices.
-- **Student** — make the next class prominent (single chronological column, current/next emphasized instead of
-  an equal-box grid), add recent materials, keep notices + quick links.
-- **Human touches** (brief §36): "Next class in Xm" / "now" on the current card, "Uploaded Xm ago" on recent
-  materials, "N new" on the notices heading. Relative-time formatting via a pure `lib/` helper.
+**Goal.** The shared read-only building blocks, and the administrator's home built on them.
 
-**Files.** `app/[locale]/(dashboard)/{admin,teacher,student}/page.tsx`, `components/dashboard/*`, new dashboard
-widgets, read-only reuse of `ClassSessionService` / `CourseService` / `StudentService` / notice services,
-`lib/*.utils.ts` for relative time, l10n keys. **Done when** the three dashboards genuinely differ and each
-role's "what's next" is the first thing on screen.
+- **Foundation (pure `lib/utils/schedule.utils.ts` helpers, unit-verified):** `resolveDepartmentNow(now)` →
+  Asia/Dhaka `HH:mm` (h23, so midnight isn't `24:00`); `resolveClassStatus(today, now)` → current/next class +
+  minutes-until (skips cancelled, half-open); `findScheduleConflicts(sessions)` → the read-only whole-timetable
+  scan (`findConflicts` is private/per-candidate) via the public `timeRangesOverlap`, catching cross-semester
+  teacher clashes. Room clashes stay impossible (no field).
+- **Shared widgets:** `DashboardStat` (compact tile, `tone` colors the number, optional link — not a vanity
+  card), `DashboardClassRow` (read-only class row with the "Now"/"in X min"/"Cancelled" marker — deliberately not
+  the management `ScheduleGridCell`), `DashboardTodaySchedule` (the "today" list; parent passes markers so admin
+  can flag every running class and personal views flag one current + one next; uses the R2b `EmptyState`).
+- **Admin dashboard:** `PageHeader` (first adopter) + quick actions (publish notice / create account / add class)
+  → an overview row (today's classes / conflicts / pending approvals / active courses, the last two toned and
+  linked) → an asymmetric split: today's department schedule + the conflict list (wide), the approval queue +
+  `DashboardNotices` (narrow). Drops the old `max-w-2xl` stub. Names joined from `CourseService.list()` +
+  `UserService.list({role:'teacher'})`; pending from `UserService.list({status:'pending'})`.
+
+**Outcome.** `format`/`lint`/`build` (77/77) green; l10n +20 keys → 682 (Bengali flagged). Helpers unit-verified
+(deleted temp script): Dhaka time incl. h23 midnight, current/next with cancelled skipped, conflict scan catching
+the cross-semester clash and excluding back-to-back/cancelled. Widgets verified rendering on the running server
+(deleted `/ui-preview`): stat tones (red conflicts, amber+linked pending), class rows (green "Now", blue "in 25
+min", struck-through "Cancelled"), and the empty state. **Not seen:** the assembled admin page itself is
+auth-gated — it's built from these verified widgets + verified helpers over existing services.
+
+**Files.** `lib/utils/schedule.utils.ts`, `components/dashboard/{dashboard-stat,dashboard-class-row,dashboard-today-schedule}.tsx`
+(+ barrel), `app/[locale]/(dashboard)/admin/page.tsx`, `l10n/l10n.csv`.
+
+### R4b — Teacher dashboard ⬜ Not started
+
+**Goal.** Make "what am I teaching next" the top answer. `resolveClassStatus` over the teacher's own classes
+(`ClassSessionService.list({teacherId})` filtered to today) drives a prominent next/now card; then assigned
+courses (`CourseService.list()` filtered by `assignedTeacherId`), recent material activity
+(`MaterialService.list()` filtered by `uploadedById`, "uploaded X ago"), and notices. Reuses the R4a widgets.
+
+### R4c — Student dashboard elevation ⬜ Not started
+
+**Goal.** Elevate the one real dashboard: next-class prominence (adopt `DashboardTodaySchedule` with the single
+current/next markers in place of the equal-box grid), add recent materials (`StudentService.listMaterials`), and
+the relative-time touches. Adopt `PageHeader`. Keep notices + course/teacher shortcuts.
+
+**Done (R4b+c) when** the three dashboards genuinely differ and each role's "what's next" is the first thing on
+screen.
 
 ### R5 — Routine / timetable
 
