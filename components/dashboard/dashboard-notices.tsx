@@ -118,6 +118,7 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT, viewerSession
   return (
     <NoticeList
       notices={notices.map(toView)}
+      preview={limit !== null}
       labels={{
         emptyTitle: l10n('NOTICES_EMPTY_TITLE'),
         emptyDescription: l10n('NOTICES_EMPTY_DESCRIPTION'),

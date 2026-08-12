@@ -9,6 +9,7 @@ import type { NoticeListLabels, NoticeView } from './notices.types';
 type NoticeCardProps = {
   notice: NoticeView;
   labels: NoticeListLabels;
+  preview?: boolean;
 };
 
 /*
@@ -27,7 +28,7 @@ type NoticeCardProps = {
   text, a picture, or both, and `NoticeCreateSchema` refuses one that is neither. So each
   is rendered only when it is there, rather than the card assuming a shape.
 */
-export function NoticeCard({ notice, labels }: NoticeCardProps) {
+export function NoticeCard({ notice, labels, preview = false }: NoticeCardProps) {
   return (
     <article className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -39,9 +40,14 @@ export function NoticeCard({ notice, labels }: NoticeCardProps) {
           keeps the audience badge it always had.
         */}
         {notice.category === NOTICE_CATEGORIES.SESSION ? (
-          <Badge variant="secondary">
-            {labels.sessionsLabel} {notice.sessions.join(', ')}
-          </Badge>
+          <div className="flex max-w-full flex-wrap items-center justify-end gap-1 text-xs">
+            <span className="text-muted-foreground">{labels.sessionsLabel}</span>
+            {notice.sessions.map(session => (
+              <Badge key={session} variant="secondary">
+                {session}
+              </Badge>
+            ))}
+          </div>
         ) : (
           <NoticeBadge audience={notice.audience} label={notice.audienceLabel} />
         )}
@@ -52,7 +58,7 @@ export function NoticeCard({ notice, labels }: NoticeCardProps) {
         somebody typed, and on its own it also keeps a pasted URL on one unbreakable line
         that pushes the card past the viewport and scrolls the whole page sideways.
       */}
-      {notice.body && <p className="text-sm wrap-break-word whitespace-pre-wrap">{notice.body}</p>}
+      {notice.body && <p className={`text-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${preview ? 'line-clamp-3' : ''}`}>{notice.body}</p>}
 
       {/*
         The title is the alt text, and for a picture-only notice that is the whole of what
@@ -67,7 +73,7 @@ export function NoticeCard({ notice, labels }: NoticeCardProps) {
         height but says nothing about width, so a 4000px scan rendered at its natural width
         until this was added.
       */}
-      {notice.imageUrl && (
+      {!preview && notice.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- access-checked route; the optimizer fetches without the viewer's session
         <img
           src={notice.imageUrl}
