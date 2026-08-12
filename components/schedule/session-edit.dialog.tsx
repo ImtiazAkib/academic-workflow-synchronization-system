@@ -9,6 +9,7 @@ import { ClassSessionDto } from '@/types';
 
 import { ErrorDto, isSuccess } from '@/lib/result';
 import { ClassSessionUpdateInput, ClassSessionUpdateOutput, ClassSessionUpdateSchema } from '@/lib/schemas';
+import { resolveScheduleErrorMessage } from '@/lib/utils';
 
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 
@@ -29,7 +30,7 @@ type SessionEditDialogProps = {
 
 /*
   Mounted only while a session is selected and keyed on its id, so `defaultValues` fills
-  the form on mount rather than needing an effect — and a stale conflict from the
+  the form on mount rather than needing an effect - and a stale conflict from the
   previous attempt is cleared for free.
 */
 export function SessionEditDialog({ session, courses, teachers, labels, onUpdated, onOpenChange }: SessionEditDialogProps) {
@@ -71,6 +72,12 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
     onOpenChange(false);
   };
 
+  const fieldConflicts = {
+    course: conflicts.filter(x => x.field === 'courseId').map(x => resolveScheduleErrorMessage(x.code, labels.errors)),
+    teacher: conflicts.filter(x => x.field === 'teacherId').map(x => resolveScheduleErrorMessage(x.code, labels.errors)),
+  };
+  const genericConflicts = conflicts.filter(x => x.field !== 'courseId' && x.field !== 'teacherId');
+
   return (
     <Dialog open onOpenChange={onOpenChange}>
       {/* Capped height plus a column layout, so the body scrolls under a fixed footer. */}
@@ -81,7 +88,7 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
         </DialogHeader>
 
         <form noValidate onSubmit={handleSubmit(handleFormSubmit)} className="flex min-h-0 flex-1 flex-col gap-4">
-          <SessionConflictNotice errors={conflicts} title={labels.conflictTitle} labels={labels.errors} />
+          <SessionConflictNotice errors={genericConflicts} title={labels.conflictTitle} labels={labels.errors} />
 
           <input type="hidden" {...register('classSessionId')} />
 
@@ -96,6 +103,7 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
               labels={labels.fields}
               fieldErrors={labels.fieldErrors}
               days={labels.days}
+              conflicts={fieldConflicts}
               idPrefix="edit-session"
             />
           </div>
@@ -105,7 +113,7 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
               {labels.cancel}
             </Button>
 
-            <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+            <Button type="submit" variant="default" disabled={isSubmitting}>
               {isSubmitting ? labels.working : labels.editSubmit}
             </Button>
           </DialogFooter>

@@ -16,7 +16,7 @@ const materialService = new MaterialService();
   A route handler rather than a Server Action, because an action serializes its
   arguments and a 25 MB file has no business going through that. `FormData` streams.
 
-  Everything the request claims — course, title, type, size — is validated here and
+  Everything the request claims - course, title, type, size - is validated here and
   again in the service. The only thing trusted is the session cookie.
 */
 export async function POST(request: NextRequest) {
@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
 
   /*
     Before `formData()`, and the order is the whole point. Refusing after the body is read
-    means the bytes already crossed the wire and sat in a buffer — which is most of what
+    means the bytes already crossed the wire and sat in a buffer - which is most of what
     the limit exists to prevent. Keyed on the account rather than the caller, because this
     endpoint requires a session: a user id is a fact the server issued, where a forwarded
     address is a header somebody may be able to set.
 
     The bucket these files land in is the same database that holds users, courses and the
-    timetable, so filling it does not degrade materials — it takes down every feature at
+    timetable, so filling it does not degrade materials - it takes down every feature at
     once.
   */
   if (!(await consumeRateLimit('upload', sessionUser.userId, RATE_LIMIT.UPLOAD))) {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   /*
     Before `formData()`, alongside the rate-limit gate and for the same reason: refusing
     after the body is read means a file the bucket cannot hold has already crossed the wire.
-    A material always carries a file, so a full bucket turns the whole request away here —
+    A material always carries a file, so a full bucket turns the whole request away here -
     the exact "does this particular file fit" check still runs in the service.
   */
   if ((await getStorageStatus()).full) {

@@ -103,7 +103,7 @@ export function CoursesScreen({ courses, teachers, labels }: CoursesScreenProps)
           <p className="text-muted-foreground text-xs">{labels.count}</p>
         </div>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.ADMIN_COURSES_NEW.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.ADMIN_COURSES_NEW.HREF} />}>
           <BookPlus className="size-4" />
           {labels.createCta}
         </Button>

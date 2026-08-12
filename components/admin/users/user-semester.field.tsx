@@ -28,7 +28,7 @@ type UserSemesterFieldProps = {
   The one user field shared between the create page and the edit dialog, and the one
   that appears only for a role. A designation on a student or a phone number on an
   administrator is merely unused; a semester on a teacher is a claim about the model
-  that is not true — nothing filters by it and nothing would ever show it again.
+  that is not true - nothing filters by it and nothing would ever show it again.
 
   Hiding it is agreement, not enforcement: `UserService.semesterFor()` drops the value
   for the other two roles whatever the form submits, so a hand-built request cannot
@@ -44,7 +44,7 @@ export function UserSemesterField({ control, errors, labels, fieldErrors, idPref
     return null;
   }
 
-  // The blank entry is what "not set yet" looks like — an admin may not know the year.
+  // The blank entry is what "not set yet" looks like - an admin may not know the year.
   const semesterItems: Record<string, string> = { '': labels.semesterUnset };
 
   for (let semester = SEMESTER.MIN; semester <= SEMESTER.MAX; semester++) {

@@ -11,12 +11,12 @@ type PhoneInputProps = Omit<React.ComponentProps<typeof Input>, 'type'>;
 /*
   A phone field fixed to Bangladesh: a static +880 sits in the leading slot and the input
   takes the ten local digits after it. The schema normalizes whatever is typed onto the
-  stored `+8801XXXXXXXXX`, so the prefix is a label rather than part of the value — the
+  stored `+8801XXXXXXXXX`, so the prefix is a label rather than part of the value - the
   field submits only what the user types, and an edit form seeds it with the local digits
   via `toBangladeshPhoneInput`.
 
-  `{...props}` spreads onto the inner input exactly as it does for a bare Input — the
-  react-hook-form ref, the id, aria-invalid — so a form wires this the same way it wires
+  `{...props}` spreads onto the inner input exactly as it does for a bare Input - the
+  react-hook-form ref, the id, aria-invalid - so a form wires this the same way it wires
   any other field.
 */
 export function PhoneInput({ className, ...props }: PhoneInputProps) {

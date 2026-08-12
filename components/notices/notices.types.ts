@@ -7,7 +7,7 @@ import type { NoticeCategory } from '@/types';
  *
  * The date arrives already formatted, and that is the point of this type existing rather
  * than passing `NoticeDto` straight down. Formatting is locale-aware and timezone-pinned,
- * which only the server can do here — `getFormatter()` reads the request's locale, and a
+ * which only the server can do here - `getFormatter()` reads the request's locale, and a
  * client component re-formatting an ISO string would quietly fall back to the browser's
  * locale and the visitor's own timezone. The department publishes on Dhaka time.
  */
@@ -26,7 +26,7 @@ export type NoticeView = {
   imageUrl: string | null;
   audience: string;
   audienceLabel: string;
-  /** `general` or `session` — decides whether the card shows the audience or the sessions. */
+  /** `general` or `session` - decides whether the card shows the audience or the sessions. */
   category: NoticeCategory;
   /** The intake sessions a session notice targets. Empty on a general one. */
   sessions: string[];
@@ -95,6 +95,6 @@ export type NoticeListLabels = {
   emptyDescription: string;
   publishedBy: string;
   unknownPublisher: string;
-  /** Prefix on a session notice's badge, before the intakes — "Sessions:". */
+  /** Prefix on a session notice's badge, before the intakes - "Sessions:". */
   sessionsLabel: string;
 };

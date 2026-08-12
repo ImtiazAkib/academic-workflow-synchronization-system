@@ -6,14 +6,14 @@ type LoadingShapeProps = {
 
 /*
   Four shapes, because the app has four kinds of screen and one generic skeleton described
-  three of eighteen pages. Its own comment claimed the point — "shaped like the page that
-  is coming, so nothing jumps on arrival" — and switching from a table to a week grid
+  three of eighteen pages. Its own comment claimed the point - "shaped like the page that
+  is coming, so nothing jumps on arrival" - and switching from a table to a week grid
   blanked both to the same three bars.
 
   Each shape carries the whole accessibility envelope itself rather than leaving it to the
   caller: `aria-busy`, a polite live region, and an `sr-only` sentence. That is the part
   easiest to drop when copying a skeleton, and the part a screen reader depends on
-  entirely — everything else here is grey rectangles it cannot see.
+  entirely - everything else here is grey rectangles it cannot see.
 */
 
 /**

@@ -27,7 +27,7 @@ type TeacherScheduleScreenProps = {
 };
 
 /*
-  The teacher's own week: they may move a class or call it off, but not delete one —
+  The teacher's own week: they may move a class or call it off, but not delete one -
   removing a slot from the department's timetable stays with the administrator.
 
   Rescheduling happens over the calendar rather than on a blank form: the week stays
@@ -35,7 +35,7 @@ type TeacherScheduleScreenProps = {
   being moved. The service refuses a clash regardless, but seeing the week first means
   fewer refusals to read.
 
-  Ownership is enforced in the service, not here — a teacher editing a class they do not
+  Ownership is enforced in the service, not here - a teacher editing a class they do not
   teach is refused even if they reach the action directly.
 */
 export function TeacherScheduleScreen({ sessions, courses, teachers, labels, today }: TeacherScheduleScreenProps) {

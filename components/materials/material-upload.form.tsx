@@ -19,10 +19,11 @@ import type { MaterialCourseOption, MaterialsLabels } from './materials.types';
 type MaterialUploadFormProps = {
   courses: MaterialCourseOption[];
   labels: MaterialsLabels;
-  /** The bucket is over the block line — refuse to upload at all. */
+  /** The bucket is over the block line - refuse to upload at all. */
   storageBlocked: boolean;
-  /** Past the warn line but not the block line — let the upload through, but say so. */
+  /** Past the warn line but not the block line - let the upload through, but say so. */
   storageNearFull: boolean;
+  onUploaded?: () => void;
 };
 
 /*
@@ -31,26 +32,37 @@ type MaterialUploadFormProps = {
   `FormData` streams the body instead.
 
   Nothing here is a control. The size, the type, the course and whether the bucket has
-  room are all re-checked on the server — this only saves the teacher a round trip when the
+  room are all re-checked on the server - this only saves the teacher a round trip when the
   answer is obvious. `storageBlocked` disables the picker and the button so a full bucket is
   visible before a file is chosen, not discovered after it uploads.
 */
-export function MaterialUploadForm({ courses, labels, storageBlocked, storageNearFull }: MaterialUploadFormProps) {
+export function MaterialUploadForm({ courses, labels, storageBlocked, storageNearFull, onUploaded }: MaterialUploadFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [courseId, setCourseId] = useState(courses[0]?.courseId ?? '');
   const [isUploading, setIsUploading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const courseItems: Record<string, string> = {};
 
   courses.forEach(x => {
-    courseItems[x.courseId] = `${x.code} — ${x.title}`;
+    courseItems[x.courseId] = `${x.code} - ${x.title}`;
   });
 
   const handleCourseChange = (value: unknown): void => {
     setCourseId(String(value));
+  };
+
+  const selectFile = (file: File | null): void => {
+    setSelectedFile(file);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    selectFile(event.dataTransfer.files.item(0));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -63,6 +75,10 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
       // The Select is not a native input, so its value is attached by hand.
       body.set('courseId', courseId);
 
+      if (selectedFile) {
+        body.set('file', selectedFile);
+      }
+
       const response = await fetch('/api/materials/upload', { method: 'POST', body });
 
       if (!response.ok) {
@@ -74,7 +90,9 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
       }
 
       formRef.current?.reset();
+      setSelectedFile(null);
       toast.success(labels.toastUploaded);
+      onUploaded?.();
       router.refresh();
     } finally {
       setIsUploading(false);
@@ -125,12 +143,39 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="material-file">{labels.fieldFile}</Label>
-          <Input id="material-file" name="file" type="file" accept={MATERIAL_ACCEPT} required disabled={storageBlocked} className="py-1.5" />
+          <div
+            role="button"
+            tabIndex={storageBlocked ? -1 : 0}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDragOver={event => event.preventDefault()}
+            onDrop={handleDrop}
+            className="border-border hover:border-primary/40 hover:bg-primary-muted/40 flex min-h-10 cursor-pointer items-center rounded-md border border-dashed px-3 text-sm transition-colors disabled:pointer-events-none">
+            <span className="text-muted-foreground truncate">
+              {selectedFile ? `${selectedFile.name} · ${Math.ceil(selectedFile.size / 1024)} KB` : labels.dropzone}
+            </span>
+          </div>
+          <Input
+            ref={fileInputRef}
+            id="material-file"
+            name="file"
+            type="file"
+            accept={MATERIAL_ACCEPT}
+            required
+            disabled={storageBlocked}
+            className="sr-only"
+            onChange={event => selectFile(event.target.files?.item(0) ?? null)}
+          />
         </div>
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" variant="appPrimary" disabled={isUploading || courses.length === 0 || storageBlocked}>
+        <Button type="submit" variant="default" disabled={isUploading || courses.length === 0 || storageBlocked}>
           <Upload className="size-4" />
           {isUploading ? labels.uploading : labels.uploadSubmit}
         </Button>

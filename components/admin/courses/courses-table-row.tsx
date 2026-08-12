@@ -1,6 +1,10 @@
+import { MoreHorizontal, Pencil, Power } from 'lucide-react';
+
 import { CourseDto } from '@/types';
 
-import { Badge, Button, TableCell, TableRow } from '@/components/ui';
+import { resolveSemesterLabel } from '@/lib/utils';
+
+import { Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, TableCell, TableRow } from '@/components/ui';
 
 import type { CoursesLabels, TeacherOption } from './courses.types';
 
@@ -25,31 +29,41 @@ export function CoursesTableRow({ course, teachers, labels, onEdit, onActivation
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{course.code}</TableCell>
+      <TableCell>
+        <div className="flex flex-col gap-0.5">
+          <span className="font-medium">{course.title}</span>
+          <span className="text-muted-foreground font-mono text-xs">{course.code}</span>
+        </div>
+      </TableCell>
 
-      <TableCell>{course.title}</TableCell>
+      <TableCell className="text-muted-foreground">{resolveSemesterLabel(course.semester)}</TableCell>
 
-      <TableCell>{course.semester}</TableCell>
-
-      <TableCell>{course.credits}</TableCell>
+      <TableCell className="text-muted-foreground">{course.credits}</TableCell>
 
       <TableCell className={teacherName ? undefined : 'text-muted-foreground'}>{teacherName ?? labels.unassigned}</TableCell>
 
       <TableCell>
-        <Badge variant={course.isActive ? 'default' : 'destructive'}>{course.isActive ? labels.statusActive : labels.statusInactive}</Badge>
+        <Badge variant={course.isActive ? 'success' : 'neutral'}>{course.isActive ? labels.statusActive : labels.statusInactive}</Badge>
       </TableCell>
 
-      <TableCell>
-        {/* Equal tracks, so the changing middle label cannot shift the column. */}
-        <div className="grid grid-cols-2 gap-1.5">
-          <Button type="button" variant="outline" size="sm" onClick={handleEditClick}>
-            {labels.edit}
-          </Button>
+      <TableCell className="text-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon-sm" aria-label={labels.columnActions} />}>
+            <MoreHorizontal className="size-4" />
+          </DropdownMenuTrigger>
 
-          <Button type="button" variant="outline" size="sm" onClick={handleActivationClick}>
-            {course.isActive ? labels.deactivate : labels.reactivate}
-          </Button>
-        </div>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={handleEditClick}>
+              <Pencil />
+              {labels.edit}
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={handleActivationClick}>
+              <Power />
+              {course.isActive ? labels.deactivate : labels.reactivate}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

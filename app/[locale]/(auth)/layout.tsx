@@ -5,6 +5,7 @@ import { Link } from '@/l10n/navigation';
 
 import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
 
+import { SiteFooter } from '@/components/layout';
 import { AppLogo, Container, LanguageSelector, ThemeSelector } from '@/components/shared';
 
 type AuthLayoutProps = {
@@ -20,7 +21,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-border border-b">
+      <header className="bg-background/80 border-border fixed inset-x-0 top-0 z-50 border-b backdrop-blur-md">
         {/*
           `gap-2 sm:gap-4` and a brand that can shrink, matching the marketing header: at
           375px the theme and language controls together are wider than what a non-shrinking
@@ -29,7 +30,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
         */}
         <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
           <Link href={ROUTES.HOME.HREF} className="flex min-w-0 items-center gap-2.5">
-            <AppLogo label={l10n('APP_LOGO_ALT')} className="size-8 shrink-0" />
+            <AppLogo label={l10n('APP_LOGO_ALT')} className="size-11 shrink-0" />
             <span className="font-heading text-regular-bold truncate tracking-tight">{APP_DATA.SHORT_NAME}</span>
           </Link>
 
@@ -53,9 +54,11 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
         its content and settles against the left edge. Stacking makes it fill the width,
         so the card its own `justify-center` centres actually has a full row to centre in.
       */}
-      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex flex-1 flex-col justify-center">
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex flex-1 flex-col justify-center pt-16">
         {children}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

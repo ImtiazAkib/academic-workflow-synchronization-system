@@ -52,14 +52,14 @@ function buildConfirmUrl(token: string): string {
  * There is no gate helper for this the way there is for the admin area, because there is
  * nothing to authorize: any signed-in account may edit its own profile, and the profile
  * it edits is the one the session names. The session is still re-read here rather than
- * trusted from the page — a Server Action is a public endpoint, and the screen that
+ * trusted from the page - a Server Action is a public endpoint, and the screen that
  * rendered the form proves nothing about who is posting to it.
  *
  * The session cookie is re-issued on success. It carries the name, which the topbar
  * greets somebody by; without this, changing your name leaves the old one on screen until
  * you next sign in, which reads as the save having silently failed. The address in the
- * cookie is taken from the saved record rather than the form, so an email change — which
- * has not happened yet — cannot slip into the session ahead of being proven.
+ * cookie is taken from the saved record rather than the form, so an email change - which
+ * has not happened yet - cannot slip into the session ahead of being proven.
  *
  * @param values - Raw form values, validated here rather than trusted.
  *
@@ -100,8 +100,8 @@ export async function updateProfileAction(values: unknown): Promise<SingleResult
     account onto an address nobody had asked for on this attempt.
 
     A failed send does not undo the save. The pending address is stored and its token is
-    valid, so the remedy is to submit the form again — which mints a fresh token and
-    retires this one — rather than losing the name and phone number that saved fine.
+    valid, so the remedy is to submit the form again - which mints a fresh token and
+    retires this one - rather than losing the name and phone number that saved fine.
   */
   if (pendingEmailToken && user.pendingEmail) {
     await mail.send(buildVerifyNewAddressMail(user.pendingEmail, user.name, buildConfirmUrl(pendingEmailToken)));
@@ -113,7 +113,7 @@ export async function updateProfileAction(values: unknown): Promise<SingleResult
 /**
  * Change the password on the caller's own account.
  *
- * Any signed-in account may change its own password, so — like `updateProfileAction` —
+ * Any signed-in account may change its own password, so - like `updateProfileAction` -
  * there is nothing to authorize beyond having a session, and the session is re-read here
  * rather than trusted from the page. The current password is verified against the stored
  * hash inside the service; this action only proves who is asking and hands the values on.

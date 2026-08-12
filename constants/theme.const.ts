@@ -1,14 +1,14 @@
 import { AppTheme } from '@/types';
 
 /**
- * Where the *choice* lives — `light`, `dark`, or `system`. Client-only, because the
+ * Where the *choice* lives - `light`, `dark`, or `system`. Client-only, because the
  * toggle and the system-preference tracking are client-only; the server never needs to
  * know whether a dark render was chosen outright or resolved from the operating system.
  */
 export const THEME_STORAGE_KEY = 'theme';
 
 /**
- * Where the *resolved* theme lives — `dark` or `light`, never `system`.
+ * Where the *resolved* theme lives - `dark` or `light`, never `system`.
  *
  * A cookie rather than only `localStorage` because the server reads it: the root layout
  * sets the `.dark` class on `<html>` from this, so a dark visitor's first paint is dark

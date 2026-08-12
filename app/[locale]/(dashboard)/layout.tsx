@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 
 import { getTranslations } from 'next-intl/server';
-import { Toaster } from 'sonner';
 
 import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
 
 import { requireSession } from '@/lib/auth';
-import { resolveRoleLabel } from '@/lib/utils';
+import { resolveInitials, resolveRoleLabel } from '@/lib/utils';
 
-import { DashboardSidebar, DashboardTopbar } from '@/components/dashboard';
+import { DashboardSidebar, DashboardTitleSync, DashboardTopbar } from '@/components/dashboard';
+import { Toaster } from '@/components/shared';
 import { DialogLabelsProvider } from '@/components/ui';
 
 type DashboardLayoutProps = {
@@ -44,6 +44,32 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   const l10n = await getTranslations();
 
+  /*
+    The nav labels, resolved once here (a server component) and handed down as one object,
+    rather than as a dozen separate props to each of the sidebar and topbar. `resolveNavModel`
+    turns them into the sectioned model both placements render from.
+  */
+  const navLabels = {
+    overview: l10n('DASHBOARD_NAV_OVERVIEW'),
+    users: l10n('DASHBOARD_NAV_USERS'),
+    courses: l10n('DASHBOARD_NAV_COURSES'),
+    schedule: l10n('DASHBOARD_NAV_SCHEDULE'),
+    materials: l10n('DASHBOARD_NAV_MATERIALS'),
+    teachers: l10n('DASHBOARD_NAV_TEACHERS'),
+    notices: l10n('DASHBOARD_NAV_NOTICES'),
+    uploads: l10n('DASHBOARD_NAV_UPLOADS'),
+    sectionAcademic: l10n('DASHBOARD_NAV_SECTION_ACADEMIC'),
+    sectionCommunication: l10n('DASHBOARD_NAV_SECTION_COMMUNICATION'),
+    sectionDirectory: l10n('DASHBOARD_NAV_SECTION_DIRECTORY'),
+    sectionAdministration: l10n('DASHBOARD_NAV_SECTION_ADMINISTRATION'),
+  };
+
+  const user = {
+    name: sessionUser.name,
+    roleLabel: resolveRoleLabel(sessionUser.role, l10n),
+    initials: resolveInitials(sessionUser.name),
+  };
+
   return (
     /*
       One provider for the whole dashboard, so every confirm and edit dialog's close button
@@ -51,37 +77,30 @@ export default async function DashboardLayout({ children, params }: DashboardLay
       crosses from here — a server component — into the client context once.
     */
     <DialogLabelsProvider close={l10n('DIALOG_CLOSE')}>
-      <div className="flex min-h-dvh flex-col lg:flex-row">
+      <DashboardTitleSync />
+      <div className="flex h-dvh flex-col overflow-hidden lg:flex-row">
         <DashboardSidebar
           role={sessionUser.role}
+          navLabels={navLabels}
+          navAriaLabel={l10n('DASHBOARD_NAV_LABEL')}
           logoLabel={l10n('APP_LOGO_ALT')}
-          navLabel={l10n('DASHBOARD_NAV_LABEL')}
-          overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
-          usersLabel={l10n('DASHBOARD_NAV_USERS')}
-          coursesLabel={l10n('DASHBOARD_NAV_COURSES')}
-          scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
-          materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
-          teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
-          noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
-          uploadsLabel={l10n('DASHBOARD_NAV_UPLOADS')}
+          user={user}
           profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <DashboardTopbar
             role={sessionUser.role}
-            roleLabel={resolveRoleLabel(sessionUser.role, l10n)}
-            welcome={l10n('DASHBOARD_WELCOME', { name: sessionUser.name })}
-            navLabel={l10n('DASHBOARD_NAV_LABEL')}
+            navLabels={navLabels}
+            navAriaLabel={l10n('DASHBOARD_NAV_LABEL')}
+            breadcrumbLabel={l10n('DASHBOARD_BREADCRUMB_LABEL')}
             overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
-            usersLabel={l10n('DASHBOARD_NAV_USERS')}
-            coursesLabel={l10n('DASHBOARD_NAV_COURSES')}
-            scheduleLabel={l10n('DASHBOARD_NAV_SCHEDULE')}
-            materialsLabel={l10n('DASHBOARD_NAV_MATERIALS')}
-            teachersLabel={l10n('DASHBOARD_NAV_TEACHERS')}
-            noticesLabel={l10n('DASHBOARD_NAV_NOTICES')}
-            uploadsLabel={l10n('DASHBOARD_NAV_UPLOADS')}
+            logoLabel={l10n('APP_LOGO_ALT')}
+            menuOpenLabel={l10n('DASHBOARD_MENU_OPEN')}
+            menuCloseLabel={l10n('DASHBOARD_MENU_CLOSE')}
+            user={user}
             profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
+            signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
             languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
             themeLabels={{
               group: l10n('THEME_SELECTOR_LABEL'),
@@ -89,12 +108,10 @@ export default async function DashboardLayout({ children, params }: DashboardLay
               dark: l10n('THEME_DARK'),
               system: l10n('THEME_SYSTEM'),
             }}
-            signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
-            signOutWorkingLabel={l10n('DASHBOARD_SIGNING_OUT')}
             locale={locale}
           />
 
-          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 p-4 lg:p-8">
+          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-8">
             {children}
           </main>
         </div>
@@ -103,7 +120,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           Mounted once for the whole dashboard rather than per screen, so an action can
           confirm itself from anywhere underneath without each page wiring up its own.
         */}
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster />
       </div>
     </DialogLabelsProvider>
   );

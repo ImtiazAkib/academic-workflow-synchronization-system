@@ -22,10 +22,9 @@ export function CoursesTable({ courses, teachers, labels, onEdit, onActivation }
       what stacks the action buttons on a phone.
     */
     <div className="border-border w-full overflow-x-auto rounded-lg border">
-      <Table aria-label={labels.tableLabel} className="min-w-3xl">
+      <Table aria-label={labels.tableLabel} className="min-w-2xl">
         <TableHeader>
           <TableRow>
-            <TableHead>{labels.columnCode}</TableHead>
             <TableHead>{labels.columnTitle}</TableHead>
             <TableHead>{labels.columnSemester}</TableHead>
             <TableHead>{labels.columnCredits}</TableHead>

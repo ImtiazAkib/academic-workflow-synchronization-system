@@ -28,7 +28,7 @@ type CourseCreateFormProps = {
 };
 
 /**
- * A page rather than a dialog, matching the account screen — the work gets its own URL,
+ * A page rather than a dialog, matching the account screen - the work gets its own URL,
  * so it survives a refresh and can be linked.
  */
 export function CourseCreateForm({ teachers, labels }: CourseCreateFormProps) {
@@ -94,7 +94,7 @@ export function CourseCreateForm({ teachers, labels }: CourseCreateFormProps) {
           {labels.cancel}
         </Button>
 
-        <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+        <Button type="submit" variant="default" disabled={isSubmitting}>
           {isSubmitting ? labels.working : labels.submit}
         </Button>
       </div>

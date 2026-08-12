@@ -6,7 +6,7 @@ type MaterialsEmptyProps = {
 };
 
 /**
- * Shown when a teacher has published nothing yet. Not an error — an empty repository is
+ * Shown when a teacher has published nothing yet. Not an error - an empty repository is
  * where every course starts.
  */
 export function MaterialsEmpty({ title, description }: MaterialsEmptyProps) {

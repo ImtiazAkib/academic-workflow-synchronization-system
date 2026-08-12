@@ -64,7 +64,7 @@ export async function updateClassSessionAction(values: unknown): Promise<SingleR
 /**
  * Call a class off for the week, or put it back.
  *
- * Open to teachers as well as administrators — but a teacher's own id is passed to the
+ * Open to teachers as well as administrators - but a teacher's own id is passed to the
  * service, which refuses a class they are not teaching. The scope comes from the
  * session, never from the caller's arguments.
  *
@@ -92,7 +92,7 @@ export async function setClassSessionCancelledAction(values: unknown): Promise<S
   /*
     The whole session goes to the service, not a pre-computed scope. This used to pass
     `sessionUser.role === TEACHER ? userId : undefined`, and the service's check was
-    `if (requestedBy && ...)` — so the rule was disabled by omitting an argument. A
+    `if (requestedBy && ...)` - so the rule was disabled by omitting an argument. A
     row-level rule that any caller can switch off by passing less is not a rule.
   */
   return classSessionService.setCancelled(validation.data.classSessionId, validation.data.isCancelled, sessionUser);

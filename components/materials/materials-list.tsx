@@ -17,12 +17,13 @@ export function MaterialsList({ materials, courses, labels, onRemove }: Material
   return (
     // The wrapper scrolls and the table keeps its natural width, so columns never crush.
     <div className="border-border w-full overflow-x-auto rounded-lg border">
-      <Table aria-label={labels.tableLabel} className="min-w-2xl">
+      <Table aria-label={labels.tableLabel} className="min-w-3xl">
         <TableHeader>
           <TableRow>
             <TableHead>{labels.columnTitle}</TableHead>
             <TableHead>{labels.columnCourse}</TableHead>
             <TableHead>{labels.columnSize}</TableHead>
+            <TableHead>{labels.columnDate}</TableHead>
             <TableHead className="text-end">{labels.columnActions}</TableHead>
           </TableRow>
         </TableHeader>

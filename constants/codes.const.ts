@@ -8,7 +8,7 @@ import { USERS_AUTH, USERS_BUSINESS, USERS_DATABASE, USERS_VALIDATION } from './
 /*
   Central codes registry organized by layers.
 
-  Format: five digits — [layer][feature][sequence]
+  Format: five digits - [layer][feature][sequence]
   - Layer (1st digit):    1=Database, 2=Validation, 3=Business, 4=External, 5=Auth
   - Feature (2nd digit):  0=Common, 1=Users, 2=Courses, 3=Schedule, 4=Materials, 5=Notices
   - Sequence (last three): 000-999

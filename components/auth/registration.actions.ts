@@ -36,7 +36,7 @@ const authService = new AuthService();
  * Build the absolute link that carries the verification token.
  *
  * Absolute because it goes in an email, and from `APP_BASE_URL` rather than a request
- * header — a `Host` a caller controls is how a verification link ends up pointing at
+ * header - a `Host` a caller controls is how a verification link ends up pointing at
  * somebody else's server.
  *
  * @param token - Raw verification token.
@@ -77,7 +77,7 @@ async function sendVerification(registration: Registration): Promise<EmptyResult
  * uniqueness already bounds registering the same address twice, and the resend has a
  * per-account cooldown. Neither says anything about ten thousand different addresses.
  *
- * How much a caller key can be trusted depends on the deployment — see `resolveCallerKey`.
+ * How much a caller key can be trusted depends on the deployment - see `resolveCallerKey`.
  *
  * @param scope - Which budget to count against.
  * @param budget - How many attempts, and over how long.
@@ -101,7 +101,7 @@ async function refuseFloodedCaller(scope: string, budget: RateLimitBudget): Prom
  * to conjure an error and is in fact a throw: that constructor refuses an empty list. So
  * the branch written to handle "a failure that carries no reason" was the one branch that
  * could not return a Result at all. Unreachable today, because every `AuthService` failure
- * supplies an error — but a throw on the failure path of a Result-returning function is
+ * supplies an error - but a throw on the failure path of a Result-returning function is
  * the kind of thing that stays unreachable right up until it is not.
  *
  * @param result - The failed registration.
@@ -177,7 +177,7 @@ export async function registerTeacherAction(values: unknown): Promise<EmptyResul
  *
  * Called from the verification page rather than a form: the visitor arrives by clicking
  * a link, so there is nothing to submit. It is still an action rather than page-render
- * logic because it writes — issuing an identifier is a mutation, and a page that mutated
+ * logic because it writes - issuing an identifier is a mutation, and a page that mutated
  * on GET would fire again on every refresh and every link prefetch.
  *
  * @param token - Raw token from the link.
@@ -209,7 +209,7 @@ export async function verifyEmailAction(token: unknown): Promise<SingleResult<st
  *
  * Sits beside `verifyEmailAction` rather than with the profile screen that started the
  * change, because the caller is the same kind of caller: somebody arriving from an inbox
- * with a token and no session. It takes none and needs none — the token is the proof.
+ * with a token and no session. It takes none and needs none - the token is the proof.
  *
  * Nothing is emailed afterwards. Registration mails the identifier because that is the
  * only way it is ever delivered; here the account already has everything it needs, and a
@@ -241,8 +241,8 @@ export async function confirmEmailChangeAction(token: unknown): Promise<SingleRe
  * Names an unregistered address rather than hiding it: the department asked for an explicit
  * "no account here" over the silent "check your inbox", so an unknown address is a failure
  * carrying `EMAIL_NOT_REGISTERED`. That is a deliberate reversal of the anti-enumeration
- * stance sign-in keeps, and the trade — this screen can now be used to probe which
- * addresses exist — was accepted for it. Every registered case still looks identical: an
+ * stance sign-in keeps, and the trade - this screen can now be used to probe which
+ * addresses exist - was accepted for it. Every registered case still looks identical: an
  * account that is already confirmed, switched off, or inside its cooldown gets the same
  * "check your inbox", with no email sent and no state disclosed.
  *
@@ -276,7 +276,7 @@ export async function resendVerificationAction(email: unknown): Promise<EmptyRes
     );
   }
 
-  // A null payload is a registered account with nothing to send — reported as success.
+  // A null payload is a registered account with nothing to send - reported as success.
   if (result.result) {
     await mail.send(buildVerifyAddressMail(result.result.user.email, result.result.user.name, buildVerifyUrl(result.result.verificationToken)));
   }
@@ -306,7 +306,7 @@ function buildResetUrl(token: string): string {
 /**
  * The request half of forgot-password: mail a reset link to an account that can use one.
  *
- * Shaped exactly like `resendVerificationAction`, including the deliberate reversal — an
+ * Shaped exactly like `resendVerificationAction`, including the deliberate reversal - an
  * unregistered address is named rather than hidden, because the department asked for the
  * explicit answer here too. A registered-but-unusable account (unverified, deactivated, or
  * inside the cooldown) is a silent success with nothing sent.
@@ -346,10 +346,10 @@ export async function requestPasswordResetAction(email: unknown): Promise<EmptyR
  * The apply half of forgot-password: set a new password from a link.
  *
  * A form action rather than the auto-firing effect the email-verification screen uses,
- * because the token is spent by the write — it must be spent on submit, not on the page
+ * because the token is spent by the write - it must be spent on submit, not on the page
  * loading, so a refresh or a link prefetch cannot burn it before the new password is typed.
  *
- * @param values - Raw form values — the token and the two password boxes.
+ * @param values - Raw form values - the token and the two password boxes.
  *
  * @returns Empty success, or a failure carrying the reason's code.
  */

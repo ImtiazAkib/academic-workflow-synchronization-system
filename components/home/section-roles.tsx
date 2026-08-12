@@ -11,14 +11,14 @@ export async function SectionRoles() {
 
   return (
     <section id={SECTION_IDS.ROLES} className="section-py scroll-mt-16">
-      <Container className="flex flex-col gap-10">
-        <div className="flex max-w-2xl flex-col gap-3">
+      <Container className="flex flex-col gap-10 lg:gap-12">
+        <div className="flex max-w-3xl flex-col gap-3">
           <span className="tagline text-primary">{l10n('HOME_ROLES_TAGLINE')}</span>
           <h2>{l10n('HOME_ROLES_TITLE')}</h2>
           <p className="text-medium-normal text-muted-foreground text-pretty">{l10n('HOME_ROLES_DESCRIPTION')}</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           <RoleCard
             visual={ROLE_VISUALS.ADMIN}
             title={l10n('HOME_ROLES_ADMIN_TITLE')}

@@ -20,16 +20,18 @@ export function UsersTable({ users, labels, viewer, onEdit, onApproval, onActiva
   return (
     /*
       The wrapper scrolls and the table refuses to go below its natural width. Without
-      that floor the browser honours the 100% width instead and crushes every column —
+      that floor the browser honours the 100% width instead and crushes every column -
       which is what put three action buttons on top of each other on a phone.
     */
     <div className="border-border w-full overflow-x-auto rounded-lg border">
-      <Table aria-label={labels.tableLabel} className="min-w-3xl">
+      <Table aria-label={labels.tableLabel} className="min-w-4xl">
         <TableHeader>
           <TableRow>
             <TableHead>{labels.columnName}</TableHead>
             <TableHead>{labels.columnEmail}</TableHead>
             <TableHead>{labels.columnRole}</TableHead>
+            <TableHead>{labels.columnDepartmentBatch}</TableHead>
+            <TableHead>{labels.columnJoined}</TableHead>
             <TableHead>{labels.columnStatus}</TableHead>
             <TableHead className="text-end">{labels.columnActions}</TableHead>
           </TableRow>

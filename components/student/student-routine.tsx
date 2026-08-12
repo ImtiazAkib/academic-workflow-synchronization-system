@@ -18,7 +18,7 @@ type StudentRoutineProps = {
 
 /*
   The same five-column week the administrator and the teacher read, so a student is not
-  learning a second layout for the same information — day columns rather than a
+  learning a second layout for the same information - day columns rather than a
   time-of-day grid, for the reason recorded on `ScheduleWeekView`.
 
   `today` is resolved in `Asia/Dhaka` by the page. Never from the runtime clock: a Vercel

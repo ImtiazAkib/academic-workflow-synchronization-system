@@ -38,7 +38,7 @@ type EmailVerificationProps = {
   A client component rather than page-render logic, because confirming an address
   *writes*: it flips `emailVerified` and mints an identifier. A page that did that while
   rendering would fire again on every refresh, every back-navigation and every link
-  prefetch — and the second run would find the token already spent.
+  prefetch - and the second run would find the token already spent.
 
   Running it from an effect means it happens once, on a real visit, in response to
   somebody actually arriving.
@@ -51,7 +51,7 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
   /*
     React runs effects twice in development's strict mode. The token is single-use, so
     the second call would find it spent and show a failure over a success that already
-    happened — this makes the request fire once per mount whatever the mode.
+    happened - this makes the request fire once per mount whatever the mode.
   */
   const hasRequested = useRef(false);
 
@@ -90,7 +90,7 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.REGISTER.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.REGISTER.HREF} />}>
           {labels.registerCta}
         </Button>
       </div>
@@ -109,7 +109,7 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
 
       {/*
         Shown large and copyable because this is the one moment the identifier is on a
-        screen. It is also emailed — a tab gets closed, an inbox does not.
+        screen. It is also emailed - a tab gets closed, an inbox does not.
       */}
       <p className="border-border bg-muted/40 w-full rounded-lg border px-4 py-3 font-mono text-2xl font-bold tracking-widest">{loginId}</p>
 
@@ -122,7 +122,7 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
 
       <p className="border-border text-muted-foreground w-full rounded-lg border border-dashed px-4 py-3 text-xs">{labels.approvalNote}</p>
 
-      <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+      <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
         {labels.signInCta}
       </Button>
     </div>

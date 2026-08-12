@@ -13,7 +13,7 @@ import type { FileConversionDto } from '@/types';
 const conversionService = new ConversionService();
 
 type UploadsPanelProps = {
-  /** Only this account's uploads. Omit for every account's — the administrator's view. */
+  /** Only this account's uploads. Omit for every account's - the administrator's view. */
   userId?: string;
 };
 
@@ -24,8 +24,8 @@ type UploadsPanelProps = {
   An async server component rather than a client one handed props, for the same reason the
   notices feed is: the read is scoped on the server. A teacher passes their id and sees
   their own conversions; the administrator passes none and sees the department's. The
-  localizing and formatting happen here too — status words, failure reasons, sizes and
-  times — so the client half only paints the rows and re-polls while any is still running.
+  localizing and formatting happen here too - status words, failure reasons, sizes and
+  times - so the client half only paints the rows and re-polls while any is still running.
 */
 export async function UploadsPanel({ userId }: UploadsPanelProps) {
   const l10n = await getTranslations();

@@ -24,7 +24,7 @@ type UsersFiltersProps = {
 export function UsersFilters({ labels }: UsersFiltersProps) {
   /*
     `startTransition` handed to nuqs so `isPending` follows the `shallow: false` round trip
-    that re-runs the server query — without it a filter change gives no sign the list is
+    that re-runs the server query - without it a filter change gives no sign the list is
     refetching. The spinner by the search field and `aria-busy` on the group are that sign.
   */
   const [isPending, startTransition] = useTransition();
@@ -39,8 +39,8 @@ export function UsersFilters({ labels }: UsersFiltersProps) {
   );
 
   /*
-    The text box keeps its own copy so typing stays instant. The URL — and with it the
-    server round trip — follows on a throttle rather than on every keystroke.
+    The text box keeps its own copy so typing stays instant. The URL - and with it the
+    server round trip - follows on a throttle rather than on every keystroke.
   */
   const [search, setSearch] = useState(filters.query);
 

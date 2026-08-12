@@ -47,11 +47,11 @@ type ResetPasswordFormProps = {
 
 /*
   A form, not the auto-firing effect the email-verification screen uses. The token is spent
-  by the write, so it must be spent on submit — a refresh or a link prefetch would otherwise
+  by the write, so it must be spent on submit - a refresh or a link prefetch would otherwise
   burn it before the new password is even typed.
 
   Three end states: the form itself, a full-screen link failure (the token was invalid or
-  expired — the two cases typing again cannot fix, which send the visitor back to ask for a
+  expired - the two cases typing again cannot fix, which send the visitor back to ask for a
   fresh link), and a success with the way on to sign-in.
 */
 export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
@@ -83,7 +83,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
 
     /*
       An invalid or expired link is not something resubmitting fixes, so it earns the full
-      failure screen — the same two cases the confirmation link has. Anything else is a
+      failure screen - the same two cases the confirmation link has. Anything else is a
       transient fault worth a line above the still-usable form.
     */
     if (code === VALIDATION.VERIFICATION_LINK_INVALID.CODE || code === VALIDATION.VERIFICATION_LINK_EXPIRED.CODE) {
@@ -102,7 +102,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.FORGOT_PASSWORD.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.FORGOT_PASSWORD.HREF} />}>
           {labels.requestNewCta}
         </Button>
       </div>
@@ -116,7 +116,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
         <h1 className="text-2xl">{labels.successTitle}</h1>
         <p className="text-muted-foreground text-sm">{labels.successDescription}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
           {labels.signInCta}
         </Button>
       </div>
@@ -159,7 +159,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
         {errors.confirmPassword && <p className="text-destructive text-sm">{labels.fieldErrors.passwordsDoNotMatch}</p>}
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="w-full">
+      <Button type="submit" variant="default" disabled={isSubmitting} className="w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

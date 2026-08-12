@@ -63,7 +63,7 @@ export default async function RegistrationReceivedPage() {
             </p>
           )}
 
-          <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+          <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
             {l10n('REGISTRATION_RECEIVED_SIGN_IN')}
           </Button>
         </div>

@@ -17,7 +17,7 @@ type CoursesFiltersProps = {
 
 /*
   The filter lives in the URL rather than component state, so a filtered view can be
-  bookmarked and survives a refresh. `shallow: false` is what makes that work — the
+  bookmarked and survives a refresh. `shallow: false` is what makes that work - the
   change reaches the server component, which re-runs the query.
 */
 export function CoursesFilters({ labels }: CoursesFiltersProps) {

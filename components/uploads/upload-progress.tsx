@@ -10,7 +10,7 @@ import { FILE_CONVERSION_STATUS } from '@/constants/storage.const';
 import { Badge, Spinner, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
 
 /**
- * One conversion, reduced to what the table renders — every string already localized and
+ * One conversion, reduced to what the table renders - every string already localized and
  * formatted on the server, so this component only paints and polls.
  */
 export type UploadRowView = {
@@ -40,7 +40,7 @@ type UploadProgressProps = {
 /*
   The conversions list, and it refreshes itself while any of them is still running.
 
-  A conversion finishes on the server, off the back of the upload's response — nothing
+  A conversion finishes on the server, off the back of the upload's response - nothing
   pushes that news to this page. So while a row is `processing`, the component re-runs the
   server component on an interval; the moment none are, it stops, because there is nothing
   left to wait for and a dashboard that polls forever is a dashboard that never sleeps.
@@ -82,9 +82,7 @@ export function UploadProgress({ rows, labels }: UploadProgressProps) {
 
               <TableCell>
                 <Badge
-                  variant={
-                    x.status === FILE_CONVERSION_STATUS.DONE ? 'default' : x.status === FILE_CONVERSION_STATUS.FAILED ? 'destructive' : 'secondary'
-                  }
+                  variant={x.status === FILE_CONVERSION_STATUS.DONE ? 'success' : x.status === FILE_CONVERSION_STATUS.FAILED ? 'destructive' : 'info'}
                   className="inline-flex items-center gap-1.5">
                   {x.status === FILE_CONVERSION_STATUS.PROCESSING && <Spinner className="size-3" />}
                   {x.statusLabel}

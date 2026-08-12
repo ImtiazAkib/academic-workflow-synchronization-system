@@ -27,7 +27,7 @@ type ResendConfirmationFormProps = {
 
 /*
   Names an unregistered address rather than hiding it. The screen used to say the same thing
-  whatever happened, to keep anybody from testing which addresses have accounts — but the
+  whatever happened, to keep anybody from testing which addresses have accounts - but the
   department asked for the explicit "no account here" instead, accepting that trade. A
   registered address that is already confirmed, switched off, or inside its cooldown still
   gets the neutral "check your inbox", so only the not-registered case is disclosed.
@@ -83,7 +83,7 @@ export function ResendConfirmationForm({ labels }: ResendConfirmationFormProps) 
         <Input id="resend-email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} />
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSending || email.length === 0} className="w-full">
+      <Button type="submit" variant="default" disabled={isSending || email.length === 0} className="w-full">
         {isSending ? labels.submitting : labels.submit}
       </Button>
     </form>

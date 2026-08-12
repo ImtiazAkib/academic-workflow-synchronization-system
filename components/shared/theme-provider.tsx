@@ -18,7 +18,7 @@ type ThemeProviderProps = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 /**
- * Whether a chosen theme resolves to dark right now — which for `system` is a question
+ * Whether a chosen theme resolves to dark right now - which for `system` is a question
  * only the browser can answer, and only at the moment it is asked.
  *
  * @param theme - The chosen theme.
@@ -34,7 +34,7 @@ function isDarkFor(theme: AppTheme): boolean {
  *
  * Three writes, and the cookie is the one that matters beyond this render: it is what lets
  * the next full page load arrive already dark, from the server, with no script and no
- * flash. `dark`/`light` only — never `system`, because the server cannot resolve that, so
+ * flash. `dark`/`light` only - never `system`, because the server cannot resolve that, so
  * the resolution is done here and the answer is stored.
  *
  * @param theme - The chosen theme.
@@ -54,8 +54,8 @@ function applyTheme(theme: AppTheme): void {
 /**
  * The stored choice, or `system` when there is none or the stored value is junk.
  *
- * Guarded for the server, where there is no `localStorage`. The mismatch this creates —
- * `system` on the server, the real choice on the client — never reaches rendered HTML:
+ * Guarded for the server, where there is no `localStorage`. The mismatch this creates -
+ * `system` on the server, the real choice on the client - never reaches rendered HTML:
  * the class lives on `<html>` via the cookie, and the one control that shows the choice
  * defers its pressed state until after mount.
  *
@@ -77,7 +77,7 @@ function readStoredTheme(): AppTheme {
  * Most elements carry `transition-colors`, so without this a theme switch is a
  * second-long ripple across the page rather than a switch. A stylesheet turning every
  * transition off is added, the change is made, a reflow is forced to commit it, and the
- * stylesheet is removed on the next frame — so ordinary hovers keep their transition and
+ * stylesheet is removed on the next frame - so ordinary hovers keep their transition and
  * only the theme flip skips one.
  *
  * @param change - The write to make while transitions are off.
@@ -99,7 +99,7 @@ function withoutTransitions(change: () => void): void {
 /*
   The theme, hand-rolled rather than `next-themes`, and script-free by design.
 
-  `next-themes` — and any approach that puts a no-flash `<script>` in the tree — renders
+  `next-themes` - and any approach that puts a no-flash `<script>` in the tree - renders
   that script from within the root layout, which re-renders on the client every language
   switch; React 19.2 then errors on the reconciled `<script>` every time. So there is no
   script here at all. The no-flash job is done on the server: the root layout reads the
@@ -111,7 +111,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<AppTheme>(readStoredTheme);
 
   /*
-    Keep `<html>` in step with the chosen theme, and — while the choice is `system` — with
+    Keep `<html>` in step with the chosen theme, and - while the choice is `system` - with
     the operating system changing under it, so a laptop switching to night mode at sunset
     is followed without a reload. Re-subscribed whenever the choice changes, so the listener
     is only attached while it can matter.
@@ -133,7 +133,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   /*
     Follow the choice across tabs. Changing the theme in one tab writes `localStorage`,
-    which fires a `storage` event in every other tab of the same origin — so they move
+    which fires a `storage` event in every other tab of the same origin - so they move
     together rather than disagreeing until a reload.
   */
   useEffect(() => {

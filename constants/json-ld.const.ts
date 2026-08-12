@@ -19,7 +19,7 @@ type JsonLdGraphInput = {
  *
  * The organization is the project itself. Once the department's own identity is
  * known, this becomes an `EducationalOrganization` with its address and contact
- * details — inventing them now would put false data in front of crawlers.
+ * details - inventing them now would put false data in front of crawlers.
  *
  * @param input - Absolute origin, page description and language tag.
  *

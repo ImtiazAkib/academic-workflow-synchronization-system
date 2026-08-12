@@ -5,7 +5,7 @@ type JsonLdProps = {
 };
 
 /*
-  Structured data is a script tag, not markup React can render as children — hence
+  Structured data is a script tag, not markup React can render as children - hence
   `dangerouslySetInnerHTML`, which is Next's documented approach. The `Graph` type
   comes from schema-dts, so a node that does not exist in the schema.org vocabulary
   is a compile error rather than something a validator finds after deployment.

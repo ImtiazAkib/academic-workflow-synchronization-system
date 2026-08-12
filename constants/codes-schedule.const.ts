@@ -41,7 +41,7 @@ export const SCHEDULE_AUTH = {
   validation error: the record is well-formed, the slot is simply taken. They come back
   as a failure the dialog renders inline, never as a thrown error.
 
-  There were three. `ROOM_TAKEN` (33000) went when the room field did — nothing tracks
+  There were three. `ROOM_TAKEN` (33000) went when the room field did - nothing tracks
   where a class physically sits any more, so two classes can share a slot as long as the
   teacher and the course differ. The code is left unused rather than reassigned, so an
   old log line still decodes to what it meant.

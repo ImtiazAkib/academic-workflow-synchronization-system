@@ -11,7 +11,7 @@ type GlobalErrorProps = {
 
 /**
  * A store that never changes, so `useSyncExternalStore` reads the locale once per render
- * with the server and client snapshots it needs to stay hydration-safe — the same use the
+ * with the server and client snapshots it needs to stay hydration-safe - the same use the
  * theme selector puts it to. An effect that set state would trip
  * `react-hooks/set-state-in-effect` and say the same thing one render later.
  *
@@ -22,7 +22,7 @@ function subscribeToNothing(): () => void {
 }
 
 /**
- * The locale carried by the URL — `bn-BD` is served under `/bn`.
+ * The locale carried by the URL - `bn-BD` is served under `/bn`.
  *
  * @returns The active locale, on the client.
  */
@@ -36,7 +36,7 @@ function readLocale(): 'en' | 'bn' {
   This is the root global-error boundary: it replaces the whole root layout when rendering
   it throws, so it runs *outside* the next-intl provider and cannot call the translator. Its
   copy therefore lives here, in both languages, flagged for the same review as every other
-  Bangla string. (Kept out of `l10n.csv` on purpose — a key there would only mislead, since
+  Bangla string. (Kept out of `l10n.csv` on purpose - a key there would only mislead, since
   nothing here can read it.)
 */
 const COPY = {
@@ -57,7 +57,7 @@ export default function GlobalError({ reset }: GlobalErrorProps) {
     The one locale signal left outside the provider is the URL: `bn-BD` is served under the
     `/bn` prefix (`localePrefix: 'as-needed'`), so the pathname carries it. The server
     snapshot is English and the client snapshot reads the path, so the server and the first
-    client render agree — a Bangla page shows English for the blink before hydration, which
+    client render agree - a Bangla page shows English for the blink before hydration, which
     for an error screen is a fair trade for correctness the rest of the time.
   */
   const locale = useSyncExternalStore(subscribeToNothing, readLocale, () => 'en' as const);

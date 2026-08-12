@@ -53,10 +53,9 @@ export default async function TeacherCoursesPage() {
         </div>
       ) : (
         <div className="border-border w-full overflow-x-auto rounded-lg border">
-          <Table aria-label={l10n('TEACHER_COURSES_TITLE')} className="min-w-2xl">
+          <Table aria-label={l10n('TEACHER_COURSES_TITLE')} className="min-w-xl">
             <TableHeader>
               <TableRow>
-                <TableHead>{l10n('COURSES_TABLE_CODE')}</TableHead>
                 <TableHead>{l10n('COURSES_TABLE_TITLE')}</TableHead>
                 <TableHead>{l10n('COURSES_TABLE_SEMESTER')}</TableHead>
                 <TableHead>{l10n('COURSES_TABLE_CREDITS')}</TableHead>
@@ -67,12 +66,16 @@ export default async function TeacherCoursesPage() {
             <TableBody>
               {courses.map(x => (
                 <TableRow key={x.courseId}>
-                  <TableCell className="font-medium">{x.code}</TableCell>
-                  <TableCell>{x.title}</TableCell>
-                  <TableCell>{resolveSemesterLabel(x.semester)}</TableCell>
-                  <TableCell>{x.credits}</TableCell>
                   <TableCell>
-                    <Badge variant={x.isActive ? 'default' : 'destructive'}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium">{x.title}</span>
+                      <span className="text-muted-foreground font-mono text-xs">{x.code}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{resolveSemesterLabel(x.semester)}</TableCell>
+                  <TableCell className="text-muted-foreground">{x.credits}</TableCell>
+                  <TableCell>
+                    <Badge variant={x.isActive ? 'success' : 'neutral'}>
                       {x.isActive ? l10n('COURSES_STATUS_ACTIVE') : l10n('COURSES_STATUS_INACTIVE')}
                     </Badge>
                   </TableCell>

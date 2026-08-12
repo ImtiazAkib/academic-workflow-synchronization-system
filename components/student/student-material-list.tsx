@@ -20,7 +20,7 @@ type StudentMaterialListProps = {
   handout for one course, not to sort forty files.
 
   There is no delete and no upload here, and no `canManage` flag that could turn one on.
-  The student area has no write path — the absence is the guarantee.
+  The student area has no write path - the absence is the guarantee.
 */
 export function StudentMaterialList({ materials, courses, labels }: StudentMaterialListProps) {
   const groups = groupMaterialsByCourse(materials, courses);
@@ -39,7 +39,7 @@ export function StudentMaterialList({ materials, courses, labels }: StudentMater
           ) : (
             // The wrapper scrolls and the table keeps its natural width, so columns never crush.
             <div className="border-border w-full overflow-x-auto rounded-lg border">
-              <Table aria-label={`${course.code} — ${labels.tableLabel}`} className="min-w-xl">
+              <Table aria-label={`${course.code} - ${labels.tableLabel}`} className="min-w-xl">
                 <TableHeader>
                   <TableRow>
                     <TableHead>{labels.columnTitle}</TableHead>
