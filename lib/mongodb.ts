@@ -25,8 +25,20 @@ const cache: MongooseCache = globalWithMongoose.mongooseCache ?? { connection: n
 globalWithMongoose.mongooseCache = cache;
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
-  if (cache.connection) {
+  /*
+    A cached Mongoose object is not necessarily a live socket. After an idle period the
+    driver can close it while this module cache survives, which otherwise leaves the
+    first request in a newly opened tab waiting on a dead connection. Reuse only an
+    actively connected instance; a disconnected one must go through the normal connect
+    path again.
+  */
+  if (cache.connection?.connection.readyState === 1) {
     return cache.connection;
+  }
+
+  if (cache.connection) {
+    cache.connection = null;
+    cache.promise = null;
   }
 
   if (!cache.promise) {

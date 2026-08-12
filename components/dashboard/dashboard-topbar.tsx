@@ -49,7 +49,7 @@ export function DashboardTopbar({
   locale,
 }: DashboardTopbarProps) {
   return (
-    <header className="border-border bg-background sticky top-0 z-40 border-b">
+    <header className="border-border bg-background z-40 shrink-0 border-b">
       <div className="flex h-16 items-center gap-2 px-4 lg:px-8">
         <DashboardMobileNav
           role={role}

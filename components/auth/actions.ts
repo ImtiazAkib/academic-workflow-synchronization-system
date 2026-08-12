@@ -67,7 +67,7 @@ export async function signInAction(values: unknown): Promise<SingleResult<UserRo
 }
 
 /**
- * Sign out and return to the landing page in the current language.
+ * Sign out and return to the sign-in page in the current language.
  *
  * The locale arrives as a hidden form field rather than being looked up: Server
  * Actions cannot read `next/root-params`. It is validated here because a form field
@@ -81,5 +81,5 @@ export async function signOutAction(formData: FormData): Promise<void> {
   const submitted = formData.get(SESSION.LOCALE_FIELD);
   const locale = hasLocale(routing.locales, submitted) ? submitted : DEFAULT_APP_LOCALE;
 
-  redirect({ href: ROUTES.HOME.HREF, locale });
+  redirect({ href: ROUTES.SIGN_IN.HREF, locale });
 }

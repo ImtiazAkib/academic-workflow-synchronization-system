@@ -27,7 +27,7 @@ type DashboardSidebarProps = {
 */
 export function DashboardSidebar({ role, navLabels, navAriaLabel, logoLabel, user, profileLabel }: DashboardSidebarProps) {
   return (
-    <aside className="bg-sidebar border-sidebar-border hidden w-60 shrink-0 flex-col border-r lg:flex">
+    <aside className="bg-sidebar border-sidebar-border hidden h-dvh w-60 shrink-0 flex-col border-r lg:flex">
       <div className="border-sidebar-border flex h-16 shrink-0 items-center border-b px-4">
         <Link href={ROUTES.HOME.HREF} className="flex items-center gap-2.5">
           <AppLogo label={logoLabel} className="size-8" />

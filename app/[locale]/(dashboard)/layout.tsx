@@ -7,7 +7,7 @@ import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
 import { requireSession } from '@/lib/auth';
 import { resolveInitials, resolveRoleLabel } from '@/lib/utils';
 
-import { DashboardSidebar, DashboardTopbar } from '@/components/dashboard';
+import { DashboardSidebar, DashboardTitleSync, DashboardTopbar } from '@/components/dashboard';
 import { Toaster } from '@/components/shared';
 import { DialogLabelsProvider } from '@/components/ui';
 
@@ -77,7 +77,8 @@ export default async function DashboardLayout({ children, params }: DashboardLay
       crosses from here — a server component — into the client context once.
     */
     <DialogLabelsProvider close={l10n('DIALOG_CLOSE')}>
-      <div className="flex min-h-dvh flex-col lg:flex-row">
+      <DashboardTitleSync />
+      <div className="flex h-dvh flex-col overflow-hidden lg:flex-row">
         <DashboardSidebar
           role={sessionUser.role}
           navLabels={navLabels}
@@ -87,7 +88,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <DashboardTopbar
             role={sessionUser.role}
             navLabels={navLabels}
@@ -110,7 +111,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             locale={locale}
           />
 
-          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 p-4 lg:p-8">
+          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-8">
             {children}
           </main>
         </div>

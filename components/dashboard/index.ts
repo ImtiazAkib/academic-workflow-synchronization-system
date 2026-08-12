@@ -7,3 +7,4 @@ export * from './dashboard-sidebar';
 export * from './dashboard-stat';
 export * from './dashboard-today-schedule';
 export * from './dashboard-topbar';
+export * from './dashboard-title-sync';

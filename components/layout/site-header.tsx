@@ -64,7 +64,7 @@ export async function SiteHeader() {
           <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
 
           {sessionUser ? (
-            <Button variant="default" size="sm" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} />}>
+            <Button variant="default" size="sm" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} prefetch={false} />}>
               {l10n('NAV_DASHBOARD')}
             </Button>
           ) : (

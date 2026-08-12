@@ -1,4 +1,4 @@
-import { CalendarDays, FolderOpen, GraduationCap, Users } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, FolderOpen, GraduationCap, Sparkles, Users } from 'lucide-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 
 import { Link } from '@/l10n/navigation';
@@ -64,21 +64,41 @@ export default async function StudentDashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <PageHeader title={l10n('DASHBOARD_STUDENT_TITLE')} description={l10n('DASHBOARD_STUDENT_INTRO')} />
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <header className="border-border bg-card relative overflow-hidden rounded-2xl border px-5 py-5 sm:px-7 sm:py-6">
+        <div className="bg-primary/8 pointer-events-none absolute -top-16 -right-10 size-52 rounded-full blur-3xl" aria-hidden />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3.5">
+            <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm">
+              <GraduationCap className="size-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <PageHeader title={l10n('DASHBOARD_STUDENT_TITLE')} description={l10n('DASHBOARD_STUDENT_INTRO')} />
+            </div>
+          </div>
 
-        {semester && <p className="text-muted-foreground text-xs">{l10n('STUDENT_SEMESTER_BADGE', { semester: resolveSemesterLabel(semester) })}</p>}
-      </div>
+          {semester && (
+            <div className="border-primary/15 bg-primary-muted/60 text-primary inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm">
+              <Sparkles className="size-3.5" aria-hidden />
+              {l10n('STUDENT_SEMESTER_BADGE', { semester: resolveSemesterLabel(semester) })}
+            </div>
+          )}
+        </div>
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-6 lg:col-span-2">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,0.85fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
           {!semester ? (
             <EmptyState icon={GraduationCap} title={l10n('STUDENT_NO_SEMESTER_TITLE')} description={l10n('STUDENT_NO_SEMESTER_DESCRIPTION')} />
           ) : (
             <>
-              <section className="flex flex-col gap-3">
-                <h2 className="text-section-title">{l10n('STUDENT_NEXT_TITLE')}</h2>
+              <section className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-primary-muted text-primary flex size-8 items-center justify-center rounded-lg">
+                    <CalendarDays className="size-4" aria-hidden />
+                  </span>
+                  <h2 className="text-section-title">{l10n('STUDENT_NEXT_TITLE')}</h2>
+                </div>
 
                 <DashboardNextClass
                   session={focus}
@@ -94,7 +114,7 @@ export default async function StudentDashboardPage() {
                 />
               </section>
 
-              <section className="flex flex-col gap-3">
+              <section className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="text-section-title">{l10n('STUDENT_TODAY_TITLE')}</h2>
 
@@ -119,7 +139,7 @@ export default async function StudentDashboardPage() {
                 />
               </section>
 
-              <section className="flex flex-col gap-3">
+              <section className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="text-section-title">{l10n('DASHBOARD_RECENT_MATERIALS_TITLE')}</h2>
 
@@ -152,31 +172,41 @@ export default async function StudentDashboardPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-6">
-          <section className="flex flex-col gap-3">
-            <h2 className="text-section-title">{l10n('DASHBOARD_NOTICES_TITLE')}</h2>
+        <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-6">
+          <section className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+              <span className="bg-primary-muted text-primary flex size-8 items-center justify-center rounded-lg">
+                <Sparkles className="size-4" aria-hidden />
+              </span>
+              <h2 className="text-section-title">{l10n('DASHBOARD_NOTICES_TITLE')}</h2>
+            </div>
 
             {/* Addressed to `all` or `students` — the query cannot return a teachers-only notice. */}
             <DashboardNotices role={USER_ROLES.STUDENT} viewerSession={studentSession} />
           </section>
 
-          <section className="flex flex-col gap-3">
+          <section className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
             <h2 className="text-section-title">{l10n('STUDENT_LINKS_TITLE')}</h2>
 
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
               {links.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="border-border bg-card hover:border-primary/40 flex flex-col gap-1.5 rounded-lg border p-4 transition-colors">
-                  <link.icon className="text-muted-foreground size-5" aria-hidden />
-                  <span className="text-card-title">{link.label}</span>
-                  <span className="text-muted-foreground line-clamp-2 text-xs">{link.hint}</span>
+                  className="group border-border bg-surface-muted/45 hover:border-primary/35 hover:bg-primary-muted/50 flex min-w-0 items-center gap-3 rounded-xl border p-3 transition-colors">
+                  <span className="bg-card text-primary flex size-9 shrink-0 items-center justify-center rounded-lg border shadow-sm">
+                    <link.icon className="size-4" aria-hidden />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm font-semibold">{link.label}</span>
+                    <span className="text-muted-foreground line-clamp-1 text-xs">{link.hint}</span>
+                  </span>
+                  <ArrowUpRight className="text-muted-foreground group-hover:text-primary size-4 shrink-0 transition-colors" aria-hidden />
                 </Link>
               ))}
             </div>
           </section>
-        </div>
+        </aside>
       </div>
     </div>
   );
