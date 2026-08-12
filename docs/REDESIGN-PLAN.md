@@ -68,7 +68,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R9](#r9)   | Users & teacher directory              | 10, 19, 20  | ✅ Done        |
 | [R10](#r10) | Forms & dialogs consistency pass       | 11, 21–24   | ✅ Done        |
 | [R11](#r11) | Authentication screens                 | 12, 35      | ✅ Done        |
-| [R12](#r12) | Public landing page                    | 13, 34      | ⬜ Not started |
+| [R12](#r12) | Public landing page                    | 13, 34      | ✅ Done        |
 | [R13](#r13) | Responsive, a11y & interaction polish  | 14, 15, 16  | ⬜ Not started |
 
 ## Definition of done (every step)
