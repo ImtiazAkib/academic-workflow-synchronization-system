@@ -13,7 +13,7 @@ type NoticeListProps = {
 /*
   Cards in a column rather than rows in a table, unlike every other admin list in the app.
   A notice is a paragraph of prose, and prose in a table cell either wraps into an
-  unreadable column or gets truncated into uselessness — which for an announcement means
+  unreadable column or gets truncated into uselessness - which for an announcement means
   the screen shows that something was said without showing what.
 
   The same list serves the admin screen and the feed on each role's home, so the two can

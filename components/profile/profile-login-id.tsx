@@ -17,8 +17,8 @@ type ProfileLoginIdProps = {
   At the top of the profile and deliberately the largest thing on it.
 
   The identifier is shown once, on the screen that follows a confirmation link, and mailed
-  once. Both of those are moments somebody moves past quickly — a tab gets closed, an inbox
-  gets filtered — and after them there is no other way to learn what opens the account.
+  once. Both of those are moments somebody moves past quickly - a tab gets closed, an inbox
+  gets filtered - and after them there is no other way to learn what opens the account.
   This is where somebody comes when they cannot find that message, so it has to be the
   first thing they see rather than a row in a table of details.
 
@@ -54,7 +54,7 @@ export function ProfileLoginId({ loginId, labels }: ProfileLoginIdProps) {
       </div>
 
       {/*
-        Administrators reach this screen too, and hold no identifier at all — they sign in
+        Administrators reach this screen too, and hold no identifier at all - they sign in
         with their email address. Saying so is better than an empty box, which reads as
         something that failed to load.
       */}

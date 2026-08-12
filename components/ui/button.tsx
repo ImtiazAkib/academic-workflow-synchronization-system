@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
   /*
     `border border-transparent` has to be in the base: the `outline` variant only sets
-    `border-border`, a color, and Tailwind's reset leaves the width at 0 — so without a
+    `border-border`, a color, and Tailwind's reset leaves the width at 0 - so without a
     width here an outline button renders as bare text. Transparent by default keeps
     every variant the same height.
   */
@@ -19,7 +19,7 @@ const buttonVariants = cva(
         One hierarchy (R2a): primary (solid navy), outline (1px neutral border), secondary
         (filled slate), ghost, destructive, link. The old duplicate `app*` family existed only
         because the canonical `default` scoped its hover to anchors (`[a]:hover`), so a real
-        <button> never lit up — now fixed with `hover:bg-primary-hover`, and the call sites
+        <button> never lit up - now fixed with `hover:bg-primary-hover`, and the call sites
         migrated off `appPrimary`/`appOutline`.
       */
       variant: {
@@ -35,7 +35,7 @@ const buttonVariants = cva(
       /*
         10 / 9 / 11, matching Input and SelectTrigger step for step. The shadcn scale
         starts at h-8, two steps under the h-10 field, so any button beside an input
-        sat visibly short — which is what put `className="h-10"` on every call site.
+        sat visibly short - which is what put `className="h-10"` on every call site.
       */
       size: {
         default: 'h-10 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',

@@ -29,7 +29,7 @@ type DashboardTopbarProps = {
 /*
   A solid institutional bar, not the old frosted-glass one. One row: on the left the mobile menu
   button (below `lg`, where the sidebar is hidden) and the location breadcrumb; on the right the
-  utilities — theme, language, account. The below-`lg` nav now lives in the drawer the menu button
+  utilities - theme, language, account. The below-`lg` nav now lives in the drawer the menu button
   opens, so this bar no longer carries a second scrolling nav row.
 */
 export function DashboardTopbar({

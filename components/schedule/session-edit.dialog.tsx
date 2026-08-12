@@ -30,7 +30,7 @@ type SessionEditDialogProps = {
 
 /*
   Mounted only while a session is selected and keyed on its id, so `defaultValues` fills
-  the form on mount rather than needing an effect — and a stale conflict from the
+  the form on mount rather than needing an effect - and a stale conflict from the
   previous attempt is cleared for free.
 */
 export function SessionEditDialog({ session, courses, teachers, labels, onUpdated, onOpenChange }: SessionEditDialogProps) {

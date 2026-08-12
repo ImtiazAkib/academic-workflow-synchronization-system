@@ -50,7 +50,7 @@ function SelectContent({
   /*
     Base UI defaults this to `true`, which lifts the popup over the trigger so the
     selected row lands under the cursor. It reads as the list covering the control it
-    belongs to, so the list opens below the trigger instead — an ordinary dropdown.
+    belongs to, so the list opens below the trigger instead - an ordinary dropdown.
   */
   alignItemWithTrigger = false,
   ...props

@@ -20,18 +20,18 @@ import type { NoticeCreateFormLabels } from './notices.types';
 
 type NoticeCreateFormProps = {
   labels: NoticeCreateFormLabels;
-  /** The intake sessions a session notice may target — the department's current batches. */
+  /** The intake sessions a session notice may target - the department's current batches. */
   sessions: string[];
   /**
    * Whether the audience picker is offered. An administrator chooses it; a teacher does
-   * not — their general notices always go to students, so the field is simply absent.
+   * not - their general notices always go to students, so the field is simply absent.
    */
   canChooseAudience: boolean;
-  /** Where publishing or cancelling returns to — the admin or the teacher notices list. */
+  /** Where publishing or cancelling returns to - the admin or the teacher notices list. */
   listHref: typeof ROUTES.ADMIN_NOTICES.HREF | typeof ROUTES.TEACHER_NOTICES.HREF;
-  /** The bucket is over the block line — an image cannot be attached, but text still publishes. */
+  /** The bucket is over the block line - an image cannot be attached, but text still publishes. */
   storageBlocked: boolean;
-  /** Past the warn line but not the block line — attaching still works, but say so. */
+  /** Past the warn line but not the block line - attaching still works, but say so. */
   storageNearFull: boolean;
 };
 
@@ -47,7 +47,7 @@ function revoke(url: string | null): void {
 }
 
 /*
-  A page rather than a dialog, matching the account, course and class screens — the work
+  A page rather than a dialog, matching the account, course and class screens - the work
   gets its own URL, so it survives a refresh and can be linked.
 
   The plan named this a dialog, and the body is why it is not one. Five thousand characters
@@ -59,7 +59,7 @@ function revoke(url: string | null): void {
   It posts `FormData` to `/api/notices` rather than calling a Server Action, because a
   notice may carry a picture and an action serializes its arguments. The text fields still
   go through react-hook-form and `NoticeCreateSchema`, so the browser and the server ask
-  exactly the same questions — including "is there a body or an image", which neither
+  exactly the same questions - including "is there a body or an image", which neither
   field can answer alone. That is why the file lives in the form's values rather than in a
   ref beside them: the rule is about the pair.
 
@@ -89,7 +89,7 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
   } = useForm<NoticeCreateInput, undefined, NoticeCreateOutput>({
     resolver: zodResolver(NoticeCreateSchema),
     /*
-      `all` is the default audience for an administrator deliberately — it reaches everybody
+      `all` is the default audience for an administrator deliberately - it reaches everybody
       the notice might concern, so a slip of attention over-delivers rather than silently
       missing the people it was for. A teacher has no audience choice, so their default is
       the only value it can take: students.
@@ -263,7 +263,7 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
         </div>
       )}
 
-      {/* A session notice is addressed by intake — the batches it should reach, and no others. */}
+      {/* A session notice is addressed by intake - the batches it should reach, and no others. */}
       {isSession && (
         <div className="flex flex-col gap-2">
           <span className="text-foreground text-sm font-medium">{labels.fields.sessions}</span>
@@ -334,7 +334,7 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
         <p className="text-muted-foreground text-xs">{labels.imageHint}</p>
 
         {/*
-          Only the picture is refused when the bucket is full — a text notice still goes out,
+          Only the picture is refused when the bucket is full - a text notice still goes out,
           so the message sits under the image field rather than at the top of the form.
         */}
         {storageBlocked ? (
@@ -351,7 +351,7 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
 
         {/*
           Shown before publishing, because a picture is the one field whose mistake is
-          invisible in the form — a wrong file has a plausible name, and the only way to
+          invisible in the form - a wrong file has a plausible name, and the only way to
           know it is the wrong page of the circular is to look at it.
         */}
         {previewUrl && (

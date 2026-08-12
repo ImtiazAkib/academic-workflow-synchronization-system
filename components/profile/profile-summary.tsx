@@ -17,7 +17,7 @@ type ProfileSummaryProps = {
   Everything on this screen that somebody may read and may not change.
 
   The division is not cosmetic. A roll number, a session, a semester, a department, a role
-  and an approval are the department's record of a person — issued by the application or
+  and an approval are the department's record of a person - issued by the application or
   set by an administrator at the moment they are already checking who somebody is. Showing
   them matters, because "what does the office have written down about me" is a real
   question and this is the only screen that answers it. Making them editable would be a
@@ -57,7 +57,7 @@ export function ProfileSummary({ loginId, facts, courses, labels }: ProfileSumma
               <ul className="flex flex-wrap gap-1">
                 {courses.slice(0, 4).map(x => (
                   <li key={x.courseId}>
-                    {/* Code and year, matching the teacher directory — the titles wrap badly at this size. */}
+                    {/* Code and year, matching the teacher directory - the titles wrap badly at this size. */}
                     <Badge variant="secondary">
                       {x.code} · {resolveSemesterLabel(x.semester)}
                     </Badge>

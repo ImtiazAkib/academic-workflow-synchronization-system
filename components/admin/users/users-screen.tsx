@@ -36,7 +36,7 @@ type UsersScreenProps = {
   would only mean lifting it back up again.
 
   Every mutation ends in `router.refresh()`: the list is server-rendered, so re-running
-  the server component is what makes the change appear — and it re-applies the current
+  the server component is what makes the change appear - and it re-applies the current
   URL filters for free.
 */
 export function UsersScreen({ users, labels, viewer }: UsersScreenProps) {

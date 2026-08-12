@@ -43,7 +43,7 @@ export const ROUTES = {
     arrive at the same kind of moment and do entirely different things: one mints an
     identifier for an account that has none, the other moves the address on an account
     that is already in use. One route deciding between them by inspecting the token is a
-    route that can pick wrong — and picking wrong here means issuing an identifier
+    route that can pick wrong - and picking wrong here means issuing an identifier
     against an email change, or applying an email change against a registration.
 
     Public, and it has to be: the link is clicked from an inbox, which is as often a
@@ -56,7 +56,7 @@ export const ROUTES = {
   /*
     Password recovery, in two halves like email verification: one screen asks for the
     address and mails a link, the other takes the link and sets a new password. Both are
-    public — a locked-out account has no session, and the reset link is opened from an
+    public - a locked-out account has no session, and the reset link is opened from an
     inbox as often on a phone that never signed in as in the browser that asked. Neither
     belongs in `PROTECTED_SEGMENTS`.
   */
@@ -166,7 +166,7 @@ export const ROUTES = {
  * Where each role lands after signing in, and the only area it may enter.
  */
 export const ROLE_HOME = {
-  // The super administrator lands in the admin area — it is their area too, with more in it.
+  // The super administrator lands in the admin area - it is their area too, with more in it.
   'super-admin': ROUTES.ADMIN.HREF,
   admin: ROUTES.ADMIN.HREF,
   teacher: ROUTES.TEACHER.HREF,
@@ -178,10 +178,10 @@ export const ROLE_HOME = {
   them and `seo.const.ts` disallows them in robots.txt. Keeping it single-sourced is
   what stops a route from being open to crawlers but unguarded, or the reverse.
 
-  Stored unprefixed — the locale is added where it is needed.
+  Stored unprefixed - the locale is added where it is needed.
 
   `/profile` is listed explicitly because it is the one signed-in route that sits outside
-  a role's own area — every other protected path begins with `/admin`, `/teacher` or
+  a role's own area - every other protected path begins with `/admin`, `/teacher` or
   `/student`, and would be covered by one of those prefixes whether anybody remembered it
   or not. This one would not.
 */

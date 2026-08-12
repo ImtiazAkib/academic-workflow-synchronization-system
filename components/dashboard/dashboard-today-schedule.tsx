@@ -17,7 +17,7 @@ type DashboardTodayScheduleProps = {
    * current class; the admin department view passes every class running right now.
    */
   currentIds: Set<string>;
-  /** The single next class to mark "in X min" — a personal-view concept, left null department-wide. */
+  /** The single next class to mark "in X min" - a personal-view concept, left null department-wide. */
   nextId?: string | null;
   /** Pre-formatted "in 25 min", resolved by the caller (which holds the translator). */
   nextInLabel?: string | null;
@@ -26,8 +26,8 @@ type DashboardTodayScheduleProps = {
 
 /*
   A dashboard's "today" list (R4): today's classes in order, the ones on now tinted and marked,
-  the one up next (personal views only) carrying its "in X min". The parent decides the markers —
-  one current class for a person, every running class for the department — so this stays a dumb
+  the one up next (personal views only) carrying its "in X min". The parent decides the markers -
+  one current class for a person, every running class for the department - so this stays a dumb
   renderer. Empty is a real answer here (a day with no classes) and gets a contextual empty state.
 */
 export function DashboardTodaySchedule({ sessions, courses, teachers, currentIds, nextId, nextInLabel, labels }: DashboardTodayScheduleProps) {

@@ -14,7 +14,7 @@ type NoticeCardProps = {
 
 /*
   One notice, whole. There is no "read more" and no detail route, because a notice has
-  nowhere else to be — an announcement that needed a second click to finish reading is an
+  nowhere else to be - an announcement that needed a second click to finish reading is an
   announcement half the department read half of.
 
   `whitespace-pre-wrap` on the body is what makes that true in practice. The field is a
@@ -24,7 +24,7 @@ type NoticeCardProps = {
   is typed by a person, and "it is only a notice" is how an injected script gets onto a
   page every account in the department loads.
 
-  The body is optional and the image is optional, and never both at once — a notice is
+  The body is optional and the image is optional, and never both at once - a notice is
   text, a picture, or both, and `NoticeCreateSchema` refuses one that is neither. So each
   is rendered only when it is there, rather than the card assuming a shape.
 */
@@ -36,7 +36,7 @@ export function NoticeCard({ notice, labels, preview = false }: NoticeCardProps)
 
         {/*
           A session notice is not addressed by role, so its audience label ("students") would
-          say less than nothing — it shows which intakes it reached instead. A general notice
+          say less than nothing - it shows which intakes it reached instead. A general notice
           keeps the audience badge it always had.
         */}
         {notice.category === NOTICE_CATEGORIES.SESSION ? (
@@ -62,7 +62,7 @@ export function NoticeCard({ notice, labels, preview = false }: NoticeCardProps)
 
       {/*
         The title is the alt text, and for a picture-only notice that is the whole of what
-        a screen reader gets — which is the honest answer. Nobody types a description of a
+        a screen reader gets - which is the honest answer. Nobody types a description of a
         scanned circular, and inventing one from the file name would describe the file
         rather than the announcement.
 

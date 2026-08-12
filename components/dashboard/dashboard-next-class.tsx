@@ -7,7 +7,7 @@ import { Badge, EmptyState } from '@/components/ui';
 import type { ClassSessionDto } from '@/types';
 
 type DashboardNextClassProps = {
-  /** The class to feature — the one on now, else the next one today, else null. */
+  /** The class to feature - the one on now, else the next one today, else null. */
   session: ClassSessionDto | null;
   /** `now` when the featured class is in progress, `next` when it is still to start. */
   kind: 'now' | 'next' | null;
@@ -18,8 +18,8 @@ type DashboardNextClassProps = {
 };
 
 /*
-  The "what's next" hero (R4): the single class a teacher or student most needs to see — the one on
-  now, or the next one today — made unmistakable at the top of their home. A live class gets the
+  The "what's next" hero (R4): the single class a teacher or student most needs to see - the one on
+  now, or the next one today - made unmistakable at the top of their home. A live class gets the
   navy tint and a "Now" badge; the next one carries its "in X min". When the day's classes are done
   it says so plainly rather than leaving a blank.
 */

@@ -33,7 +33,7 @@ type AccountMenuProps = {
 };
 
 /*
-  The account cluster in the topbar's right corner — avatar + name opening a menu with the
+  The account cluster in the topbar's right corner - avatar + name opening a menu with the
   profile link and sign out, replacing the old naked always-visible sign-out button. Sign out
   stays the app's server-action form (so it clears the cookie and redirects the same way); the
   menu item just submits that hidden form, so the whole thing is one click inside the menu

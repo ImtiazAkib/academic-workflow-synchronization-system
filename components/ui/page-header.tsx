@@ -10,7 +10,7 @@ type PageHeaderProps = {
 
 /*
   The one page-header shape (R3b): title, an optional one-line description, and an optional
-  actions slot — replacing the title+description+action row hand-rolled across ~32 pages, where
+  actions slot - replacing the title+description+action row hand-rolled across ~32 pages, where
   the description size in particular had drifted (18px on some, 14px on others). The title is a
   plain h1, so it inherits the calm 600-weight page-title scale set in R1; the description is
   fixed at 14px muted. Screens adopt this from R4 on.

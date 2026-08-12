@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils/index';
 import { Button } from '@/components/ui/button';
 
 /*
-  The one word the dialog primitive renders on its own — the close button's label, which is
+  The one word the dialog primitive renders on its own - the close button's label, which is
   never passed in as `children` and so has nowhere to arrive from a call site. A client
   component cannot look it up, and a prop for one string on every dialog in the app is eight
   call sites of plumbing. So it rides a context: the area that renders dialogs provides the

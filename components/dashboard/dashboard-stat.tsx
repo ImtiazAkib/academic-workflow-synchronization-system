@@ -8,7 +8,7 @@ type DashboardStatProps = {
   label: string;
   value: string | number;
   icon?: LucideIcon;
-  /** When set, the whole tile links there — e.g. the pending-approvals tile to the users queue. */
+  /** When set, the whole tile links there - e.g. the pending-approvals tile to the users queue. */
   href?: string;
   /** `warning`/`danger` color the number when the count is something to act on (conflicts, a backlog). */
   tone?: 'default' | 'warning' | 'danger';
@@ -16,8 +16,8 @@ type DashboardStatProps = {
 
 /*
   A compact overview tile (R4): a small labelled number, not the 250px vanity card the brief warns
-  against. A row of these answers "what needs attention today" at a glance — today's classes, open
-  conflicts, the approval backlog — with the number in tabular figures so a row of tiles lines up.
+  against. A row of these answers "what needs attention today" at a glance - today's classes, open
+  conflicts, the approval backlog - with the number in tabular figures so a row of tiles lines up.
 */
 export function DashboardStat({ label, value, icon: Icon, href, tone = 'default' }: DashboardStatProps) {
   const body = (

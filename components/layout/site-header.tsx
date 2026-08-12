@@ -11,7 +11,7 @@ import { Button } from '@/components/ui';
 /*
   Reads the session so the landing page knows the visitor is already signed in. Without
   this the header only ever offered "Sign in", so somebody who closed the tab and came back
-  to the landing page was shown a sign-in button with no way back to their dashboard — even
+  to the landing page was shown a sign-in button with no way back to their dashboard - even
   though their session was still valid. Reading the cookie opts this route out of static
   generation, which is the right trade for a header that has to reflect who is looking at it;
   a crawler carries no cookie and still gets the public, signed-out version.
@@ -21,7 +21,7 @@ export async function SiteHeader() {
   const sessionUser = await getSessionUser();
 
   return (
-    <header className="bg-background/80 border-border sticky top-0 z-50 border-b backdrop-blur-md">
+    <header className="bg-background/80 border-border fixed inset-x-0 top-0 z-50 border-b backdrop-blur-md">
       {/*
         Tightened gaps below `sm`, and the brand is allowed to shrink: at 375px the
         language selector and sign-in button together are wider than what is left after
@@ -29,7 +29,7 @@ export async function SiteHeader() {
       */}
       <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
         <Link href={ROUTES.HOME.HREF} className="flex min-w-0 items-center gap-2.5">
-          <AppLogo label={l10n('APP_LOGO_ALT')} className="size-8 shrink-0" />
+          <AppLogo label={l10n('APP_LOGO_ALT')} className="size-11 shrink-0" />
           <span className="font-heading text-regular-bold truncate tracking-tight">{APP_DATA.SHORT_NAME}</span>
         </Link>
 

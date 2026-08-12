@@ -13,13 +13,13 @@ import { routing } from './routing';
 /**
  * Resolves the locale for the current request and loads the dictionary behind it.
  *
- * The locale comes from the `[locale]` root param — Next reads it natively as of
+ * The locale comes from the `[locale]` root param - Next reads it natively as of
  * 16.3, which is what replaced next-intl's deprecated `setRequestLocale()` calls in
  * every layout and page.
  *
  * `next/root-params` is not available in Route Handlers or Server Actions, so callers
  * there pass a locale explicitly (`getTranslations({ locale })`) and it arrives here
- * as the `locale` argument — hence the branch rather than reading the param blindly.
+ * as the `locale` argument - hence the branch rather than reading the param blindly.
  */
 const appI18nRequest = async ({ locale }: { locale?: string }) => {
   let resolved = locale;

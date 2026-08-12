@@ -15,7 +15,7 @@ import type { UseFormRegister } from 'react-hook-form';
   body rather than keeping two copies that drift. Typed loosely because the two schemas
   differ by `classSessionId` alone.
 
-  Times are plain `<input type="time">`, which submits `HH:mm` — exactly what the model
+  Times are plain `<input type="time">`, which submits `HH:mm` - exactly what the model
   stores. No Date, no timezone: a class at 09:30 is 09:30 in Dhaka wherever this runs.
 */
 type SessionFieldsProps = {
@@ -28,7 +28,7 @@ type SessionFieldsProps = {
   fieldErrors: ScheduleFieldErrorLabels;
   days: DayLabels;
   /**
-   * Server-side clash messages already resolved to sentences, split by the field each concerns —
+   * Server-side clash messages already resolved to sentences, split by the field each concerns -
    * so a "that teacher is busy" lands under the teacher, not only in a notice at the top.
    */
   conflicts: { course: string[]; teacher: string[] };
@@ -39,7 +39,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
   const courseItems: Record<string, string> = {};
 
   courses.forEach(x => {
-    courseItems[x.courseId] = `${x.code} — ${x.title}`;
+    courseItems[x.courseId] = `${x.code} - ${x.title}`;
   });
 
   const teacherItems: Record<string, string> = {};

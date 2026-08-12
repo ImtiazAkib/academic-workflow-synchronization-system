@@ -4,7 +4,7 @@ import type { PasswordChangeErrorLabels, UserErrorLabels } from '@/lib/utils';
  * One read-only fact about the account, already resolved to strings by the page.
  *
  * The screen renders a list of these rather than a fixed set of rows, because which
- * facts exist depends on the role — a teacher has a designation and no session, a
+ * facts exist depends on the role - a teacher has a designation and no session, a
  * student the reverse, an administrator neither. A row per field with a conditional
  * around each would be the same list written twice as long.
  */
@@ -63,7 +63,7 @@ export type ProfileEditLabels = {
  * Every string the change-password form renders.
  *
  * Its own bundle, apart from `ProfileEditLabels`, because it is its own form with its own
- * action — the two share the screen and nothing else. The field errors are named per rule
+ * action - the two share the screen and nothing else. The field errors are named per rule
  * so the form can show the right one from the react-hook-form error type, the same way the
  * edit form does.
  */

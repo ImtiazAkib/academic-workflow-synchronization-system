@@ -37,12 +37,12 @@ function subscribeToNothing(): () => void {
 
 /*
   A compact icon trigger opening a menu of the three choices, rather than a three-button pill
-  group — so it costs one control's width in the bar instead of three, which is what let the
+  group - so it costs one control's width in the bar instead of three, which is what let the
   topbar stop overflowing on a phone. "System" is kept as the third choice: it is what someone
   who told their phone to go dark at sunset means, and a light/dark toggle makes them say it twice.
 
   The server cannot know the theme (it lives in localStorage / the OS), so the trigger shows a
-  neutral icon until mount and only then the active one — the same hydration guard the pill group
+  neutral icon until mount and only then the active one - the same hydration guard the pill group
   used for its pressed state, kept here so the markup does not disagree with itself.
 */
 export function ThemeSelector({ labels }: ThemeSelectorProps) {

@@ -32,11 +32,11 @@ type DashboardMobileNavProps = {
 
 /*
   The below-`lg` navigation, replacing the horizontal scroll strip with a left drawer behind a
-  hamburger — so a role with seven or eight entries can reach all of them on a phone instead of
+  hamburger - so a role with seven or eight entries can reach all of them on a phone instead of
   sideways-scrolling past the ones that fell off the edge. The drawer holds the same three bands
   as the desktop sidebar (logo, sectioned nav, user block) from the same `resolveNavModel`, so
   the two never list different things. It slides on a transform transition (not a keyframe class),
-  and closes when a link inside it is tapped — the drawer lives in the persistent layout, so that
+  and closes when a link inside it is tapped - the drawer lives in the persistent layout, so that
   closed state carries onto the page just navigated to.
 */
 export function DashboardMobileNav({ role, navLabels, navAriaLabel, logoLabel, openLabel, closeLabel, user, profileLabel }: DashboardMobileNavProps) {

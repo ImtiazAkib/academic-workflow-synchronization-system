@@ -22,7 +22,7 @@ type DashboardSidebarProps = {
 /*
   Hidden below `lg`, where the same nav runs across the topbar instead. Three bands: a logo
   header the height of the topbar so the two line up across the shell, the scrolling sectioned
-  nav, and a user block pinned to the bottom that carries identity and links to the profile —
+  nav, and a user block pinned to the bottom that carries identity and links to the profile -
   the who-am-I signal the topbar greeting used to give.
 */
 export function DashboardSidebar({ role, navLabels, navAriaLabel, logoLabel, user, profileLabel }: DashboardSidebarProps) {

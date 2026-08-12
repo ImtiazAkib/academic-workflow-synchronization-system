@@ -13,7 +13,7 @@ type ScheduleGridCellProps = {
   courses: CourseOption[];
   teachers: TeacherOption[];
   labels: ScheduleLabels;
-  /** True when this class shares a slot with another of the same teacher — a double-booking. */
+  /** True when this class shares a slot with another of the same teacher - a double-booking. */
   isConflicted: boolean;
   /** Teachers may move and call off their own classes; only an admin may delete one. */
   canManage: boolean;
@@ -25,7 +25,7 @@ type ScheduleGridCellProps = {
 
 /**
  * One class in the week. Shows the course code rather than the id, so the card reads
- * without a lookup — the names come from the same lists the pickers use.
+ * without a lookup - the names come from the same lists the pickers use.
  */
 export function ScheduleGridCell({
   session,
@@ -85,7 +85,7 @@ export function ScheduleGridCell({
           <Clock className="size-3.5 shrink-0" aria-hidden />
           {/*
             The icon says "time" to somebody who can see it and nothing at all to somebody
-            who cannot — so the term is spelled out and hidden visually, matching the
+            who cannot - so the term is spelled out and hidden visually, matching the
             read-only twin in `student-routine-card.tsx`. Without it this was a `dl` of
             values with no terms: a screen reader read "09:00–10:00" and a bare name.
           */}

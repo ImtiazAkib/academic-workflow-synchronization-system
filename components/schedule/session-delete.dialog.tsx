@@ -19,8 +19,8 @@ type SessionDeleteDialogProps = {
 };
 
 /**
- * Removal is permanent — a session has nothing hanging off it that needs a valid
- * author, unlike an account — so the class is named before it goes.
+ * Removal is permanent - a session has nothing hanging off it that needs a valid
+ * author, unlike an account - so the class is named before it goes.
  */
 export function SessionDeleteDialog({
   session,

@@ -45,7 +45,7 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
 
   /*
     What this row is allowed to offer, mirroring the rules `UserService` enforces. The
-    service refuses these regardless of what the browser sends — rendering a button that
+    service refuses these regardless of what the browser sends - rendering a button that
     can only ever produce a refusal is the thing being avoided here, not a hole being
     closed.
   */
@@ -55,7 +55,7 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
   const canEdit = !isImmutable && !isForeignAdmin;
   // Approval and activation decide whether an account can sign in, so never your own.
   const canChangeAccess = canEdit && !isSelf;
-  // Deletion is the same reach as changing access, made permanent — the service agrees.
+  // Deletion is the same reach as changing access, made permanent - the service agrees.
   const canDelete = canChangeAccess;
 
   const statusLabel = resolveUserStatusLabel(status, {
@@ -93,11 +93,11 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
             {/*
           The identifier the account signs in with. It reaches its owner once, by email,
           and the department needs somewhere to read it back from when that message is
-          lost — this is that somewhere.
+          lost - this is that somewhere.
         */}
             {user.loginId && <span className="text-muted-foreground block font-mono text-xs">{user.loginId}</span>}
             {user.roll && <span className="text-muted-foreground block text-xs">{user.roll}</span>}
-            {/* The year a student's routine is filtered by — worth seeing without opening the dialog. */}
+            {/* The year a student's routine is filtered by - worth seeing without opening the dialog. */}
             {user.semester && <span className="text-muted-foreground block text-xs">{resolveSemesterLabel(user.semester)}</span>}
           </span>
         </div>
@@ -108,7 +108,7 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
       <TableCell>{roleLabel}</TableCell>
 
       <TableCell className="text-muted-foreground">
-        <span className="block">{user.department ?? '—'}</span>
+        <span className="block">{user.department ?? '-'}</span>
         {(user.session || user.semester) && (
           <span className="block text-xs">
             {[user.session, user.semester ? resolveSemesterLabel(user.semester) : null].filter(Boolean).join(' · ')}
@@ -126,7 +126,7 @@ export function UsersTableRow({ user, labels, viewer, onEdit, onApproval, onActi
         {/*
           A two-column grid rather than a flex row: the labels change per row ("Approve" /
           "Revoke", "Deactivate" / "Reactivate"), and under flex that shifts every button
-          beside them, so nothing lines up down the column. Equal tracks keep it straight —
+          beside them, so nothing lines up down the column. Equal tracks keep it straight -
           two rows of two when every action is available: edit and access on top, delete
           beneath, set apart by its red so it is not reached for by reflex.
         */}

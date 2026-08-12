@@ -5,8 +5,8 @@ import { Tabs as TabsPrimitive } from '@base-ui/react/tabs';
 import { cn } from '@/lib/utils';
 
 /*
-  Underline tabs on Base UI's headless Tabs (R2b). An institutional underline — the active
-  tab is a navy bottom border, not a filled pill — for the course-detail sections the brief
+  Underline tabs on Base UI's headless Tabs (R2b). An institutional underline - the active
+  tab is a navy bottom border, not a filled pill - for the course-detail sections the brief
   asks for (Overview / Materials / Schedule / Students). The active state keys off Base UI's
   `data-active` attribute.
 */

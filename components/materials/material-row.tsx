@@ -49,7 +49,7 @@ export function MaterialRow({ material, courses, labels, onRemove }: MaterialRow
         </div>
       </TableCell>
 
-      <TableCell>{course?.code ?? '—'}</TableCell>
+      <TableCell>{course?.code ?? '-'}</TableCell>
 
       <TableCell className="text-muted-foreground">{formatFileSize(material.size)}</TableCell>
 

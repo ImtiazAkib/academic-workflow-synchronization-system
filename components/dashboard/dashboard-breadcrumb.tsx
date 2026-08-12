@@ -22,12 +22,12 @@ type DashboardBreadcrumbProps = {
 };
 
 /*
-  The topbar location trail, replacing the old "Welcome, {name}" greeting — it says where the
+  The topbar location trail, replacing the old "Welcome, {name}" greeting - it says where the
   user is rather than hello. Client only for the pathname; the trail itself comes from the same
   nav model the sidebar renders, so the crumb and the highlighted sidebar entry always agree.
   The section is a plain label (it has no page of its own); only the current page is a
   BreadcrumbPage, carrying aria-current. Profile is the one signed-in page outside the nav model
-  — reached from the account menu — so it names itself rather than falling back to Overview.
+  - reached from the account menu - so it names itself rather than falling back to Overview.
 */
 export function DashboardBreadcrumb({ role, labels, overviewLabel, profileLabel, ariaLabel }: DashboardBreadcrumbProps) {
   const pathname = usePathname();

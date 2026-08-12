@@ -34,7 +34,7 @@ type ScheduleScreenProps = {
 
 /*
   The administrator's timetable. The teacher view reuses `ScheduleWeekView` directly
-  rather than this screen — it has no filters, no dialogs and no state, so wrapping it
+  rather than this screen - it has no filters, no dialogs and no state, so wrapping it
   in an orchestrator would only give it machinery it never uses.
 */
 export function ScheduleScreen({ sessions, courses, teachers, labels, today }: ScheduleScreenProps) {

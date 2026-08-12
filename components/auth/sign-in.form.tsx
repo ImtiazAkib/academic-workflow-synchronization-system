@@ -41,7 +41,7 @@ export function SignInForm({ labels }: SignInFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   /*
     `isSubmitting` goes false the moment the action resolves, but a successful sign-in then
-    navigates — and react-hook-form has already re-enabled the button by the time the new
+    navigates - and react-hook-form has already re-enabled the button by the time the new
     page paints. This holds the busy state through the redirect, so the button never flicks
     back to "Sign in" for the instant before the dashboard loads. It is never cleared,
     because the only way out of a successful submit is the navigation that unmounts this.

@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 /*
   The overflow/action menu, on Base UI's headless Menu (R2b). Built to retire the 2×2 grids
   of inline row-action buttons in the users/courses/materials tables (R6/R7/R9) and to back
-  the account menu in the shell (R3). Styled to match the Select popup — same popover surface,
-  1px ring, 8px radius and 100ms fade/zoom — so every floating surface reads the same.
+  the account menu in the shell (R3). Styled to match the Select popup - same popover surface,
+  1px ring, 8px radius and 100ms fade/zoom - so every floating surface reads the same.
 */
 const DropdownMenu = MenuPrimitive.Root;
 const DropdownMenuGroup = MenuPrimitive.Group;
@@ -65,7 +65,7 @@ function DropdownMenuItem({
 }
 
 /*
-  A link row (Base UI `Menu.LinkItem`), for the menu entries that navigate — the account menu's
+  A link row (Base UI `Menu.LinkItem`), for the menu entries that navigate - the account menu's
   Profile, a row action's "View". `Menu.Item` rendered as an anchor would have its click swallowed
   by the item's own handler and never navigate; `LinkItem` is the part that lets the link through.
   The caller supplies the locale-aware `Link` via `render`.
@@ -84,7 +84,7 @@ function DropdownMenuLinkItem({ className, ...props }: MenuPrimitive.LinkItem.Pr
 }
 
 /*
-  A plain styled label, not Base UI's `Menu.GroupLabel` — that part throws unless it sits inside
+  A plain styled label, not Base UI's `Menu.GroupLabel` - that part throws unless it sits inside
   a `Menu.Group`, and the common use (the account-menu header, a menu section heading) is a
   standalone label, not a group's caption. A non-focusable div is skipped by the menu's keyboard
   navigation. For a genuinely group-associated caption, wrap items in `DropdownMenuGroup` and use

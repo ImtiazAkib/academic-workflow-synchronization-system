@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 /*
   Avatar on Base UI's headless Avatar (R2b). The department has no photo field, so in practice
-  this renders the initials fallback — a small muted circle carrying a name's initials — for the
+  this renders the initials fallback - a small muted circle carrying a name's initials - for the
   users table, teacher directory and the shell's user block (R3/R9). The initials themselves are
   derived by a pure helper at the call site, not here; this primitive only renders what it is given.
 */

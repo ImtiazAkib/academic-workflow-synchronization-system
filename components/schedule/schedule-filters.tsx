@@ -18,7 +18,7 @@ type ScheduleFiltersProps = {
 
 /*
   Filters live in the URL, so a filtered week can be bookmarked and survives a refresh.
-  `shallow: false` is what makes that work — the change reaches the server component,
+  `shallow: false` is what makes that work - the change reaches the server component,
   which re-runs the query.
 */
 export function ScheduleFilters({ teachers, labels }: ScheduleFiltersProps) {

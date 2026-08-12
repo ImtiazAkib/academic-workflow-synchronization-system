@@ -8,7 +8,7 @@ type DashboardClassRowProps = {
   session: ClassSessionDto;
   courseCode: string;
   courseTitle?: string;
-  /** The teacher's name — shown on the admin and student views, omitted on a teacher's own list. */
+  /** The teacher's name - shown on the admin and student views, omitted on a teacher's own list. */
   teacherName?: string;
   /** `current` tints the whole row (the class on now); `next` just carries its badge. */
   highlight?: 'current' | 'next' | null;
@@ -18,8 +18,8 @@ type DashboardClassRowProps = {
 };
 
 /*
-  One class in a dashboard's "today" list (R4): a read-only row — time, course, who and which
-  year — with the human-touch marker the brief asks for, "Now" on the class in progress and
+  One class in a dashboard's "today" list (R4): a read-only row - time, course, who and which
+  year - with the human-touch marker the brief asks for, "Now" on the class in progress and
   "in 25 min" on the one up next. Deliberately not the schedule grid's ScheduleGridCell, which
   carries edit/cancel/delete buttons; a dashboard only reports. A cancelled class keeps its slot,
   struck through with a quiet badge, because a gap and a called-off class are not the same news.

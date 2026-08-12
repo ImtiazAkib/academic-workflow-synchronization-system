@@ -12,7 +12,7 @@ import type { NoticeDto } from '@/types';
 
 type DashboardNoticesProps = {
   role: UserRole;
-  /** How many to show. `null` is every one of them — the admin screen's archive. */
+  /** How many to show. `null` is every one of them - the admin screen's archive. */
   limit?: number | null;
   /**
    * The viewer's intake, for a student. Threaded in because the session token does not
@@ -34,7 +34,7 @@ const userService = new UserService();
  * How many notices a dashboard shows before it stops being a dashboard.
  *
  * The home screen answers "what should I know today", not "what has ever been announced".
- * The admin screen passes its own limit — none — because that one is the archive.
+ * The admin screen passes its own limit - none - because that one is the archive.
  */
 const FEED_LIMIT = 5;
 
@@ -43,7 +43,7 @@ const FEED_LIMIT = 5;
 
   An async server component rather than a client component handed props, and that is what
   makes the audience rule enforceable rather than decorative. The filtering happens in
-  `NoticeService.listForRole()`, on the server, before anything crosses to the browser — so a
+  `NoticeService.listForRole()`, on the server, before anything crosses to the browser - so a
   student's dashboard is never sent a teachers-only notice to hide. A feed that fetched
   everything and filtered in the browser would have already disclosed it.
 
@@ -62,7 +62,7 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT, viewerSession
   /*
     A read that failed must not arrive at the same screen as a department with nothing to
     say. `listFailure` carries an empty array, so passing it straight through would render
-    "nothing announced yet" over a database that simply could not be reached — and an
+    "nothing announced yet" over a database that simply could not be reached - and an
     urgent notice would be invisible behind a sentence saying there are none.
 
     Said inline rather than thrown. The dashboard's error boundary would take the whole

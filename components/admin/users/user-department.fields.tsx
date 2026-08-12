@@ -26,15 +26,15 @@ type UserDepartmentFieldsProps = {
 };
 
 /*
-  The fields registration collects that an administrator may need to correct — a roll
+  The fields registration collects that an administrator may need to correct - a roll
   number typed wrong, a session in the department's other format. They are shown here
   rather than left read-only because approval is exactly the moment somebody is checking
   who the applicant is, and a value they cannot fix is a value they have to write down
   and chase.
 
   Roll, registration number and session are a student's; department is asked of students
-  and teachers alike. An administrator's account has none of them — it signs in by email
-  and belongs to no cohort — so the whole block is absent for that role rather than showing
+  and teachers alike. An administrator's account has none of them - it signs in by email
+  and belongs to no cohort - so the whole block is absent for that role rather than showing
   inputs that mean nothing. Roll lives here for the same reason: it identifies a student,
   and an administrator or a teacher has no roll to show.
 

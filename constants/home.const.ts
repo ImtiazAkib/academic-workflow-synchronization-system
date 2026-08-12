@@ -14,7 +14,7 @@ import { FeatureVisual, RoleVisual } from '@/types';
 
 /*
   Structural data only. Every string on the landing page is an `l10n('KEY')` call in
-  the component that renders it — keys are never collected into arrays here, because
+  the component that renders it - keys are never collected into arrays here, because
   i18n-ally only detects them in their literal call form.
 */
 

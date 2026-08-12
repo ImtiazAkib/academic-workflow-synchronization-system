@@ -22,7 +22,7 @@ type DashboardNavProps = {
 };
 
 /*
-  A client component only so the active entry can be read from the real pathname — hard-coding
+  A client component only so the active entry can be read from the real pathname - hard-coding
   it would start lying the moment a second entry landed under it. Which entries appear, and in
   what section, is decided by `resolveNavModel`, so this file holds only rendering and the
   active-state read.

@@ -18,7 +18,7 @@ type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, 'type'> & {
 
   The toggle only flips the input's `type` between `password` and `text`. The value never
   leaves the field and nothing about how the form reads it changes, so `{...register(...)}`
-  spreads onto this exactly as it did onto a bare `Input` — including the ref, which React
+  spreads onto this exactly as it did onto a bare `Input` - including the ref, which React
   forwards through the spread.
 
   `pe-10` reserves the lane the button sits in so a long password does not slide under it.

@@ -20,7 +20,7 @@ export function UsersTable({ users, labels, viewer, onEdit, onApproval, onActiva
   return (
     /*
       The wrapper scrolls and the table refuses to go below its natural width. Without
-      that floor the browser honours the 100% width instead and crushes every column —
+      that floor the browser honours the 100% width instead and crushes every column -
       which is what put three action buttons on top of each other on a phone.
     */
     <div className="border-border w-full overflow-x-auto rounded-lg border">

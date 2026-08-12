@@ -6,7 +6,7 @@ type EmptyStateProps = {
   icon?: LucideIcon;
   title: string;
   description?: string;
-  /** Optional primary action (a Button), rendered under the copy — kept width-tolerant for Bengali. */
+  /** Optional primary action (a Button), rendered under the copy - kept width-tolerant for Bengali. */
   action?: React.ReactNode;
   className?: string;
 };

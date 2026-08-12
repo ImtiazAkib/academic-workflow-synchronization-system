@@ -11,7 +11,7 @@ type DashboardMaterialRowProps = {
 
 /*
   One recently-uploaded file in a dashboard's "recent materials" list (R4): a compact read-only row
-  giving the human touch the brief asks for — the file, its course, and how long ago it landed. A
+  giving the human touch the brief asks for - the file, its course, and how long ago it landed. A
   generic file icon for now; the per-type icons (PDF / slides / assignment) come with the materials
   repository in R7, where telling the types apart actually matters.
 */

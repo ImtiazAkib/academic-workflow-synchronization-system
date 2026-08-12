@@ -57,7 +57,7 @@ export async function updateCourseAction(values: unknown): Promise<SingleResult<
 }
 
 /**
- * Switch a course on or off — the boolean decides which.
+ * Switch a course on or off - the boolean decides which.
  *
  * Takes one object and parses all of it. It used to take the flag as a second argument
  * typed `boolean`, which stops nothing at runtime: the annotation is erased, and the flag

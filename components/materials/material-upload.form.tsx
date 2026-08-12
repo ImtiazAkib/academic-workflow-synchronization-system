@@ -19,9 +19,9 @@ import type { MaterialCourseOption, MaterialsLabels } from './materials.types';
 type MaterialUploadFormProps = {
   courses: MaterialCourseOption[];
   labels: MaterialsLabels;
-  /** The bucket is over the block line — refuse to upload at all. */
+  /** The bucket is over the block line - refuse to upload at all. */
   storageBlocked: boolean;
-  /** Past the warn line but not the block line — let the upload through, but say so. */
+  /** Past the warn line but not the block line - let the upload through, but say so. */
   storageNearFull: boolean;
   onUploaded?: () => void;
 };
@@ -32,7 +32,7 @@ type MaterialUploadFormProps = {
   `FormData` streams the body instead.
 
   Nothing here is a control. The size, the type, the course and whether the bucket has
-  room are all re-checked on the server — this only saves the teacher a round trip when the
+  room are all re-checked on the server - this only saves the teacher a round trip when the
   answer is obvious. `storageBlocked` disables the picker and the button so a full bucket is
   visible before a file is chosen, not discovered after it uploads.
 */
@@ -49,7 +49,7 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
   const courseItems: Record<string, string> = {};
 
   courses.forEach(x => {
-    courseItems[x.courseId] = `${x.code} — ${x.title}`;
+    courseItems[x.courseId] = `${x.code} - ${x.title}`;
   });
 
   const handleCourseChange = (value: unknown): void => {

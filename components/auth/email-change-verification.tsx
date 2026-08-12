@@ -37,7 +37,7 @@ type EmailChangeVerificationProps = {
 
   A client component rather than page-render logic, because confirming *writes*. A page
   that wrote while rendering would fire again on every refresh, every back-navigation and
-  every link prefetch — and the second run would find the token already spent.
+  every link prefetch - and the second run would find the token already spent.
 
   Signing in again is offered but not demanded. The session already open in another tab
   keeps working: the address is not what the session is keyed on, and the account did not
@@ -50,7 +50,7 @@ export function EmailChangeVerification({ token, labels }: EmailChangeVerificati
   /*
     React runs effects twice in development's strict mode. The token is single-use, so the
     second call would find it spent and show a failure over a success that already
-    happened — this makes the request fire once per mount whatever the mode.
+    happened - this makes the request fire once per mount whatever the mode.
   */
   const hasRequested = useRef(false);
 

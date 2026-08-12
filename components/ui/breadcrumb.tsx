@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /*
-  Breadcrumb (R2b): plain semantic markup — a labelled `nav` over an `ol` — for the shell's
+  Breadcrumb (R2b): plain semantic markup - a labelled `nav` over an `ol` - for the shell's
   topbar location trail (R3). No Base UI needed; the only moving part is BreadcrumbLink, which
   uses `useRender` so the caller can hand it the locale-aware `Link` (`render={<Link .../>}`)
   without this primitive importing the router. The `nav` takes its `aria-label` from the caller

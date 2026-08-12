@@ -28,7 +28,7 @@ type CourseEditDialogProps = {
 
 /*
   Mounted only while a row is selected, and keyed on that row's id, so `defaultValues`
-  fills the form on mount rather than needing an effect to copy the course in — and a
+  fills the form on mount rather than needing an effect to copy the course in - and a
   stale error from the previous attempt is cleared for free.
 */
 export function CourseEditDialog({ course, teachers, labels, onUpdated, onOpenChange }: CourseEditDialogProps) {

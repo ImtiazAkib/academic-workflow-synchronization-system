@@ -26,7 +26,7 @@ type ScheduleWeekViewProps = {
   scale wastes most of its height on empty rows, and on a phone it is unreadable. Each
   day lists its classes in order instead, which is the same information.
 
-  `today` is resolved in `Asia/Dhaka` by the caller — never from the runtime clock,
+  `today` is resolved in `Asia/Dhaka` by the caller - never from the runtime clock,
   which is UTC on Vercel and would mark the wrong column every Bangladeshi evening.
 */
 export function ScheduleWeekView({

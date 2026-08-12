@@ -47,11 +47,11 @@ type ResetPasswordFormProps = {
 
 /*
   A form, not the auto-firing effect the email-verification screen uses. The token is spent
-  by the write, so it must be spent on submit — a refresh or a link prefetch would otherwise
+  by the write, so it must be spent on submit - a refresh or a link prefetch would otherwise
   burn it before the new password is even typed.
 
   Three end states: the form itself, a full-screen link failure (the token was invalid or
-  expired — the two cases typing again cannot fix, which send the visitor back to ask for a
+  expired - the two cases typing again cannot fix, which send the visitor back to ask for a
   fresh link), and a success with the way on to sign-in.
 */
 export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
@@ -83,7 +83,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
 
     /*
       An invalid or expired link is not something resubmitting fixes, so it earns the full
-      failure screen — the same two cases the confirmation link has. Anything else is a
+      failure screen - the same two cases the confirmation link has. Anything else is a
       transient fault worth a line above the still-usable form.
     */
     if (code === VALIDATION.VERIFICATION_LINK_INVALID.CODE || code === VALIDATION.VERIFICATION_LINK_EXPIRED.CODE) {

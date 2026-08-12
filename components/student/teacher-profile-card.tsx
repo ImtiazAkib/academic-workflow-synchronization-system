@@ -16,7 +16,7 @@ type TeacherProfileCardProps = {
 /*
   Renders every field `TeacherDirectoryDto` carries, which is the point of that type
   existing: the decision about what a student may see was made once, in the mapper, and
-  this card cannot widen it by reaching for another property — there is no other
+  this card cannot widen it by reaching for another property - there is no other
   property to reach for.
 
   The email is a `mailto:` rather than text to copy, because "find a teacher's contact

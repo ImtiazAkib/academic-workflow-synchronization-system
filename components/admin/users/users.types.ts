@@ -4,7 +4,7 @@ import type { UserErrorLabels } from '@/lib/utils';
  * Who is looking at the screen, and therefore what it may offer them.
  *
  * The screens use this to decide which roles a select lists and which buttons a row
- * carries. It is a courtesy, not a control — `UserService` refuses the same operations
+ * carries. It is a courtesy, not a control - `UserService` refuses the same operations
  * whatever the browser sends, so a button that should not be there is a cosmetic bug
  * rather than a hole.
  */
@@ -55,7 +55,7 @@ export type UsersFieldErrorLabels = {
 };
 
 /**
- * What the standalone create screen needs — a slice of `UsersLabels` rather than the
+ * What the standalone create screen needs - a slice of `UsersLabels` rather than the
  * whole bundle, because that page renders no table, filters or confirmations.
  */
 export type UserCreateFormLabels = {

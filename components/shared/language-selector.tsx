@@ -17,7 +17,7 @@ type LanguageSelectorProps = {
 
 /*
   A compact icon trigger opening a menu of the languages, rather than a row of full-width name
-  buttons — English + বাংলা side by side were the widest thing in the topbar and pushed it past a
+  buttons - English + বাংলা side by side were the widest thing in the topbar and pushed it past a
   phone's width. The menu still names each language in its own script; the active one carries a
   check. Switching stays a `router.replace` in a transition so the choice takes effect in place,
   sets the cookie, and disables the trigger while the tree re-renders for the new locale.

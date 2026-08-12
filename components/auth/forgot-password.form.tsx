@@ -27,7 +27,7 @@ type ForgotPasswordFormProps = {
 
 /*
   Ask for a reset link. Like the resend-confirmation form it turns into a "check your inbox"
-  panel once a request goes through — but it now names an unregistered address rather than
+  panel once a request goes through - but it now names an unregistered address rather than
   hiding it, the department's deliberate choice, so a not-registered failure is shown here
   the same way sign-in shows a bad password.
 */

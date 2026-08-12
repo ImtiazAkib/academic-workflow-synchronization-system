@@ -12,7 +12,7 @@ import type { UseFormRegister } from 'react-hook-form';
 /*
   The create page and the edit dialog ask for exactly the same five fields, so they
   share this body rather than keeping two copies that drift. Only the surrounding
-  chrome — a page with a back link, or a dialog with a footer — differs.
+  chrome - a page with a back link, or a dialog with a footer - differs.
 
   Typed loosely against the form because the two schemas differ by `courseId` alone;
   tightening it would mean a generic that buys nothing at these two call sites.

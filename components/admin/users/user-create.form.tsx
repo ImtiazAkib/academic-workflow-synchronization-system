@@ -30,7 +30,7 @@ type UserCreateFormProps = {
 
 /*
   A page rather than a dialog. Seven fields plus their validation messages never sat
-  comfortably in a popup — on a phone it filled the screen and still scrolled — and a
+  comfortably in a popup - on a phone it filled the screen and still scrolled - and a
   page gives the work its own URL, which is what makes it linkable and survivable on a
   refresh.
 
@@ -64,7 +64,7 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
   /*
     Who each creator may make: the super administrator creates administrators and only
     administrators, an ordinary administrator creates teachers and students. Super
-    administrator is offered to nobody — that account is seeded — and `UserService` refuses
+    administrator is offered to nobody - that account is seeded - and `UserService` refuses
     any request that steps outside this, so the single-option select a super administrator
     sees is a courtesy rather than the control.
   */
