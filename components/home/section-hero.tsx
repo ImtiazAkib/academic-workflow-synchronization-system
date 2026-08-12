@@ -25,11 +25,11 @@ export async function SectionHero() {
         <p className="text-medium-normal text-muted-foreground max-w-2xl text-pretty">{l10n('HOME_HERO_DESCRIPTION')}</p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button variant="appPrimary" size="lg" nativeButton={false} render={<a href={`#${SECTION_IDS.ROLES}`} />}>
+          <Button variant="default" size="lg" nativeButton={false} render={<a href={`#${SECTION_IDS.ROLES}`} />}>
             {l10n('HOME_HERO_CTA_PRIMARY')}
           </Button>
 
-          <Button variant="appOutline" size="lg" nativeButton={false} render={<a href={`#${SECTION_IDS.FEATURES}`} />}>
+          <Button variant="outline" size="lg" nativeButton={false} render={<a href={`#${SECTION_IDS.FEATURES}`} />}>
             {l10n('HOME_HERO_CTA_SECONDARY')}
           </Button>
         </div>

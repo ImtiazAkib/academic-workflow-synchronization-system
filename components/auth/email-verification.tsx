@@ -90,7 +90,7 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.REGISTER.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.REGISTER.HREF} />}>
           {labels.registerCta}
         </Button>
       </div>
@@ -122,7 +122,7 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
 
       <p className="border-border text-muted-foreground w-full rounded-lg border border-dashed px-4 py-3 text-xs">{labels.approvalNote}</p>
 
-      <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+      <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
         {labels.signInCta}
       </Button>
     </div>

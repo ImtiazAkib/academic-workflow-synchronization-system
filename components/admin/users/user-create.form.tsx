@@ -186,7 +186,7 @@ export function UserCreateForm({ labels, viewer }: UserCreateFormProps) {
           {labels.cancel}
         </Button>
 
-        <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+        <Button type="submit" variant="default" disabled={isSubmitting}>
           {isSubmitting ? labels.working : labels.submit}
         </Button>
       </div>

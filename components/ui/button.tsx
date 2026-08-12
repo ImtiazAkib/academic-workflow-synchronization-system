@@ -12,11 +12,18 @@ const buttonVariants = cva(
     width here an outline button renders as bare text. Transparent by default keeps
     every variant the same height.
   */
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent bg-clip-padding text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent bg-clip-padding text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
+      /*
+        One hierarchy (R2a): primary (solid navy), outline (1px neutral border), secondary
+        (filled slate), ghost, destructive, link. The old duplicate `app*` family existed only
+        because the canonical `default` scoped its hover to anchors (`[a]:hover`), so a real
+        <button> never lit up — now fixed with `hover:bg-primary-hover`, and the call sites
+        migrated off `appPrimary`/`appOutline`.
+      */
       variant: {
-        default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+        default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         outline:
           'border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
@@ -24,12 +31,6 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30',
         link: 'text-primary underline-offset-4 hover:underline',
-
-        appPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer',
-        appOutline: 'bg-transparent border-2 text-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer',
-        appSecondary: 'bg-card text-card-foreground hover:bg-card/80 cursor-pointer',
-        appGhost: 'bg-transparent text-muted-foreground hover:text-foreground cursor-pointer',
-        appLink: 'text-primary underline-offset-4 hover:underline cursor-pointer',
       },
       /*
         10 / 9 / 11, matching Input and SelectTrigger step for step. The shadcn scale

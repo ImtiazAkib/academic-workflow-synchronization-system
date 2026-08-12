@@ -207,7 +207,7 @@ export function UserEditDialog({ user, labels, onUpdated, onOpenChange }: UserEd
               {labels.cancel}
             </Button>
 
-            <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+            <Button type="submit" variant="default" disabled={isSubmitting}>
               {isSubmitting ? labels.working : labels.editSubmit}
             </Button>
           </DialogFooter>

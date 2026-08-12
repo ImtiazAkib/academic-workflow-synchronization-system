@@ -3,6 +3,8 @@
 The build is split into **17 steps**. Each one is self-contained, ends with a green build, and leaves the app
 in a working state.
 
+> The post-build UI/UX redesign is tracked separately in [REDESIGN-PLAN.md](REDESIGN-PLAN.md) (steps R1–R13).
+
 ## How this works
 
 - **You start each step.** Say _"start step 4"_ and only step 4 gets built. Nothing runs ahead of your command.

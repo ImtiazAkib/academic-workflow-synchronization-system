@@ -112,7 +112,7 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
               {labels.cancel}
             </Button>
 
-            <Button type="button" variant="appPrimary" disabled={isWorking} onClick={handleRemoveConfirm}>
+            <Button type="button" variant="default" disabled={isWorking} onClick={handleRemoveConfirm}>
               {isWorking ? labels.deleting : labels.deleteConfirm}
             </Button>
           </DialogFooter>

@@ -53,7 +53,7 @@ export default async function UnauthorizedPage() {
 
         <p className="text-medium-normal text-muted-foreground max-w-xl">{l10n('UNAUTHORIZED_DESCRIPTION')}</p>
 
-        <Button variant="appPrimary" size="lg" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} />}>
+        <Button variant="default" size="lg" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} />}>
           {l10n('UNAUTHORIZED_CTA')}
         </Button>
       </Container>

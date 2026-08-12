@@ -207,7 +207,7 @@ export function RegisterStudentForm({ labels }: RegisterStudentFormProps) {
         </div>
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="mt-1 w-full">
+      <Button type="submit" variant="default" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

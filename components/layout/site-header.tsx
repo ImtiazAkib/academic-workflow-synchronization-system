@@ -64,11 +64,11 @@ export async function SiteHeader() {
           <LanguageSelector label={l10n('LANGUAGE_SELECTOR_LABEL')} />
 
           {sessionUser ? (
-            <Button variant="appPrimary" size="sm" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} />}>
+            <Button variant="default" size="sm" nativeButton={false} render={<Link href={ROLE_HOME[sessionUser.role]} />}>
               {l10n('NAV_DASHBOARD')}
             </Button>
           ) : (
-            <Button variant="appOutline" size="sm" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+            <Button variant="outline" size="sm" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
               {l10n('NAV_SIGN_IN')}
             </Button>
           )}

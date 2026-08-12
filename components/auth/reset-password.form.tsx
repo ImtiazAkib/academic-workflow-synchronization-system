@@ -102,7 +102,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.FORGOT_PASSWORD.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.FORGOT_PASSWORD.HREF} />}>
           {labels.requestNewCta}
         </Button>
       </div>
@@ -116,7 +116,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
         <h1 className="text-2xl">{labels.successTitle}</h1>
         <p className="text-muted-foreground text-sm">{labels.successDescription}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
           {labels.signInCta}
         </Button>
       </div>
@@ -159,7 +159,7 @@ export function ResetPasswordForm({ token, labels }: ResetPasswordFormProps) {
         {errors.confirmPassword && <p className="text-destructive text-sm">{labels.fieldErrors.passwordsDoNotMatch}</p>}
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="w-full">
+      <Button type="submit" variant="default" disabled={isSubmitting} className="w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

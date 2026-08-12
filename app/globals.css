@@ -49,7 +49,14 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-neutral: var(--neutral);
-  /* Role accents — one per user module (admin, teacher, student) */
+  /* Semantic surface + status tokens (redesign R1) */
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-surface-muted: var(--surface-muted);
+  --color-border-strong: var(--border-strong);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-muted: var(--primary-muted);
+  /* Role/feature accents — marketing cards only (constants/home.const.ts); retired in R12. */
   --color-accent-violet: var(--accent-violet);
   --color-accent-blue: var(--accent-blue);
   --color-accent-teal: var(--accent-teal);
@@ -66,15 +73,30 @@
 :root {
   --font-body: var(--font-inter);
   --font-display: var(--font-poppins);
-  --radius: 0.75rem;
+  /*
+    Tightened from 0.75rem in R1 so the derived scale lands institutional: radius-md 6px
+    (inputs/buttons), radius-lg 8px (cards), radius-xl 12px (modals).
+  */
+  --radius: 0.5rem;
+  /* Reference only — the app's controls stand at h-10 (40px); not wired to a utility. */
+  --control-height: 2.5rem;
   --background: oklch(0.99 0.003 265);
   --foreground: oklch(0.21 0.025 265);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.21 0.025 265);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.025 265);
-  --primary: oklch(0.52 0.19 265);
-  --primary-foreground: oklch(0.99 0.005 265);
+  /*
+    Deep academic navy (R1). Lowered from oklch(0.52 0.19 265) — a bright blue-violet that
+    read as startup-indigo — to a darker, roughly half-chroma navy nudged off 265 toward true
+    blue. Contrast re-verified: foreground-on-primary 8.3:1 (button), primary-as-text on
+    background/card 8.3–8.5:1, focus ring 8.3:1 (need 3). --primary-hover darkens for R2's
+    button; --primary-muted is the soft navy selected-state background.
+  */
+  --primary: oklch(0.42 0.1 256);
+  --primary-foreground: oklch(0.99 0.005 256);
+  --primary-hover: oklch(0.37 0.1 256);
+  --primary-muted: oklch(0.95 0.03 256);
   --secondary: oklch(0.96 0.008 265);
   --secondary-foreground: oklch(0.27 0.03 265);
   --muted: oklch(0.96 0.008 265);
@@ -93,10 +115,25 @@
     the eye; only the text on it got readable.
   */
   --destructive: oklch(0.5 0.19 27);
-  --success: oklch(0.6 0.14 155);
-  --warning: oklch(0.72 0.15 75);
+  /*
+    Darkened + de-chroma'd from oklch(0.6 0.14 155) in R1 to the destructive variant's
+    footing: 5.2:1 as text on card and 4.8:1 on bg-success/10, so R2's success badge reads.
+  */
+  --success: oklch(0.52 0.12 155);
+  /*
+    Darkened from oklch(0.72 0.15 75) in R2a: at L 0.72 amber failed as text on a light tint
+    (the storage-warning and notice-draft messages already used text-warning on bg-warning/10).
+    Now 5.0:1 on card / 4.6:1 on bg-warning/10, so those and R6/R9's warning badge read.
+  */
+  --warning: oklch(0.55 0.13 70);
+  /* Informational blue, distinct from the navy primary; 5.0:1 as text on bg-info/10. */
+  --info: oklch(0.52 0.12 245);
+  --info-foreground: oklch(0.99 0.005 245);
   --neutral: oklch(0.55 0.015 265);
+  /* A recessed surface a step under --card, and a stronger border than --border. */
+  --surface-muted: oklch(0.97 0.006 265);
   --border: oklch(0.9 0.01 265);
+  --border-strong: oklch(0.82 0.015 265);
   /*
     Split from `--border` in step 15b, where the two held the same value. A card edge is
     decoration and may stay faint; the boundary of a text field is what tells somebody
@@ -104,22 +141,25 @@
     every input, textarea and select in the app was effectively borderless.
   */
   --input: oklch(0.72 0.02 265);
-  --ring: oklch(0.52 0.19 265);
-  --chart-1: oklch(0.52 0.19 265);
+  --ring: oklch(0.42 0.1 256);
+  --chart-1: oklch(0.42 0.1 256);
   --chart-2: oklch(0.58 0.15 230);
   --chart-3: oklch(0.55 0.19 300);
   --chart-4: oklch(0.6 0.14 165);
   --chart-5: oklch(0.72 0.15 75);
   --sidebar: oklch(0.98 0.005 265);
   --sidebar-foreground: oklch(0.21 0.025 265);
-  --sidebar-primary: oklch(0.52 0.19 265);
-  --sidebar-primary-foreground: oklch(0.99 0.005 265);
+  --sidebar-primary: oklch(0.42 0.1 256);
+  --sidebar-primary-foreground: oklch(0.99 0.005 256);
   --sidebar-accent: oklch(0.88 0.03 265);
   --sidebar-accent-foreground: oklch(0.27 0.03 265);
   --sidebar-border: oklch(0.9 0.01 265);
-  --sidebar-ring: oklch(0.52 0.19 265);
+  --sidebar-ring: oklch(0.42 0.1 256);
 
-  /* Role accents */
+  /*
+    Role/feature accents — currently consumed only by the marketing feature & role cards
+    (constants/home.const.ts). Left as-is here; R12 rebuilds the landing and mutes/retires them.
+  */
   --accent-violet: oklch(0.55 0.19 300);
   --accent-blue: oklch(0.58 0.15 230);
   --accent-teal: oklch(0.58 0.13 175);
@@ -133,8 +173,10 @@
   --card-foreground: oklch(0.98 0.003 265);
   --popover: oklch(0.21 0.021 265);
   --popover-foreground: oklch(0.98 0.003 265);
-  --primary: oklch(0.72 0.16 265);
-  --primary-foreground: oklch(0.18 0.04 265);
+  --primary: oklch(0.7 0.1 256);
+  --primary-foreground: oklch(0.18 0.04 256);
+  --primary-hover: oklch(0.75 0.1 256);
+  --primary-muted: oklch(0.3 0.06 256);
   --secondary: oklch(0.26 0.024 265);
   --secondary-foreground: oklch(0.98 0.003 265);
   --muted: oklch(0.26 0.024 265);
@@ -142,27 +184,31 @@
   --accent: oklch(0.36 0.035 265);
   --accent-foreground: oklch(0.98 0.003 265);
   --destructive: oklch(0.66 0.19 27);
-  --success: oklch(0.72 0.14 155);
+  --success: oklch(0.72 0.12 155);
   --warning: oklch(0.8 0.14 75);
+  --info: oklch(0.75 0.1 245);
+  --info-foreground: oklch(0.18 0.04 245);
   --neutral: oklch(0.68 0.014 265);
+  --surface-muted: oklch(0.19 0.02 265);
   --border: oklch(0.98 0 0 / 12%);
+  --border-strong: oklch(0.98 0 0 / 22%);
   --input: oklch(0.98 0 0 / 34%);
-  --ring: oklch(0.72 0.16 265);
-  --chart-1: oklch(0.72 0.16 265);
+  --ring: oklch(0.7 0.1 256);
+  --chart-1: oklch(0.7 0.1 256);
   --chart-2: oklch(0.74 0.13 230);
   --chart-3: oklch(0.7 0.17 300);
   --chart-4: oklch(0.74 0.13 165);
   --chart-5: oklch(0.8 0.14 75);
   --sidebar: oklch(0.21 0.021 265);
   --sidebar-foreground: oklch(0.98 0.003 265);
-  --sidebar-primary: oklch(0.72 0.16 265);
-  --sidebar-primary-foreground: oklch(0.18 0.04 265);
+  --sidebar-primary: oklch(0.7 0.1 256);
+  --sidebar-primary-foreground: oklch(0.18 0.04 256);
   --sidebar-accent: oklch(0.36 0.035 265);
   --sidebar-accent-foreground: oklch(0.98 0.003 265);
   --sidebar-border: oklch(0.98 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.16 265);
+  --sidebar-ring: oklch(0.7 0.1 256);
 
-  /* Role accents */
+  /* Role/feature accents — see :root; retired in R12. */
   --accent-violet: oklch(0.72 0.16 300);
   --accent-blue: oklch(0.74 0.13 230);
   --accent-teal: oklch(0.74 0.12 175);
@@ -175,7 +221,7 @@
 */
 @layer base {
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role='button']:not(:disabled) {
     cursor: pointer;
   }
 }
@@ -203,29 +249,34 @@ html[lang='bn'] {
     @apply bg-background text-foreground;
   }
 
-  /* Heading */
+  /*
+    Headings (R1): weight dropped from bold (700) to semibold (600) and the top end capped
+    — h1 now tops out at ~30px (text-3xl) instead of 60px (text-6xl), for the calm
+    institutional page title the brief asks for. A screen that genuinely wants a larger
+    display heading (the marketing hero) opts into its own size at the call site.
+  */
   h1 {
-    @apply font-heading text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl;
+    @apply font-heading text-2xl font-semibold tracking-tight sm:text-3xl;
   }
 
   h2 {
-    @apply font-heading text-3xl font-bold tracking-tight md:text-4xl;
+    @apply font-heading text-xl font-semibold tracking-tight sm:text-2xl;
   }
 
   h3 {
-    @apply font-heading text-2xl font-bold tracking-tight md:text-3xl;
+    @apply font-heading text-lg font-semibold tracking-tight sm:text-xl;
   }
 
   h4 {
-    @apply font-heading text-xl font-bold tracking-tight md:text-2xl;
+    @apply font-heading text-base font-semibold tracking-tight sm:text-lg;
   }
 
   h5 {
-    @apply font-heading text-lg font-bold tracking-tight md:text-xl;
+    @apply font-heading text-sm font-semibold tracking-tight sm:text-base;
   }
 
   h6 {
-    @apply font-heading text-base font-bold tracking-tight md:text-lg;
+    @apply font-heading text-sm font-semibold tracking-tight;
   }
 }
 
@@ -273,6 +324,22 @@ html[lang='bn'] {
   @apply text-base font-bold;
 }
 
+/*
+  Semantic type scale (redesign R1) — the shared vocabulary the PageHeader and screen
+  sections adopt from R3 on, so pages stop reaching for ad-hoc raw sizes.
+*/
+.text-page-title {
+  @apply font-heading text-2xl font-semibold tracking-tight sm:text-3xl;
+}
+
+.text-section-title {
+  @apply text-lg font-semibold sm:text-xl;
+}
+
+.text-card-title {
+  @apply text-base font-semibold;
+}
+
 /* Padding */
 .section-py {
   @apply py-12 lg:py-24;
@@ -281,12 +348,34 @@ html[lang='bn'] {
   @apply px-4 lg:px-6;
 }
 
-/* Brand gradient text — used for the highlighted part of a headline */
+/*
+  Was a from-primary/via-violet/to-blue gradient-text treatment (an AI tell); quarantined in
+  R1 to a solid navy emphasis so its callers keep working. The class and its callers (the
+  marketing hero highlight, the 404 numerals) are retired in R11/R12.
+*/
 .text-gradient-brand {
-  @apply from-primary via-accent-violet to-accent-blue bg-gradient-to-r bg-clip-text text-transparent;
+  @apply text-primary;
 }
 
 /* Surface used by role cards, feature cards and the roadmap rows */
 .surface-card {
-  @apply bg-card text-card-foreground border-border rounded-xl border;
+  @apply bg-card text-card-foreground border-border rounded-lg border;
+}
+
+/*
+  Honour a reduced-motion preference (R1): neutralise the skeleton pulse, spinner spin,
+  dialog zoom and smooth scrolling for users whose OS asks to reduce motion.
+*/
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

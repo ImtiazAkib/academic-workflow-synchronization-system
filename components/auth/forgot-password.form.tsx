@@ -82,7 +82,7 @@ export function ForgotPasswordForm({ labels }: ForgotPasswordFormProps) {
         <Input id="forgot-email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} />
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSending || email.length === 0} className="w-full">
+      <Button type="submit" variant="default" disabled={isSending || email.length === 0} className="w-full">
         {isSending ? labels.submitting : labels.submit}
       </Button>
     </form>

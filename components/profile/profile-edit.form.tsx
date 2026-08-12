@@ -159,7 +159,7 @@ export function ProfileEditForm({ user, labels }: ProfileEditFormProps) {
       )}
 
       <div className="border-border flex border-t pt-5 sm:justify-end">
-        <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="w-full sm:w-auto">
+        <Button type="submit" variant="default" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? labels.working : labels.submit}
         </Button>
       </div>

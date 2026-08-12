@@ -124,7 +124,7 @@ export function RegisterTeacherForm({ labels }: RegisterTeacherFormProps) {
         {errors.password && <p className="text-destructive text-sm">{labels.fieldErrors.passwordTooShort}</p>}
       </div>
 
-      <Button type="submit" variant="appPrimary" disabled={isSubmitting} className="mt-1 w-full">
+      <Button type="submit" variant="default" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? labels.submitting : labels.submit}
       </Button>
     </form>

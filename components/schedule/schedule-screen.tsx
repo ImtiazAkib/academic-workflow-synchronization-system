@@ -138,7 +138,7 @@ export function ScheduleScreen({ sessions, courses, teachers, labels, today }: S
           <p className="text-muted-foreground text-xs">{labels.count}</p>
         </div>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.ADMIN_SCHEDULE_NEW.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.ADMIN_SCHEDULE_NEW.HREF} />}>
           <CalendarPlus className="size-4" />
           {labels.createCta}
         </Button>

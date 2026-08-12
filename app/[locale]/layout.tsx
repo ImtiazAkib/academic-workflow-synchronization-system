@@ -119,8 +119,16 @@ export async function generateMetadata({ params }: Omit<LocaleLayoutProps, 'chil
   };
 }
 
+/*
+  Browser-chrome color, matched to the app background in each scheme (R1). Replaces a
+  hardcoded indigo (#4f46e5) that belonged to neither the old nor the new palette; these are
+  the sRGB of `--background` light/dark, so the mobile address bar meets the page seamlessly.
+*/
 export const viewport: Viewport = {
-  themeColor: '#4f46e5',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fbfcfe' },
+    { media: '(prefers-color-scheme: dark)', color: '#090d15' },
+  ],
 };
 
 /*

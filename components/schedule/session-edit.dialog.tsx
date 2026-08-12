@@ -105,7 +105,7 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
               {labels.cancel}
             </Button>
 
-            <Button type="submit" variant="appPrimary" disabled={isSubmitting}>
+            <Button type="submit" variant="default" disabled={isSubmitting}>
               {isSubmitting ? labels.working : labels.editSubmit}
             </Button>
           </DialogFooter>

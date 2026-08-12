@@ -130,7 +130,7 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" variant="appPrimary" disabled={isUploading || courses.length === 0 || storageBlocked}>
+        <Button type="submit" variant="default" disabled={isUploading || courses.length === 0 || storageBlocked}>
           <Upload className="size-4" />
           {isUploading ? labels.uploading : labels.uploadSubmit}
         </Button>

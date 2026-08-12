@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 
 import { getTranslations } from 'next-intl/server';
-import { Toaster } from 'sonner';
 
 import { MAIN_CONTENT_ID } from '@/constants/a11y.const';
 
@@ -9,6 +8,7 @@ import { requireSession } from '@/lib/auth';
 import { resolveRoleLabel } from '@/lib/utils';
 
 import { DashboardSidebar, DashboardTopbar } from '@/components/dashboard';
+import { Toaster } from '@/components/shared';
 import { DialogLabelsProvider } from '@/components/ui';
 
 type DashboardLayoutProps = {
@@ -103,7 +103,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           Mounted once for the whole dashboard rather than per screen, so an action can
           confirm itself from anywhere underneath without each page wiring up its own.
         */}
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster />
       </div>
     </DialogLabelsProvider>
   );

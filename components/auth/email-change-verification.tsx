@@ -79,7 +79,7 @@ export function EmailChangeVerification({ token, labels }: EmailChangeVerificati
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
           {labels.signInCta}
         </Button>
       </div>
@@ -99,7 +99,7 @@ export function EmailChangeVerification({ token, labels }: EmailChangeVerificati
       {/* Shown back, because "which address did it land on" is the one thing worth confirming. */}
       <p className="border-border bg-muted/40 w-full rounded-lg border px-4 py-3 font-mono text-sm break-all">{email}</p>
 
-      <Button variant="appPrimary" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
+      <Button variant="default" nativeButton={false} render={<Link href={ROUTES.SIGN_IN.HREF} />}>
         {labels.signInCta}
       </Button>
     </div>

@@ -73,7 +73,7 @@ export function UserConfirmDialog({
             {cancelLabel}
           </Button>
 
-          <Button type="button" variant={destructive ? 'destructive' : 'appPrimary'} disabled={isWorking} onClick={handleConfirmClick}>
+          <Button type="button" variant={destructive ? 'destructive' : 'default'} disabled={isWorking} onClick={handleConfirmClick}>
             {isWorking ? workingLabel : labels.confirm}
           </Button>
         </DialogFooter>

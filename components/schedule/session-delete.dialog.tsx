@@ -71,7 +71,7 @@ export function SessionDeleteDialog({
             {cancelLabel}
           </Button>
 
-          <Button type="button" variant="appPrimary" disabled={isWorking} onClick={handleConfirmClick}>
+          <Button type="button" variant="default" disabled={isWorking} onClick={handleConfirmClick}>
             {isWorking ? workingLabel : labels.confirm}
           </Button>
         </DialogFooter>
