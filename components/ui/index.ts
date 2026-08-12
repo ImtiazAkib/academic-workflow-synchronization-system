@@ -7,6 +7,7 @@ export * from './dropdown-menu';
 export * from './empty-state';
 export * from './input';
 export * from './label';
+export * from './page-header';
 export * from './password-input';
 export * from './phone-input';
 export * from './select';

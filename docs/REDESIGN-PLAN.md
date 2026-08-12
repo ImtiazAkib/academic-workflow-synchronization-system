@@ -56,7 +56,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R2a](#r2a) | Consolidate existing primitives        | 3, 21–24    | ✅ Done        |
 | [R2b](#r2b) | Build missing primitives               | 3, 38       | ✅ Done        |
 | [R3a](#r3a) | Desktop shell (sidebar, topbar, nav)   | 4, 5, 7–10  | ✅ Done        |
-| [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ⬜ Not started |
+| [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ✅ Done        |
 | [R4](#r4)   | Dashboards (admin / teacher / student) | 6, 11, 12   | ⬜ Not started |
 | [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
@@ -203,17 +203,39 @@ the nav model) shows the "Overview" fallback crumb — to refine when the profil
 **Files.** `lib/utils/navigation.utils.ts` (+ barrel), `components/dashboard/{dashboard-nav,dashboard-sidebar,dashboard-topbar,account-menu,dashboard-breadcrumb}.tsx`
 (+ barrel, − sign-out files), `app/[locale]/(dashboard)/layout.tsx`, `l10n/l10n.csv`.
 
-### R3b — Mobile drawer + PageHeader ⬜ Not started
+### R3b — Mobile drawer + PageHeader ✅ Done
 
 **Goal.** The responsive half of the shell, plus the page-header primitive screens adopt from R4 on.
 
-- **`PageHeader` primitive** (title 600 + optional description at 14px muted + optional actions slot), plain JSX,
-  inline Tailwind. Adopted per-screen from R4 on (not a 32-file sweep here). Refine the `/profile` breadcrumb.
-- **Mobile nav drawer** (Base UI `Dialog` as a left drawer behind a hamburger) replacing the below-`lg`
-  horizontal nav strip, reusing `resolveNavModel` so the drawer lists exactly what the sidebar does.
+- **`PageHeader` primitive** (`components/ui/page-header.tsx`): title (a plain `h1`, so it inherits the R1
+  600-weight page-title scale) + optional 14px muted description + optional right-aligned actions slot. Exported
+  from the `ui` barrel; screens adopt it from R4 on (no 32-file sweep here).
+- **Mobile nav drawer** (`DashboardMobileNav`): a hamburger opening a left drawer built on Base UI `Dialog`,
+  replacing the below-`lg` horizontal nav strip. Same three bands as the sidebar (logo, sectioned nav, user
+  block) from the same `resolveNavModel`. Slides on a transform transition (not a keyframe class); closes when a
+  link inside is tapped (event delegation, not a `setState`-in-effect), and that closed state carries onto the
+  navigated-to page because the drawer lives in the persistent layout.
+- **`/profile` breadcrumb** now names itself (via `profileLabel`) instead of the Overview fallback.
 
-**Files.** new `components/ui/page-header.tsx` (or shared), new mobile-drawer component, `components/dashboard/*`,
-l10n keys (menu open/close). **Done when** the full nav is reachable below `lg` and `PageHeader` is exported.
+**Outcome.** `format`/`lint`/`build` (77/77) green; l10n regenerated (662 keys, +`DASHBOARD_MENU_OPEN/CLOSE`,
+Bengali flagged). The topbar strip was removed; the hamburger sits left of the breadcrumb below `lg`. **Not
+visually confirmed:** the drawer's live open/slide/close — the assembled shell is auth-gated, and an isolation
+`/ui-preview` route couldn't be exercised because the preview pane went unresponsive this session (navigation +
+JS eval timing out after earlier port/process churn). The drawer is built on the app's proven Base UI `Dialog`
+primitive with standard parts + the R3a-verified nav model, and compiles clean.
+
+**Files.** new `components/ui/page-header.tsx` (+ barrel), new `components/dashboard/dashboard-mobile-nav.tsx`,
+`components/dashboard/{dashboard-topbar,dashboard-breadcrumb}.tsx`, `app/[locale]/(dashboard)/layout.tsx`,
+`l10n/l10n.csv`.
+
+**Post-R3 fixes (found under login).** (1) `DropdownMenuLabel` was `Menu.GroupLabel`, which throws
+`MenuGroupContext is missing` unless inside a `Menu.Group` — now a plain `div`; and a `DropdownMenuLinkItem`
+(`Menu.LinkItem`) was added because `Menu.Item` rendered as a link swallows navigation (the account-menu Profile
+link). See [[base-ui-menu-gotchas]]. (2) The topbar overflowed on phones — the theme/language **pill groups**
+(~116/140px, `shrink-0`) were rebuilt as **compact 36px icon-dropdowns** (shared, so landing/auth headers get
+them too). Verified live on `/en/sign-in` (public, same components): both open with correct options (theme
+Light/Dark/Match-my-device; language English/বাংলা with the active one checked) and the page has zero horizontal
+overflow at 375px.
 
 ### R4 — Dashboards (admin / teacher / student)
 

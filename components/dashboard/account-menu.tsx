@@ -18,6 +18,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuLinkItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui';
@@ -68,10 +69,10 @@ export function AccountMenu({ name, roleLabel, initials, profileLabel, signOutLa
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem render={<Link href={ROUTES.PROFILE.HREF} />}>
+          <DropdownMenuLinkItem render={<Link href={ROUTES.PROFILE.HREF} />}>
             <UserRound />
             {profileLabel}
-          </DropdownMenuItem>
+          </DropdownMenuLinkItem>
 
           <DropdownMenuSeparator />
 

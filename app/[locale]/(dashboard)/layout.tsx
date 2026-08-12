@@ -94,6 +94,9 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             navAriaLabel={l10n('DASHBOARD_NAV_LABEL')}
             breadcrumbLabel={l10n('DASHBOARD_BREADCRUMB_LABEL')}
             overviewLabel={l10n('DASHBOARD_NAV_OVERVIEW')}
+            logoLabel={l10n('APP_LOGO_ALT')}
+            menuOpenLabel={l10n('DASHBOARD_MENU_OPEN')}
+            menuCloseLabel={l10n('DASHBOARD_MENU_CLOSE')}
             user={user}
             profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
             signOutLabel={l10n('DASHBOARD_SIGN_OUT')}

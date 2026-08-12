@@ -661,6 +661,8 @@ declare const messages: {
   "DASHBOARD_NAV_SECTION_COMMUNICATION": "Communication",
   "DASHBOARD_NAV_SECTION_DIRECTORY": "Directory",
   "DASHBOARD_NAV_SECTION_ADMINISTRATION": "Administration",
-  "DASHBOARD_BREADCRUMB_LABEL": "Breadcrumb"
+  "DASHBOARD_BREADCRUMB_LABEL": "Breadcrumb",
+  "DASHBOARD_MENU_OPEN": "Open menu",
+  "DASHBOARD_MENU_CLOSE": "Close menu"
 };
 export default messages;

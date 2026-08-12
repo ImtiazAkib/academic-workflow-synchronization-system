@@ -1,5 +1,7 @@
 'use client';
 
+import type { ComponentProps } from 'react';
+
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 
 import { cn } from '@/lib/utils';
@@ -62,18 +64,47 @@ function DropdownMenuItem({
   );
 }
 
-function DropdownMenuLabel({ className, ...props }: MenuPrimitive.GroupLabel.Props) {
+/*
+  A link row (Base UI `Menu.LinkItem`), for the menu entries that navigate — the account menu's
+  Profile, a row action's "View". `Menu.Item` rendered as an anchor would have its click swallowed
+  by the item's own handler and never navigate; `LinkItem` is the part that lets the link through.
+  The caller supplies the locale-aware `Link` via `render`.
+*/
+function DropdownMenuLinkItem({ className, ...props }: MenuPrimitive.LinkItem.Props) {
   return (
-    <MenuPrimitive.GroupLabel
-      data-slot="dropdown-menu-label"
-      className={cn('text-muted-foreground px-2 py-1.5 text-xs font-medium', className)}
+    <MenuPrimitive.LinkItem
+      data-slot="dropdown-menu-link-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground [&_svg]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
       {...props}
     />
   );
+}
+
+/*
+  A plain styled label, not Base UI's `Menu.GroupLabel` — that part throws unless it sits inside
+  a `Menu.Group`, and the common use (the account-menu header, a menu section heading) is a
+  standalone label, not a group's caption. A non-focusable div is skipped by the menu's keyboard
+  navigation. For a genuinely group-associated caption, wrap items in `DropdownMenuGroup` and use
+  Base UI's `Menu.GroupLabel` directly.
+*/
+function DropdownMenuLabel({ className, ...props }: ComponentProps<'div'>) {
+  return <div data-slot="dropdown-menu-label" className={cn('text-muted-foreground px-2 py-1.5 text-xs font-medium', className)} {...props} />;
 }
 
 function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
   return <MenuPrimitive.Separator data-slot="dropdown-menu-separator" className={cn('bg-border -mx-1 my-1 h-px', className)} {...props} />;
 }
 
-export { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger };
+export {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuLinkItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+};

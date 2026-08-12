@@ -2,13 +2,13 @@
 
 import { useSyncExternalStore } from 'react';
 
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Check, Monitor, Moon, Sun } from 'lucide-react';
 
 import { AppTheme } from '@/types';
 
 import { APP_THEMES } from '@/constants/theme.const';
 
-import { cn } from '@/lib/utils';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui';
 
 import { useTheme } from './theme-provider';
 
@@ -36,26 +36,18 @@ function subscribeToNothing(): () => void {
 }
 
 /*
-  Three choices rather than a two-state switch, and the third is the one worth having:
-  "system" is what somebody who has already told their phone to go dark at sunset means,
-  and a toggle without it makes them state the preference twice.
+  A compact icon trigger opening a menu of the three choices, rather than a three-button pill
+  group — so it costs one control's width in the bar instead of three, which is what let the
+  topbar stop overflowing on a phone. "System" is kept as the third choice: it is what someone
+  who told their phone to go dark at sunset means, and a light/dark toggle makes them say it twice.
 
-  Shaped like `LanguageSelector` on purpose — same pill, same height, same `aria-pressed`
-  group — because the two sit side by side and a visitor should read them as one row of
-  controls rather than two widgets from different apps.
+  The server cannot know the theme (it lives in localStorage / the OS), so the trigger shows a
+  neutral icon until mount and only then the active one — the same hydration guard the pill group
+  used for its pressed state, kept here so the markup does not disagree with itself.
 */
 export function ThemeSelector({ labels }: ThemeSelectorProps) {
   const { theme, setTheme } = useTheme();
 
-  /*
-    The server cannot know the theme: it lives in `localStorage` and in the operating
-    system, neither of which exists while the HTML is being rendered. So the first client
-    render must match the server's — which means rendering the buttons unpressed until
-    after mount, and only then showing which one is active.
-
-    Without this the markup disagrees with itself and React logs a hydration mismatch. The
-    buttons still work before mount; only the pressed state waits.
-  */
   const hasMounted = useSyncExternalStore(
     subscribeToNothing,
     () => true,
@@ -72,25 +64,26 @@ export function ThemeSelector({ labels }: ThemeSelectorProps) {
     setTheme(value);
   };
 
+  // Monitor until mount, so server and the first client render agree; the real icon follows.
+  const TriggerIcon = hasMounted ? (options.find(x => x.value === theme)?.icon ?? Monitor) : Monitor;
+
   return (
-    // h-9 so it matches the language selector and the sign-out button it sits beside.
-    <div role="group" aria-label={labels.group} className="border-border flex h-9 items-center gap-0.5 rounded-full border p-0.5">
-      {options.map(x => (
-        <button
-          key={x.value}
-          type="button"
-          // The name is the label, because the icon alone says nothing to a screen reader.
-          aria-label={x.label}
-          title={x.label}
-          aria-pressed={hasMounted && theme === x.value}
-          onClick={() => handleThemeClick(x.value)}
-          className={cn(
-            'flex h-full cursor-pointer items-center rounded-full px-2.5 transition-colors',
-            hasMounted && theme === x.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-          )}>
-          <x.icon className="size-4" aria-hidden />
-        </button>
-      ))}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={labels.group} />}>
+        <TriggerIcon />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="min-w-40">
+        {options.map(x => (
+          <DropdownMenuItem key={x.value} onClick={() => handleThemeClick(x.value)}>
+            <x.icon />
+
+            <span className="flex-1">{x.label}</span>
+
+            {hasMounted && theme === x.value && <Check />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
