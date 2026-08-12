@@ -6,4 +6,5 @@ import { LucideIcon } from 'lucide-react';
 export type FeatureVisual = {
   icon: LucideIcon;
   accentClassName: string;
+  surfaceClassName: string;
 };

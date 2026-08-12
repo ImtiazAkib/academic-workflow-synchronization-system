@@ -37,12 +37,12 @@ export const ROLE_VISUALS = {
 } as const satisfies Record<string, RoleVisual>;
 
 export const FEATURE_VISUALS = {
-  AUTH: { icon: KeyRound, accentClassName: 'text-primary' },
-  RBAC: { icon: ShieldCheck, accentClassName: 'text-accent-violet' },
-  SCHEDULING: { icon: CalendarDays, accentClassName: 'text-accent-blue' },
-  MATERIALS: { icon: FolderOpen, accentClassName: 'text-accent-teal' },
-  NOTICES: { icon: Megaphone, accentClassName: 'text-accent-amber' },
-  DASHBOARDS: { icon: LayoutDashboard, accentClassName: 'text-primary' },
+  AUTH: { icon: KeyRound, accentClassName: 'text-primary', surfaceClassName: 'bg-primary/10' },
+  RBAC: { icon: ShieldCheck, accentClassName: 'text-accent-violet', surfaceClassName: 'bg-accent-violet/10' },
+  SCHEDULING: { icon: CalendarDays, accentClassName: 'text-accent-blue', surfaceClassName: 'bg-accent-blue/10' },
+  MATERIALS: { icon: FolderOpen, accentClassName: 'text-accent-teal', surfaceClassName: 'bg-accent-teal/10' },
+  NOTICES: { icon: Megaphone, accentClassName: 'text-accent-amber', surfaceClassName: 'bg-accent-amber/10' },
+  DASHBOARDS: { icon: LayoutDashboard, accentClassName: 'text-primary', surfaceClassName: 'bg-primary/10' },
 } as const satisfies Record<string, FeatureVisual>;
 
 /**

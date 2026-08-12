@@ -79,13 +79,15 @@ export async function SectionHero() {
               </div>
             </div>
 
-            <div className="bg-primary text-primary-foreground flex flex-col justify-between rounded-2xl p-5">
+            <div className="border-primary/20 bg-primary/12 text-foreground dark:border-primary/25 dark:bg-primary/10 flex flex-col justify-between rounded-2xl border p-5">
               <div>
-                <span className="bg-primary-foreground/15 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold">Connected</span>
+                <span className="bg-primary/15 text-primary dark:bg-primary/20 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold">
+                  Connected
+                </span>
                 <h2 className="mt-6 text-xl leading-snug font-semibold">Every update reaches the right person.</h2>
               </div>
-              <div className="border-primary-foreground/15 text-primary-foreground/80 mt-8 border-t pt-4 text-sm">
-                <span className="text-primary-foreground font-semibold">Material shared</span>
+              <div className="border-primary/15 text-muted-foreground dark:border-primary/20 mt-8 border-t pt-4 text-sm">
+                <span className="text-foreground font-semibold">Material shared</span>
                 <span className="mt-1 block">Ready for students</span>
               </div>
             </div>
