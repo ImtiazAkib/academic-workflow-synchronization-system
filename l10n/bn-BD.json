@@ -680,5 +680,15 @@
   "DASHBOARD_PENDING_TITLE": "অনুমোদন বাকি",
   "DASHBOARD_PENDING_EMPTY_TITLE": "সব সম্পন্ন",
   "DASHBOARD_PENDING_EMPTY_DESCRIPTION": "অনুমোদনের অপেক্ষায় কোনো অ্যাকাউন্ট নেই।",
-  "DASHBOARD_VIEW_ALL": "সব দেখুন"
+  "DASHBOARD_VIEW_ALL": "সব দেখুন",
+  "DASHBOARD_TEACHING_NEXT": "পরবর্তী ক্লাস",
+  "DASHBOARD_TEACHER_DONE_TITLE": "আজ আর কোনো ক্লাস নেই",
+  "DASHBOARD_TEACHER_DONE_DESCRIPTION": "আজ আপনার রুটিনে আর কিছু নেই।",
+  "DASHBOARD_TODAY_EMPTY_TEACHER": "আজ আপনার পড়ানোর কোনো ক্লাস নেই।",
+  "DASHBOARD_RECENT_MATERIALS_TITLE": "সাম্প্রতিক আপলোড",
+  "DASHBOARD_TEACHER_MATERIALS_EMPTY_TITLE": "এখনো কোনো আপলোড নেই",
+  "DASHBOARD_TEACHER_MATERIALS_EMPTY_DESCRIPTION": "আপনার আপলোড করা ফাইল এখানে দেখা যাবে।",
+  "DASHBOARD_TEACHER_COURSES_TITLE": "আমার কোর্স",
+  "DASHBOARD_TEACHER_COURSES_EMPTY_TITLE": "কোনো কোর্স বরাদ্দ নেই",
+  "DASHBOARD_TEACHER_COURSES_EMPTY_DESCRIPTION": "আপনাকে বরাদ্দ করা কোর্স এখানে দেখা যাবে।"
 }

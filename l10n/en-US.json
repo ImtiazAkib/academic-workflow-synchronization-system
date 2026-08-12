@@ -680,5 +680,15 @@
   "DASHBOARD_PENDING_TITLE": "Pending approvals",
   "DASHBOARD_PENDING_EMPTY_TITLE": "All caught up",
   "DASHBOARD_PENDING_EMPTY_DESCRIPTION": "No accounts are waiting for approval.",
-  "DASHBOARD_VIEW_ALL": "View all"
+  "DASHBOARD_VIEW_ALL": "View all",
+  "DASHBOARD_TEACHING_NEXT": "Teaching next",
+  "DASHBOARD_TEACHER_DONE_TITLE": "No more classes today",
+  "DASHBOARD_TEACHER_DONE_DESCRIPTION": "Nothing left on your teaching schedule today.",
+  "DASHBOARD_TODAY_EMPTY_TEACHER": "You have no classes to teach today.",
+  "DASHBOARD_RECENT_MATERIALS_TITLE": "Recent uploads",
+  "DASHBOARD_TEACHER_MATERIALS_EMPTY_TITLE": "No uploads yet",
+  "DASHBOARD_TEACHER_MATERIALS_EMPTY_DESCRIPTION": "Files you upload will appear here.",
+  "DASHBOARD_TEACHER_COURSES_TITLE": "My courses",
+  "DASHBOARD_TEACHER_COURSES_EMPTY_TITLE": "No courses assigned",
+  "DASHBOARD_TEACHER_COURSES_EMPTY_DESCRIPTION": "Courses you are assigned to teach will appear here."
 }

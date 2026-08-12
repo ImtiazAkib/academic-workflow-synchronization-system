@@ -58,7 +58,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R3a](#r3a) | Desktop shell (sidebar, topbar, nav)   | 4, 5, 7–10  | ✅ Done        |
 | [R3b](#r3b) | Mobile drawer + PageHeader             | 4, 10, 32   | ✅ Done        |
 | [R4a](#r4a) | Dashboard foundation + admin dashboard | 6, 11, 12   | ✅ Done        |
-| [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ⬜ Not started |
+| [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ✅ Done        |
 | [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ⬜ Not started |
 | [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
@@ -272,12 +272,27 @@ auth-gated — it's built from these verified widgets + verified helpers over ex
 **Files.** `lib/utils/schedule.utils.ts`, `components/dashboard/{dashboard-stat,dashboard-class-row,dashboard-today-schedule}.tsx`
 (+ barrel), `app/[locale]/(dashboard)/admin/page.tsx`, `l10n/l10n.csv`.
 
-### R4b — Teacher dashboard ⬜ Not started
+### R4b — Teacher dashboard ✅ Done
 
-**Goal.** Make "what am I teaching next" the top answer. `resolveClassStatus` over the teacher's own classes
-(`ClassSessionService.list({teacherId})` filtered to today) drives a prominent next/now card; then assigned
-courses (`CourseService.list()` filtered by `assignedTeacherId`), recent material activity
-(`MaterialService.list()` filtered by `uploadedById`, "uploaded X ago"), and notices. Reuses the R4a widgets.
+**Goal.** Make "what am I teaching next" the top answer.
+
+- **Two new shared widgets:** `DashboardNextClass` (the hero — the on-now class gets the navy tint + a "Now"
+  badge, the next one its "in X min", and a "no more classes today" empty state; reused by R4c) and
+  `DashboardMaterialRow` (a recent-upload row — file · course · size · "12 minutes ago"; generic file icon for
+  now, per-type icons come with R7).
+- **Teacher page** (replaces the 28-line stub): `PageHeader` → the **Teaching next** hero (`resolveClassStatus`
+  over the teacher's own sessions) → an asymmetric split: today's teaching schedule (`DashboardTodaySchedule`,
+  personal current/next markers) + recent uploads (`MaterialService.list()` filtered by `uploadedById`, relative
+  time via next-intl's `getFormatter().relativeTime`) in the wide column; my courses
+  (`CourseService.list()` filtered by `assignedTeacherId`) + `DashboardNotices` in the narrow one.
+
+**Outcome.** `format`/`lint`/`build` (77/77) green; l10n +10 keys (Bengali flagged). Both new widgets verified
+rendering on the running server (deleted `/ui-preview`): the "now" hero (green badge + navy tint), the "next"
+hero (blue "in 25 min"), the done empty state, and material rows with "X minutes ago". The assembled teacher page
+is auth-gated (built from these verified widgets + the R4a helpers over existing services).
+
+**Files.** `components/dashboard/{dashboard-next-class,dashboard-material-row}.tsx` (+ barrel),
+`app/[locale]/(dashboard)/teacher/page.tsx`, `l10n/l10n.csv`.
 
 ### R4c — Student dashboard elevation ⬜ Not started
 

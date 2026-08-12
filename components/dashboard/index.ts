@@ -1,5 +1,7 @@
 export * from './dashboard-class-row';
+export * from './dashboard-material-row';
 export * from './dashboard-nav';
+export * from './dashboard-next-class';
 export * from './dashboard-notices';
 export * from './dashboard-sidebar';
 export * from './dashboard-stat';
