@@ -67,6 +67,8 @@ export type ScheduleLabels = {
   today: string;
   count: string;
   statusCancelled: string;
+  /** The small marker on a card whose teacher is double-booked in that slot. */
+  conflict: string;
   /** The `dt` for the time row on a cell — visually hidden, read aloud. */
   timeLabel: string;
   cancel: string;

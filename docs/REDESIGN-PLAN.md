@@ -60,7 +60,8 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | [R4a](#r4a) | Dashboard foundation + admin dashboard | 6, 11, 12   | ✅ Done        |
 | [R4b](#r4b) | Teacher dashboard                      | 6, 12       | ✅ Done        |
 | [R4c](#r4c) | Student dashboard elevation            | 6, 12       | ✅ Done        |
-| [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
+| [R5a](#r5a) | Routine — grid refinements             | 7, 13, 14   | ✅ Done        |
+| [R5b](#r5b) | Routine — form conflicts + filters     | 7, 14       | ⬜ Not started |
 | [R6](#r6)   | Courses                                | 8, 15       | ⬜ Not started |
 | [R7](#r7)   | Materials & upload                     | 8, 16, 17   | ⬜ Not started |
 | [R8](#r8)   | Notices                                | 9, 18       | ⬜ Not started |
@@ -311,21 +312,39 @@ page itself is auth-gated. The three dashboards now genuinely differ: **admin** 
 
 **Files.** `app/[locale]/(dashboard)/student/page.tsx`, `l10n/l10n.csv`.
 
-### R5 — Routine / timetable
+> **R5 was split** into **R5a** (read-only grid refinements) and **R5b** (form conflict-anchoring + filters).
 
-**Goal.** Refine the agenda (no time-grid) and make conflicts legible.
+### R5a — Routine grid refinements ✅ Done
 
-- **Field-anchored conflicts** — render each `ErrorDto` conflict message beside the Teacher/Course field it
-  concerns (the DTO already carries `field`), not only as the top-of-form alert.
-- **Existing double-books visible** on the read-only grid — a pure `lib/` overlap helper marks overlapping cards
-  in a day column with a muted conflict treatment (color is never the only signal — add an icon/label).
-- **Filters + view** — add a day filter (`dayOfWeek` is in the DTO) and a compact list/agenda view toggle beside
-  the semester/teacher filters; replace fixed English `w-40`/`w-56` select widths with min+max so Bengali fits.
-- **Flatten nesting** — drop the card-like tinted/ring day-column wrapper to a lighter grouping (header + list +
-  a subtle "today" marker). Apply `tabular-nums` to time cells.
+**Goal.** Refine the agenda display and make existing double-books legible on the grid.
+
+- **Flatten nesting** — dropped the card-like tinted/ring day-column wrapper; each column is now a plain header
+  (a bottom divider, primary-accented + `Today` pill on today) over its cards, ending the cards-in-cards nesting.
+- **Existing double-books visible** — `ScheduleWeekView` runs the R4a `findScheduleConflicts` over its own
+  sessions (so both admin and teacher screens get it, no screen changes) and flags each clashing card with a red
+  border + tint + a destructive **"Conflict"** badge (alert icon + label — never colour alone). Cancelled classes
+  are excluded. Scoped to the current filter view; the admin dashboard remains the whole-timetable conflict count.
+- `tabular-nums` on the time cells; the cancelled/conflict chips now use the R2a `Badge` primitive.
+
+**Outcome.** `format`/`lint`/`build` (77/77) green; l10n +1 key. Verified in isolation (deleted `/ui-preview`,
+read-only `canManage=false`): flattened columns (transparent bg, navy today-header border), clashing cards red
+with the "Conflict" badge, non-clashing normal, cancelled neutral and not flagged, `tabular-nums` times.
+
+**Files.** `components/schedule/{schedule-week-view,schedule-grid-cell}.tsx`, `schedule.types.ts`,
+`lib/utils/schedule-labels.utils.ts`, `l10n/l10n.csv`.
+
+### R5b — Routine form conflicts + filters ⬜ Not started
+
+**Goal.** Make a clash legible _at the point of scheduling_, and finish the filter bar.
+
+- **Field-anchored conflicts** — route each `ErrorDto` conflict message beside the Teacher/Course field it
+  concerns (the DTO carries `field`), in `SessionFields`/the create+edit forms, instead of only the top alert.
+- **Filters + view** — add a day filter (`dayOfWeek` is in the DTO) and a compact list/week view toggle beside
+  semester/teacher; replace fixed `w-40`/`w-56` select widths with min+max so Bengali fits.
 - _Deferred:_ room in the block, and "view conflicting class" specifics (need model/service changes).
 
-**Files.** `components/schedule/*`, `lib/utils/schedule.utils.ts`, l10n keys.
+**Files.** `components/schedule/{session-fields,session-create.form,session-edit.dialog,schedule-filters,schedule-screen}.tsx`,
+l10n keys.
 
 ### R6 — Courses
 

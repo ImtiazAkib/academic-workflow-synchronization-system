@@ -698,6 +698,7 @@ declare const messages: {
   "STUDENT_DONE_TITLE": "You're done for today",
   "STUDENT_DONE_DESCRIPTION": "No more classes on your routine today.",
   "STUDENT_RECENT_MATERIALS_EMPTY_TITLE": "No recent uploads",
-  "STUDENT_RECENT_MATERIALS_EMPTY_DESCRIPTION": "New files from your teachers will appear here."
+  "STUDENT_RECENT_MATERIALS_EMPTY_DESCRIPTION": "New files from your teachers will appear here.",
+  "SCHEDULE_CONFLICT_BADGE": "Conflict"
 };
 export default messages;
