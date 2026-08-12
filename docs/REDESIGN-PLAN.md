@@ -54,7 +54,7 @@ tuning, the DRY single-nav shell, the deliberate per-day agenda timetable, and t
 | ----------- | -------------------------------------- | ----------- | -------------- |
 | [R1](#r1)   | Design tokens & type foundation        | 2, 39       | ✅ Done        |
 | [R2a](#r2a) | Consolidate existing primitives        | 3, 21–24    | ✅ Done        |
-| [R2b](#r2b) | Build missing primitives               | 3, 38       | ⬜ Not started |
+| [R2b](#r2b) | Build missing primitives               | 3, 38       | ✅ Done        |
 | [R3](#r3)   | Application shell                      | 4, 5, 7–10  | ⬜ Not started |
 | [R4](#r4)   | Dashboards (admin / teacher / student) | 6, 11, 12   | ⬜ Not started |
 | [R5](#r5)   | Routine / timetable                    | 7, 13, 14   | ⬜ Not started |
@@ -144,7 +144,7 @@ because the existing storage-warning/notice-draft messages already used `text-wa
 **Files.** `components/ui/{button,badge,dialog,select}.tsx`, `components/shared/toaster.tsx` (+ barrel),
 `app/[locale]/(dashboard)/layout.tsx`, `app/globals.css`, and 34 `app*` call-site files.
 
-### R2b — Build missing primitives ⬜ Not started
+### R2b — Build missing primitives ✅ Done
 
 **Goal.** Add the components the later screens need, on the Base UI headless bases already in use. Additive —
 no existing screen changes until a later step consumes them.
@@ -155,8 +155,18 @@ no existing screen changes until a later step consumes them.
   (semantic `nav`/`ol`; R3 topbar), **`Tooltip`** (Base UI `Tooltip`), and an optional action slot on a shared
   **`EmptyState`**.
 
-**Files.** new `components/ui/{dropdown-menu,tabs,avatar,breadcrumb,tooltip,empty-state}.tsx`,
-`components/ui/index.ts`. **Done when** each is exported and renders correctly (light/dark) in isolation.
+**Outcome.** All six built to match the Select/Dialog house patterns (data-slot, popover surface, 8px popup,
+100ms fade/zoom, token colors) and exported from the `ui` barrel. Verified on a throwaway `/ui-preview` route
+(since deleted): DropdownMenu opens with the right items, 8px radius, shadow and a red destructive row; Tabs
+switch with a navy underline + foreground active tab and muted inactive; Avatar renders circular initials;
+Breadcrumb renders the link + `aria-current` page; EmptyState renders icon/title/description/action. Two notes:
+the Breadcrumb link carries no `data-slot` (Base UI `mergeProps` rejects arbitrary data attrs, same as Badge —
+it uses `useRender` and the caller passes the locale `Link` via `render`); and the Tooltip's live hover wasn't
+confirmable via synthetic events in the headless pane, but it compiles and mirrors the verified DropdownMenu
+floating pattern. `format`/`lint`/`build` (77/77) green.
+
+**Files.** new `components/ui/{avatar,breadcrumb,dropdown-menu,empty-state,tabs,tooltip}.tsx`,
+`components/ui/index.ts`.
 
 ### R3 — Application shell
 
