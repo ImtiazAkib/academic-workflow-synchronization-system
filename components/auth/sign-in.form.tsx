@@ -13,9 +13,10 @@ import { isSuccess } from '@/lib/result';
 import { SignInInput, SignInOutput, SignInSchema } from '@/lib/schemas';
 import { SignInErrorLabels, resolveSignInErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label, PasswordInput, Spinner } from '@/components/ui';
+import { Button, FormMessage, Input, Label, PasswordInput, Spinner } from '@/components/ui';
 
 import { signInAction } from './actions';
+import { FormErrorAlert } from './form-error-alert';
 
 type SignInFormLabels = {
   identifierLabel: string;
@@ -78,11 +79,7 @@ export function SignInForm({ labels }: SignInFormProps) {
 
   return (
     <form noValidate onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
-      {formError && (
-        <p role="alert" className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
-          {formError}
-        </p>
-      )}
+      {formError && <FormErrorAlert message={formError} />}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="identifier">{labels.identifierLabel}</Label>
@@ -99,7 +96,7 @@ export function SignInForm({ labels }: SignInFormProps) {
           aria-invalid={Boolean(errors.identifier)}
           {...register('identifier')}
         />
-        {errors.identifier && <p className="text-destructive text-sm">{labels.identifierRequired}</p>}
+        {errors.identifier && <FormMessage>{labels.identifierRequired}</FormMessage>}
         <p className="text-muted-foreground text-xs">{labels.identifierHint}</p>
       </div>
 
@@ -113,7 +110,7 @@ export function SignInForm({ labels }: SignInFormProps) {
           hideLabel={labels.hidePassword}
           {...register('password')}
         />
-        {errors.password && <p className="text-destructive text-sm">{labels.passwordRequired}</p>}
+        {errors.password && <FormMessage>{labels.passwordRequired}</FormMessage>}
       </div>
 
       <Button type="submit" variant="default" disabled={isBusy} className="mt-1 w-full">
