@@ -119,6 +119,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
           registrationNoDigitsOnly: l10n('USERS_FIELD_REGISTRATION_NO_DIGITS_ONLY'),
           sessionTooLong: l10n('USERS_FIELD_SESSION_TOO_LONG'),
           departmentTooLong: l10n('USERS_FIELD_DEPARTMENT_TOO_LONG'),
+          departmentRequired: l10n('USERS_FIELD_DEPARTMENT_REQUIRED'),
           semesterInvalid: l10n('USERS_FIELD_SEMESTER_INVALID'),
           phoneInvalid: l10n('USERS_FIELD_PHONE_INVALID'),
         },
@@ -165,6 +166,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         errors: {
           emailTaken: l10n('USERS_ERROR_EMAIL_TAKEN'),
           adminLimit: l10n('USERS_ERROR_ADMIN_LIMIT'),
+          departmentRequired: l10n('USERS_FIELD_DEPARTMENT_REQUIRED'),
           ownAccess: l10n('USERS_ERROR_OWN_ACCESS'),
           superAdmin: l10n('USERS_ERROR_SUPER_ADMIN'),
           adminOnlySuperAdmin: l10n('USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN'),

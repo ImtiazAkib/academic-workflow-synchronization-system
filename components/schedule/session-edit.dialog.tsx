@@ -24,6 +24,8 @@ type SessionEditDialogProps = {
   courses: CourseOption[];
   teachers: TeacherOption[];
   labels: ScheduleLabels;
+  /** A teacher may only move their own class - lock the course, teacher and semester. */
+  lockReferences?: boolean;
   onUpdated: () => void;
   onOpenChange: (open: boolean) => void;
 };
@@ -33,7 +35,7 @@ type SessionEditDialogProps = {
   the form on mount rather than needing an effect - and a stale conflict from the
   previous attempt is cleared for free.
 */
-export function SessionEditDialog({ session, courses, teachers, labels, onUpdated, onOpenChange }: SessionEditDialogProps) {
+export function SessionEditDialog({ session, courses, teachers, labels, lockReferences, onUpdated, onOpenChange }: SessionEditDialogProps) {
   const [conflicts, setConflicts] = useState<ErrorDto[]>([]);
 
   const {
@@ -105,6 +107,7 @@ export function SessionEditDialog({ session, courses, teachers, labels, onUpdate
               days={labels.days}
               conflicts={fieldConflicts}
               idPrefix="edit-session"
+              lockReferences={lockReferences}
             />
           </div>
 

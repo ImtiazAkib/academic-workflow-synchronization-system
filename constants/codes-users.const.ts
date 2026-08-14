@@ -101,6 +101,7 @@ export const USERS_BUSINESS = {
     may create is `admin` - anything else is somebody else's to make.
   */
   SUPER_ADMIN_CREATES_ADMINS_ONLY: createErrorDefinition(31006, 'The super administrator can only create administrator accounts.'),
+  TEACHER_ASSIGNMENTS_MUST_BE_TRANSFERRED: createErrorDefinition(31007, 'Reassign this teacher’s courses and classes before deleting the account.'),
 } as const;
 
 /**

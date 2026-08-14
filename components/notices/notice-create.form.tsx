@@ -71,6 +71,7 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   /*
     The live object URL, mirrored in a ref so it can be revoked without reading state.
@@ -107,6 +108,11 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
   const category = useWatch({ control, name: 'category' });
   const isSession = category === NOTICE_CATEGORIES.SESSION;
 
+  // A notice attachment may be a picture or a PDF; only a picture gets an inline preview,
+  // so a chosen PDF shows its name rather than a broken image.
+  const selectedImage = useWatch({ control, name: 'image' });
+  const previewIsImage = selectedImage instanceof File && selectedImage.type.startsWith('image/');
+
   // Only the last one can still be live; the rest were revoked as they were replaced.
   useEffect(() => () => revoke(previewUrlRef.current), []);
 
@@ -140,11 +146,12 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const [file] = event.target.files ?? [];
+    selectImage(file ?? null);
+  };
 
-    showPreview(file ?? null);
-
-    // Validated as it is chosen, so a 12 MB photograph is refused before it is uploaded.
-    setValue('image', file, { shouldValidate: true });
+  const selectImage = (file: File | null): void => {
+    showPreview(file);
+    setValue('image', file ?? undefined, { shouldValidate: true });
   };
 
   const handleImageClear = (): void => {
@@ -315,15 +322,55 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="notice-image">{labels.fields.image}</Label>
-        {/* `py-1.5` because the base input height clips the native picker button. */}
-        <Input
+        {/* Once an attachment is chosen, its preview below replaces the dropzone so the picker is not offered twice; Remove brings it back. */}
+        {!previewUrl && (
+          <div
+            role="button"
+            tabIndex={storageBlocked ? -1 : 0}
+            onClick={() => imageInputRef.current?.click()}
+            onKeyDown={event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                imageInputRef.current?.click();
+              }
+            }}
+            onDragEnter={event => {
+              event.preventDefault();
+              if (!storageBlocked) setIsDragging(true);
+            }}
+            onDragOver={event => event.preventDefault()}
+            onDragLeave={event => {
+              // The dropzone wraps text nodes, so a bare currentTarget===target check flips
+              // off every time the cursor crosses a child. Only clear when the cursor has
+              // actually left the dropzone - relatedTarget is where it went, null off-window.
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragging(false);
+            }}
+            onDrop={event => {
+              event.preventDefault();
+              setIsDragging(false);
+              // The click and keyboard paths are closed when the bucket is full; the drop
+              // path has to be closed with them, or a full bucket still takes an attachment.
+              if (storageBlocked) return;
+              selectImage(event.dataTransfer.files.item(0));
+            }}
+            className={`flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 text-center text-sm transition-colors ${isDragging ? 'border-primary bg-primary-muted text-primary' : 'border-border hover:border-primary/40 hover:bg-primary-muted/40'}`}>
+            <span className="font-medium">{labels.dropTitle}</span>
+            <span className="text-muted-foreground text-xs">{labels.dropHint}</span>
+          </div>
+        )}
+        {/*
+          A plain input, not the styled `Input`: the component carries `w-full`, which beats
+          `sr-only`'s 1px and left this hidden, absolutely-positioned picker at full width -
+          overrunning the page to the right on wide screens.
+        */}
+        <input
           id="notice-image"
           type="file"
           accept={NOTICE_IMAGE_ACCEPT}
           ref={imageInputRef}
           aria-invalid={Boolean(errors.image)}
           disabled={storageBlocked}
-          className="py-1.5"
+          className="sr-only"
           onChange={handleImageChange}
         />
         {errors.image && (
@@ -356,11 +403,16 @@ export function NoticeCreateForm({ labels, sessions, canChooseAudience, listHref
         */}
         {previewUrl && (
           <div className="border-border flex flex-col items-start gap-2 rounded-lg border p-3">
-            {/* eslint-disable-next-line @next/next/no-img-element -- a local object URL of unknown dimensions; next/image cannot optimize it */}
-            <img src={previewUrl} alt={labels.imagePreviewAlt} className="max-h-64 w-auto rounded-md" />
+            {previewIsImage ? (
+              // `max-w-full` caps the width so a wide photograph fits the form; `w-auto` alone caps only the height and let a landscape scan scroll the page sideways.
+              // eslint-disable-next-line @next/next/no-img-element -- a local object URL of unknown dimensions; next/image cannot optimize it
+              <img src={previewUrl} alt={labels.imagePreviewAlt} className="max-h-64 w-auto max-w-full rounded-md" />
+            ) : (
+              <span className="text-muted-foreground max-w-full text-sm break-all">{selectedImage instanceof File ? selectedImage.name : ''}</span>
+            )}
 
             <Button type="button" variant="outline" size="sm" onClick={handleImageClear}>
-              {labels.imageRemove}
+              {labels.attachmentRemove}
             </Button>
           </div>
         )}

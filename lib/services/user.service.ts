@@ -224,6 +224,14 @@ export class UserService {
         return singleFailure(createError(BUSINESS.SUPER_ADMIN_CREATES_ADMINS_ONLY.CODE, BUSINESS.SUPER_ADMIN_CREATES_ADMINS_ONLY.MESSAGE, 'role'));
       }
 
+      if (input.role === USER_ROLES.ADMIN && !this.optionalText(input.department)) {
+        return singleFailure(createError(VALIDATION.DEPARTMENT_REQUIRED.CODE, VALIDATION.DEPARTMENT_REQUIRED.MESSAGE, 'department'));
+      }
+
+      if (input.role === USER_ROLES.ADMIN && (await this.isAdminCeilingReached(null, this.optionalText(input.department)))) {
+        return this.adminLimitReached();
+      }
+
       const existing = await User.findOne({ email: input.email }).lean<UserEntity | null>();
 
       if (existing) {
@@ -304,6 +312,26 @@ export class UserService {
       */
       if (input.role !== target.role) {
         return singleFailure(createError(BUSINESS.ROLE_IS_IMMUTABLE.CODE, BUSINESS.ROLE_IS_IMMUTABLE.MESSAGE, 'role'));
+      }
+
+      /*
+        The two admin rules create() enforces are re-checked here, because an edit is another
+        way into the same invariant: without this, an admin could be edited to no department at
+        all, or moved into a department that already holds its three, defeating the ceiling. A
+        Server Action is a public endpoint, so the guard lives in the service, not the form.
+      */
+      if (target.role === USER_ROLES.ADMIN) {
+        const department = this.optionalText(input.department);
+
+        if (!department) {
+          return singleFailure(createError(VALIDATION.DEPARTMENT_REQUIRED.CODE, VALIDATION.DEPARTMENT_REQUIRED.MESSAGE, 'department'));
+        }
+
+        // Only an active admin moving to a different department can overshoot that department's
+        // ceiling; an inactive one is re-checked when it is switched back on.
+        if (target.isActive && department !== this.optionalText(target.department) && (await this.isAdminCeilingReached(input.userId, department))) {
+          return this.adminLimitReached();
+        }
       }
 
       const updated = await User.findByIdAndUpdate(
@@ -392,20 +420,19 @@ export class UserService {
         }
       }
 
-      /*
-        Submitting the address the account already has clears a change that was asked for
-        and never confirmed. It is the only way back from a typo — the link went to an
-        inbox nobody owns, so it will never be clicked — and it needs no button of its
-        own, because putting the old address back is exactly what somebody in that
-        position would try.
-      */
       const pending = isAddressChanging && !isRepeatOfPending ? this.mintPendingEmail(input.email) : null;
 
       /*
-        A throttled repeat leaves the pending fields exactly as they are — clearing them
-        would retire a link that is still in somebody's inbox and still expected to work.
+        A save that introduces a new address mints a fresh pending change (replacing any prior
+        one); a save that does not — editing a name or phone while the email box still shows
+        the current address — leaves any pending change exactly as it is. This used to clear
+        the pending fields whenever the submitted address equalled the current one, which
+        silently retired an in-flight change the instant the user touched any other field,
+        since the box defaults to the current address throughout the pending window. To
+        abandon a pending change, enter the correct address (which replaces it) or let it
+        expire; a repeat of the pending address, throttled, is likewise left untouched.
       */
-      const pendingFields = isRepeatOfPending ? {} : (pending?.fields ?? this.clearedPendingEmail().fields);
+      const pendingFields = pending?.fields ?? {};
 
       const updated = await User.findByIdAndUpdate(
         target._id,
@@ -523,18 +550,6 @@ export class UserService {
   }
 
   /**
-   * The same three fields, absent — `toUpdateDocument` turns `undefined` into `$unset`.
-   *
-   * @returns The fields to clear, and no token, because nothing is being sent.
-   */
-  private clearedPendingEmail(): { fields: Record<string, unknown>; token: null } {
-    return {
-      token: null,
-      fields: { pendingEmail: undefined, pendingEmailTokenHash: undefined, pendingEmailExpiresAt: undefined },
-    };
-  }
-
-  /**
    * Approve an account, or take approval back.
    *
    * @param input - Validated approval input.
@@ -607,10 +622,25 @@ export class UserService {
         return emptyFailureWithError(createError(BUSINESS.CANNOT_CHANGE_OWN_ACCESS.CODE, BUSINESS.CANNOT_CHANGE_OWN_ACCESS.MESSAGE));
       }
 
-      await this.purgeOwnedContent(userId);
+      /*
+       * A course and timetable row are departmental commitments. Deleting their teacher
+       * must not silently turn them into unassigned work or erase students' routine, so
+       * the administrator transfers them through the existing course/schedule editors
+       * before removing the account.
+       */
+      if (target.role === USER_ROLES.TEACHER) {
+        const [courseCount, classCount] = await Promise.all([
+          Course.countDocuments({ assignedTeacher: userId }),
+          ClassSession.countDocuments({ teacher: userId }),
+        ]);
+        if (courseCount > 0 || classCount > 0) {
+          return emptyFailureWithError(
+            createError(BUSINESS.TEACHER_ASSIGNMENTS_MUST_BE_TRANSFERRED.CODE, BUSINESS.TEACHER_ASSIGNMENTS_MUST_BE_TRANSFERRED.MESSAGE)
+          );
+        }
+      }
 
-      // Department assets, not the teacher's — handed back rather than destroyed.
-      await Course.updateMany({ assignedTeacher: userId }, { $unset: { assignedTeacher: '' } });
+      await this.purgeOwnedContent(userId);
 
       // The row last, so a cascade interrupted midway leaves the account present to retry against.
       await User.findByIdAndDelete(userId);
@@ -634,9 +664,6 @@ export class UserService {
    * @param userId - The account whose content is being removed.
    */
   private async purgeOwnedContent(userId: string): Promise<void> {
-    // Class sessions name their teacher directly; a student has none, so this is simply empty for them.
-    await ClassSession.deleteMany({ teacher: userId });
-
     const materials = await Material.find({ uploadedBy: userId }).lean<{ storageKey: string }[]>();
 
     await Material.deleteMany({ uploadedBy: userId });
@@ -697,7 +724,7 @@ export class UserService {
         Switching an administrator back on is the same act as creating one, as far as the
         ceiling is concerned — the department ends up with a fourth either way.
       */
-      if (change.isActive === true && target.role === USER_ROLES.ADMIN && (await this.isAdminCeilingReached(userId))) {
+      if (change.isActive === true && target.role === USER_ROLES.ADMIN && (await this.isAdminCeilingReached(userId, target.department))) {
         return this.adminLimitReached();
       }
 
@@ -811,11 +838,6 @@ export class UserService {
       return this.ownAccess();
     }
 
-    // Only a move *into* the role can push the count up; staying put cannot.
-    if (nextRole === USER_ROLES.ADMIN && target?.role !== USER_ROLES.ADMIN && (await this.isAdminCeilingReached(null))) {
-      return this.adminLimitReached();
-    }
-
     return null;
   }
 
@@ -831,8 +853,18 @@ export class UserService {
    *
    * @returns True when no further administrator may be activated.
    */
-  private async isAdminCeilingReached(excludeUserId: string | null): Promise<boolean> {
-    const conditions: QueryFilter<UserAttributes> = { role: USER_ROLES.ADMIN, isActive: true };
+  private async isAdminCeilingReached(excludeUserId: string | null, department: string | undefined): Promise<boolean> {
+    /*
+      Without a concrete department there is nothing to scope the count to, and `{ department:
+      undefined }` counts the wrong cohort (every department-less admin, or all of them). An
+      admin must have a department - create() and update() enforce it - so the missing case is
+      treated as full rather than counted, failing closed.
+    */
+    if (!department) {
+      return true;
+    }
+
+    const conditions: QueryFilter<UserAttributes> = { role: USER_ROLES.ADMIN, isActive: true, department };
 
     if (excludeUserId) {
       conditions._id = { $ne: excludeUserId };

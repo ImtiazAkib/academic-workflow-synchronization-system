@@ -1,5 +1,7 @@
 import type { MaterialErrorLabels } from '@/lib/utils';
 
+import type { MultimediaViewerLabels } from '@/components/shared';
+
 /**
  * A course as the picker needs one.
  */
@@ -58,5 +60,24 @@ export type MaterialsLabels = {
   sortSize: string;
   sortDate: string;
   dropzone: string;
+  /** The dropzone's active line, shown while a file is being dragged over it. */
+  dropActive: string;
+  /** Clears a chosen file so a different one can be picked. */
+  removeFile: string;
+  /** The optional-description field label, shared by the upload and edit forms. */
+  fieldDescription: string;
+  /** The row's edit action. */
+  edit: string;
+  toastUpdated: string;
+  /** The edit dialog's title, and its submit button. */
+  editTitle: string;
+  editDescription: string;
+  editReplace: string;
+  editDropActive: string;
+  editKeep: string;
+  /** The edit form's in-flight submit label. */
+  updating: string;
+  /** Chrome for the attachment viewer a row opens. */
+  viewer: MultimediaViewerLabels;
   errors: MaterialErrorLabels;
 };

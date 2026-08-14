@@ -43,7 +43,7 @@ type UserDepartmentFieldsProps = {
 export function UserDepartmentFields({ register, control, errors, labels, fieldErrors, idPrefix }: UserDepartmentFieldsProps) {
   const role = useWatch({ control, name: 'role' as never });
 
-  if (role !== USER_ROLES.STUDENT && role !== USER_ROLES.TEACHER) {
+  if (role !== USER_ROLES.STUDENT && role !== USER_ROLES.TEACHER && role !== USER_ROLES.ADMIN) {
     return null;
   }
 
@@ -125,7 +125,13 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
 
       <div className="flex flex-col gap-2">
         <Label htmlFor={`${idPrefix}-department`}>
-          {labels.department} <span className="text-muted-foreground text-xs">({labels.optional})</span>
+          {labels.department}{' '}
+          {role === USER_ROLES.ADMIN ? (
+            // An administrator must have a department; the server refuses one without.
+            <span className="text-destructive">*</span>
+          ) : (
+            <span className="text-muted-foreground text-xs">({labels.optional})</span>
+          )}
         </Label>
         <Controller
           control={control}
@@ -145,7 +151,11 @@ export function UserDepartmentFields({ register, control, errors, labels, fieldE
             </Select>
           )}
         />
-        {errors.department && <p className="text-destructive text-sm">{fieldErrors.departmentTooLong}</p>}
+        {errors.department && (
+          <p className="text-destructive text-sm">
+            {errors.department.type === 'too_big' ? fieldErrors.departmentTooLong : fieldErrors.departmentRequired}
+          </p>
+        )}
       </div>
     </>
   );

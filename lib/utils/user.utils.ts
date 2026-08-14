@@ -29,6 +29,7 @@ export type UserStatusLabels = {
 export type UserErrorLabels = {
   emailTaken: string;
   adminLimit: string;
+  departmentRequired: string;
   ownAccess: string;
   superAdmin: string;
   adminOnlySuperAdmin: string;
@@ -56,6 +57,10 @@ export function resolveUserErrorMessage(code: number, labels: UserErrorLabels): 
 
   if (code === BUSINESS.ADMIN_LIMIT_REACHED.CODE) {
     return labels.adminLimit;
+  }
+
+  if (code === VALIDATION.DEPARTMENT_REQUIRED.CODE) {
+    return labels.departmentRequired;
   }
 
   if (code === BUSINESS.CANNOT_CHANGE_OWN_ACCESS.CODE) {

@@ -8,6 +8,7 @@ type NoticeListProps = {
   labels: NoticeListLabels;
   /** Dashboard feeds show a quick preview; archive pages show the complete notice. */
   preview?: boolean;
+  canDelete?: boolean;
 };
 
 /*
@@ -20,15 +21,15 @@ type NoticeListProps = {
   never disagree about how a notice looks. What differs is only which notices the server
   put in the array, and that decision lives in `NoticeService`, not here.
 */
-export function NoticeList({ notices, labels, preview = false }: NoticeListProps) {
+export function NoticeList({ notices, labels, preview = false, canDelete = false }: NoticeListProps) {
   if (notices.length === 0) {
     return <NoticesEmpty title={labels.emptyTitle} description={labels.emptyDescription} />;
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex max-w-full min-w-0 flex-col gap-3">
       {notices.map(x => (
-        <NoticeCard key={x.noticeId} notice={x} labels={labels} preview={preview} />
+        <NoticeCard key={x.noticeId} notice={x} labels={labels} preview={preview} canDelete={canDelete} />
       ))}
     </div>
   );

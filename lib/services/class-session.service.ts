@@ -135,17 +135,53 @@ export class ClassSessionService {
    *
    * @returns The updated session, or a failure naming every clash it hit.
    */
-  public async update(input: ClassSessionUpdateOutput): Promise<SingleResult<ClassSessionDto>> {
+  public async update(input: ClassSessionUpdateOutput, requester: SessionUser): Promise<SingleResult<ClassSessionDto>> {
     try {
       await connectToDatabase();
 
-      const refusal = await this.refuseUnusableReferences(input.courseId, input.teacherId);
+      const target = await ClassSession.findById(input.classSessionId).lean<ClassSessionEntity | null>();
+
+      if (!target) {
+        return singleFailure(createError(VALIDATION.SESSION_NOT_FOUND.CODE, VALIDATION.SESSION_NOT_FOUND.MESSAGE));
+      }
+
+      /*
+        A teacher may move only their own class, and only its day and time — not its course,
+        the teacher who takes it, or its semester. Those three are pinned to the stored values
+        so a widened gate or a hand-built request cannot reassign a class to someone else or
+        shift it to another cohort. An administrator may change anything. Decided from the whole
+        `requester`, the way `setCancelled` is, so the rule cannot be turned off by omitting an
+        argument.
+      */
+      let courseId = input.courseId;
+      let teacherId = input.teacherId;
+      let semester = input.semester;
+
+      if (requester.role === USER_ROLES.TEACHER) {
+        if (toId(target.teacher) !== requester.userId) {
+          return singleFailure(createError(AUTH.NOT_OWN_CLASS.CODE, AUTH.NOT_OWN_CLASS.MESSAGE));
+        }
+
+        courseId = toId(target.course);
+        teacherId = toId(target.teacher);
+        semester = target.semester;
+      }
+
+      const refusal = await this.refuseUnusableReferences(courseId, teacherId);
 
       if (refusal) {
         return refusal;
       }
 
-      const conflicts = await this.findConflicts({ ...input, classSessionId: input.classSessionId });
+      const conflicts = await this.findConflicts({
+        classSessionId: input.classSessionId,
+        courseId,
+        teacherId,
+        semester,
+        dayOfWeek: input.dayOfWeek,
+        startTime: input.startTime,
+        endTime: input.endTime,
+      });
 
       if (conflicts.length > 0) {
         return singleFailureWithErrors(conflicts);
@@ -154,12 +190,12 @@ export class ClassSessionService {
       const updated = await ClassSession.findByIdAndUpdate(
         input.classSessionId,
         {
-          course: input.courseId,
-          teacher: input.teacherId,
+          course: courseId,
+          teacher: teacherId,
           dayOfWeek: input.dayOfWeek,
           startTime: input.startTime,
           endTime: input.endTime,
-          semester: input.semester,
+          semester,
         },
         { returnDocument: 'after' }
       ).lean<ClassSessionEntity | null>();
@@ -228,30 +264,6 @@ export class ClassSessionService {
   }
 
   /**
-   * Confirm a teacher owns the class they are trying to move.
-   *
-   * @param classSessionId - Session being changed.
-   * @param teacherId - Teacher making the request.
-   *
-   * @returns A failure to return, or null when the class is theirs.
-   */
-  public async refuseForeignClass(classSessionId: string, teacherId: string): Promise<SingleResult<ClassSessionDto> | null> {
-    await connectToDatabase();
-
-    const target = await ClassSession.findById(classSessionId).lean<ClassSessionEntity | null>();
-
-    if (!target) {
-      return singleFailure(createError(VALIDATION.SESSION_NOT_FOUND.CODE, VALIDATION.SESSION_NOT_FOUND.MESSAGE));
-    }
-
-    if (toId(target.teacher) !== teacherId) {
-      return singleFailure(createError(AUTH.NOT_OWN_CLASS.CODE, AUTH.NOT_OWN_CLASS.MESSAGE));
-    }
-
-    return null;
-  }
-
-  /**
    * Take a class off the timetable.
    *
    * Sessions are deleted rather than deactivated: unlike an account, a slot that was
@@ -297,27 +309,34 @@ export class ClassSessionService {
    * @returns One error per clash, empty when the slot is free.
    */
   private async findConflicts(candidate: SlotCandidate): Promise<ErrorDto[]> {
-    const conditions: QueryFilter<ClassSessionAttributes> = {
-      dayOfWeek: candidate.dayOfWeek,
-      semester: candidate.semester,
-    };
+    // The weekday and "not the moving session itself" are common to both clash queries.
+    const base: QueryFilter<ClassSessionAttributes> = { dayOfWeek: candidate.dayOfWeek };
 
-    // Moving a session must not find itself in the slot it already occupies.
     if (candidate.classSessionId) {
-      conditions._id = { $ne: candidate.classSessionId };
+      base._id = { $ne: candidate.classSessionId };
     }
 
-    const sameSlot = await ClassSession.find(conditions).lean<ClassSessionEntity[]>();
+    /*
+      A teacher is one physical person, so a teacher clash spans every semester — two classes
+      at the same hour in different semesters are still one teacher in two rooms. A course
+      clash is only a clash within its own semester. Narrowing both by semester (as this once
+      did) let a teacher be double-booked across semesters with no refusal — the read-only
+      dashboard detector caught it after the fact, but the write path never did.
+    */
+    const [teacherSlots, courseSlots] = await Promise.all([
+      ClassSession.find({ ...base, teacher: candidate.teacherId }).lean<ClassSessionEntity[]>(),
+      ClassSession.find({ ...base, semester: candidate.semester, course: candidate.courseId }).lean<ClassSessionEntity[]>(),
+    ]);
 
-    const clashing = sameSlot.filter(x => timeRangesOverlap(candidate.startTime, candidate.endTime, x.startTime, x.endTime));
+    const overlaps = (x: ClassSessionEntity): boolean => timeRangesOverlap(candidate.startTime, candidate.endTime, x.startTime, x.endTime);
 
     const errors: ErrorDto[] = [];
 
-    if (clashing.some(x => toId(x.teacher) === candidate.teacherId)) {
+    if (teacherSlots.some(overlaps)) {
       errors.push(createError(BUSINESS.TEACHER_BUSY.CODE, BUSINESS.TEACHER_BUSY.MESSAGE, 'teacherId'));
     }
 
-    if (clashing.some(x => toId(x.course) === candidate.courseId)) {
+    if (courseSlots.some(overlaps)) {
       errors.push(createError(BUSINESS.COURSE_ALREADY_SCHEDULED.CODE, BUSINESS.COURSE_ALREADY_SCHEDULED.MESSAGE, 'courseId'));
     }
 

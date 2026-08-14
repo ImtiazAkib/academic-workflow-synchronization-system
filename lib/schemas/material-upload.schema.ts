@@ -40,6 +40,8 @@ export const MaterialUploadSchema = z.object({
     .min(1, encodeZodMessage(MATERIALS.TITLE_REQUIRED.CODE, MATERIALS.TITLE_REQUIRED.MESSAGE))
     .max(200, encodeZodMessage(MATERIALS.TITLE_TOO_LONG.CODE, MATERIALS.TITLE_TOO_LONG.MESSAGE)),
 
+  description: z.string().trim().max(2000).optional(),
+
   file: z
     .instanceof(File, { message: encodeZodMessage(MATERIALS.FILE_REQUIRED.CODE, MATERIALS.FILE_REQUIRED.MESSAGE) })
     // An empty picker submits a zero-byte file rather than nothing at all.
@@ -53,3 +55,10 @@ export const MaterialUploadSchema = z.object({
 
 export type MaterialUploadInput = z.input<typeof MaterialUploadSchema>;
 export type MaterialUploadOutput = z.output<typeof MaterialUploadSchema>;
+
+export const MaterialUpdateSchema = MaterialUploadSchema.extend({
+  materialId: objectIdField,
+  file: MaterialUploadSchema.shape.file.optional(),
+});
+
+export type MaterialUpdateOutput = z.output<typeof MaterialUpdateSchema>;
