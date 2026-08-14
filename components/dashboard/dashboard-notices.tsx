@@ -139,6 +139,7 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT, viewerSession
           zoomOut: l10n('MEDIA_VIEWER_ZOOM_OUT'),
           zoomIn: l10n('MEDIA_VIEWER_ZOOM_IN'),
           reset: l10n('MEDIA_VIEWER_RESET'),
+          loading: l10n('DASHBOARD_LOADING'),
         },
         edit: {
           action: l10n('NOTICES_EDIT_ACTION'),

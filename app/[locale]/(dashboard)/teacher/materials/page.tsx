@@ -126,6 +126,7 @@ export default async function TeacherMaterialsPage() {
             zoomOut: l10n('MEDIA_VIEWER_ZOOM_OUT'),
             zoomIn: l10n('MEDIA_VIEWER_ZOOM_IN'),
             reset: l10n('MEDIA_VIEWER_RESET'),
+            loading: l10n('DASHBOARD_LOADING'),
           },
           errors: {
             fileRequired: l10n('MATERIALS_ERROR_FILE_REQUIRED'),
