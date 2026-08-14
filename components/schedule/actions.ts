@@ -46,10 +46,21 @@ export async function createClassSessionAction(values: unknown): Promise<SingleR
  * @returns The updated session, or a failure naming every clash it hit.
  */
 export async function updateClassSessionAction(values: unknown): Promise<SingleResult<ClassSessionDto>> {
-  const gate = await gateAdminArea<ClassSessionDto>();
+  /*
+    Open to teachers as well as administrators, like the cancel action - a teacher moving
+    their own class is what the teacher schedule offers. The whole session goes to the
+    service, which enforces ownership and pins the course, teacher and semester so a teacher
+    can only change the day and time. An admin-only gate here left that advertised feature
+    dead, refusing every teacher submission.
+  */
+  const sessionUser = await getSessionUser();
 
-  if (!gate.allowed) {
-    return gate.refusal;
+  if (!sessionUser) {
+    return singleFailure(createError(AUTH.NOT_AUTHENTICATED.CODE, AUTH.NOT_AUTHENTICATED.MESSAGE));
+  }
+
+  if (sessionUser.role === USER_ROLES.STUDENT) {
+    return singleFailure(createError(AUTH.NOT_AUTHORIZED.CODE, AUTH.NOT_AUTHORIZED.MESSAGE));
   }
 
   const validation = ClassSessionUpdateSchema.safeParse(values);
@@ -58,7 +69,7 @@ export async function updateClassSessionAction(values: unknown): Promise<SingleR
     return singleFailureWithErrors(mapZodErrorsToErrorDto(validation.error));
   }
 
-  return classSessionService.update(validation.data);
+  return classSessionService.update(validation.data, sessionUser);
 }
 
 /**

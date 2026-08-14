@@ -2,6 +2,7 @@ export * from './app-logo';
 export * from './container';
 export * from './json-ld';
 export * from './loading-shapes';
+export * from './multimedia-viewer';
 export * from './language-selector';
 export * from './theme-provider';
 export * from './theme-selector';

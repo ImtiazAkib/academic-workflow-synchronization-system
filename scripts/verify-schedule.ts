@@ -26,6 +26,9 @@ const SEMESTER = 7;
 const sessions = new ClassSessionService();
 const courses = new CourseService();
 
+// These moves exercise conflict detection at admin level, where no ownership scoping applies.
+const admin = { userId: 'schedule-verify-admin', email: 'admin@verify', name: 'Verify Admin', role: USER_ROLES.ADMIN, isApproved: true };
+
 let passed = 0;
 let failed = 0;
 
@@ -122,7 +125,7 @@ async function run(): Promise<void> {
   check('same slot in another semester is allowed', otherSemester.success, JSON.stringify(otherSemester.errors));
 
   console.log('\n5. moving a session');
-  const selfMove = await sessions.update({ ...base, classSessionId: firstId });
+  const selfMove = await sessions.update({ ...base, classSessionId: firstId }, admin);
   check('a session does not clash with itself', selfMove.success, JSON.stringify(selfMove.errors));
 
   /*
@@ -131,17 +134,20 @@ async function run(): Promise<void> {
     at the same hour is not a clash any more. Asserted rather than assumed, because it
     is the rule that changed.
   */
-  const sharedSlot = await sessions.update({ ...base, classSessionId: firstId, startTime: '10:00', endTime: '11:00' });
+  const sharedSlot = await sessions.update({ ...base, classSessionId: firstId, startTime: '10:00', endTime: '11:00' }, admin);
   check('a different teacher and course may share a slot', sharedSlot.success, JSON.stringify(sharedSlot.errors));
 
   // Moving onto a slot where the same teacher is already busy is still refused.
-  const moveOntoBusyTeacher = await sessions.update({
-    ...base,
-    classSessionId: firstId,
-    teacherId: String(teacherB._id),
-    startTime: '10:00',
-    endTime: '11:00',
-  });
+  const moveOntoBusyTeacher = await sessions.update(
+    {
+      ...base,
+      classSessionId: firstId,
+      teacherId: String(teacherB._id),
+      startTime: '10:00',
+      endTime: '11:00',
+    },
+    admin
+  );
   check('moving onto a slot the teacher already holds is refused', !moveOntoBusyTeacher.success, JSON.stringify(moveOntoBusyTeacher.errors));
 
   console.log('\n6. course deactivation');

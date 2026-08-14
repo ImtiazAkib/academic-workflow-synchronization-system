@@ -5,8 +5,8 @@ import {
   NOTICE_AUDIENCES,
   NOTICE_CATEGORIES,
   NOTICE_IMAGE,
-  NOTICE_IMAGE_EXTENSIONS,
-  NOTICE_IMAGE_MIME_TYPES,
+  NOTICE_ATTACHMENT_EXTENSIONS,
+  NOTICE_ATTACHMENT_MIME_TYPES,
   NOTICE_MAX_SESSIONS,
 } from '@/constants/notice.const';
 
@@ -24,7 +24,7 @@ const NOTICES = CODES.VALIDATION.NOTICES;
 function hasAllowedExtension(fileName: string): boolean {
   const lowered = fileName.toLowerCase();
 
-  return NOTICE_IMAGE_EXTENSIONS.some(extension => lowered.endsWith(extension));
+  return NOTICE_ATTACHMENT_EXTENSIONS.some(extension => lowered.endsWith(extension));
 }
 
 /*
@@ -63,7 +63,7 @@ export const NoticeCreateSchema = z
       .instanceof(File)
       .refine(x => x.size <= NOTICE_IMAGE.MAX_SIZE_BYTES, encodeZodMessage(NOTICES.IMAGE_TOO_LARGE.CODE, NOTICES.IMAGE_TOO_LARGE.MESSAGE))
       .refine(
-        x => NOTICE_IMAGE_MIME_TYPES.includes(x.type as (typeof NOTICE_IMAGE_MIME_TYPES)[number]) && hasAllowedExtension(x.name),
+        x => NOTICE_ATTACHMENT_MIME_TYPES.includes(x.type as (typeof NOTICE_ATTACHMENT_MIME_TYPES)[number]) && hasAllowedExtension(x.name),
         encodeZodMessage(NOTICES.IMAGE_TYPE_NOT_ALLOWED.CODE, NOTICES.IMAGE_TYPE_NOT_ALLOWED.MESSAGE)
       )
       .optional(),

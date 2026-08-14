@@ -22,6 +22,11 @@ export const MATERIAL_MIME_TYPES = [
   'text/plain',
   'image/png',
   'image/jpeg',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+  'audio/mpeg',
+  'audio/ogg',
   'application/zip',
 ] as const;
 
@@ -33,7 +38,25 @@ export const MATERIAL_MIME_TYPES = [
   Neither is proof of what the bytes are. Only reading the file's magic number is, and
   that belongs with the upload handler rather than a schema.
 */
-export const MATERIAL_EXTENSIONS = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.png', '.jpg', '.jpeg', '.zip'] as const;
+export const MATERIAL_EXTENSIONS = [
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.ppt',
+  '.pptx',
+  '.xls',
+  '.xlsx',
+  '.txt',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.mp4',
+  '.webm',
+  '.mp3',
+  '.ogg',
+  '.zip',
+] as const;
 
 /**
  * The same list as the file picker's `accept` attribute - a convenience for the picker,

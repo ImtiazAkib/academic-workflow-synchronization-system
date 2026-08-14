@@ -46,6 +46,7 @@ export const NOTICE_IMAGE = {
   execute anything, which is what makes inline display safe.
 */
 export const NOTICE_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
+export const NOTICE_ATTACHMENT_MIME_TYPES = [...NOTICE_IMAGE_MIME_TYPES, 'application/pdf'] as const;
 
 /*
   Checked alongside the MIME type, for the same reason materials does it: the browser
@@ -54,8 +55,9 @@ export const NOTICE_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
   are - only the magic number is, and that is checked in the service.
 */
 export const NOTICE_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'] as const;
+export const NOTICE_ATTACHMENT_EXTENSIONS = [...NOTICE_IMAGE_EXTENSIONS, '.pdf'] as const;
 
 /**
  * The file picker's `accept` attribute - a convenience for the picker, never a control.
  */
-export const NOTICE_IMAGE_ACCEPT = [...NOTICE_IMAGE_MIME_TYPES, ...NOTICE_IMAGE_EXTENSIONS].join(',');
+export const NOTICE_IMAGE_ACCEPT = [...NOTICE_ATTACHMENT_MIME_TYPES, ...NOTICE_ATTACHMENT_EXTENSIONS].join(',');

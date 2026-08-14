@@ -18,6 +18,9 @@ export type NoticeDto = {
    * audience check; publishing the key instead would put the bucket one guess away.
    */
   hasImage: boolean;
+  /** Metadata needed to render an attachment safely; its storage location never leaves the server. */
+  attachmentMimeType?: string | null;
+  attachmentName?: string | null;
   audience: NoticeAudience;
   category: NoticeCategory;
   /** The intake sessions a session notice targets — empty on a general one. */
@@ -41,6 +44,8 @@ export function noticeFromEntity(entity: NoticeEntity): NoticeDto {
     title: entity.title,
     body: entity.body ?? '',
     hasImage: Boolean(entity.image),
+    attachmentMimeType: entity.image?.mimeType ?? null,
+    attachmentName: entity.image?.fileName ?? null,
     audience: entity.audience,
     category: entity.category,
     sessions: entity.sessions ?? [],

@@ -122,6 +122,7 @@ export function TeacherScheduleScreen({ sessions, courses, teachers, labels, tod
           courses={courses}
           teachers={teachers}
           labels={labels}
+          lockReferences
           onUpdated={handleUpdated}
           onOpenChange={handleEditOpenChange}
         />

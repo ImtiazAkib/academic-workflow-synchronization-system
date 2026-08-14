@@ -50,6 +50,7 @@ export type UsersFieldErrorLabels = {
   registrationNoDigitsOnly: string;
   sessionTooLong: string;
   departmentTooLong: string;
+  departmentRequired: string;
   semesterInvalid: string;
   phoneInvalid: string;
 };

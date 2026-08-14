@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
   const validation = MaterialUploadSchema.safeParse({
     courseId: form.get('courseId'),
     title: form.get('title'),
+    description: form.get('description') ?? undefined,
     file: form.get('file'),
   });
 

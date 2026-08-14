@@ -1,9 +1,10 @@
 import { Course } from '@/models/course.model';
 import { Material } from '@/models/material.model';
+import { User } from '@/models/user.model';
 import { MaterialDto, SessionUser, materialFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
-import { USER_ROLES } from '@/constants/roles.const';
+import { ADMIN_AREA_ROLES, USER_ROLES } from '@/constants/roles.const';
 import { FILE_CONVERSION_TARGET } from '@/constants/storage.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
@@ -20,7 +21,7 @@ import {
   singleFailure,
   singleSuccess,
 } from '@/lib/result';
-import type { MaterialUploadOutput } from '@/lib/schemas';
+import type { MaterialUpdateOutput, MaterialUploadOutput } from '@/lib/schemas';
 import { storage } from '@/lib/storage';
 import type { StoredFileStream } from '@/lib/storage';
 import { fileMatchesDeclaredType, toId } from '@/lib/utils';
@@ -30,6 +31,7 @@ import { hasStorageRoomFor } from './storage.guard';
 
 import type { CourseEntity } from '@/models/course.model';
 import type { MaterialAttributes, MaterialEntity } from '@/models/material.model';
+import type { UserEntity } from '@/models/user.model';
 import type { QueryFilter } from 'mongoose';
 
 const log = createLoggerWithContext('material.service');
@@ -122,6 +124,7 @@ export class MaterialService {
           course: input.courseId,
           uploadedBy: uploader.userId,
           title: input.title,
+          description: input.description || undefined,
           fileName: stored.fileName,
           mimeType: stored.mimeType,
           size: stored.size,
@@ -152,6 +155,71 @@ export class MaterialService {
       log.error({ err: error }, 'Uploading a material failed');
 
       return singleFailure(createError(DATABASE.CREATE_FAILED.CODE, DATABASE.CREATE_FAILED.MESSAGE));
+    }
+  }
+
+  /** Update material metadata and, when supplied, safely replace its stored file. */
+  public async update(input: MaterialUpdateOutput, requester: SessionUser): Promise<SingleResult<MaterialDto>> {
+    let replacement: Awaited<ReturnType<typeof storage.save>> | null = null;
+
+    try {
+      await connectToDatabase();
+      const target = await Material.findById(input.materialId).lean<MaterialEntity | null>();
+      if (!target) return singleFailure(createError(VALIDATION.MATERIAL_NOT_FOUND.CODE, VALIDATION.MATERIAL_NOT_FOUND.MESSAGE));
+      if (requester.role === USER_ROLES.TEACHER && toId(target.uploadedBy) !== requester.userId) {
+        return singleFailure(createError(AUTH.NOT_OWN_MATERIAL.CODE, AUTH.NOT_OWN_MATERIAL.MESSAGE));
+      }
+
+      if (input.file) {
+        if (!(await fileMatchesDeclaredType(input.file))) {
+          return singleFailure(createError(VALIDATION.FILE_TYPE_NOT_ALLOWED.CODE, VALIDATION.FILE_TYPE_NOT_ALLOWED.MESSAGE, 'file'));
+        }
+        /*
+          The old file is still in the bucket at this point (it is removed only after the
+          row points at the new one, below), so charge only the growth. Without the `- target.size`
+          a same-size or smaller replacement near the block line was refused although the
+          swap would leave usage equal or lower.
+        */
+        if (!(await hasStorageRoomFor(Math.max(0, input.file.size - target.size)))) {
+          return singleFailure(createError(BUSINESS.STORAGE_FULL.CODE, BUSINESS.STORAGE_FULL.MESSAGE, 'file'));
+        }
+        replacement = await storage.save(input.file);
+      }
+
+      const fields = {
+        title: input.title,
+        ...(replacement
+          ? { fileName: replacement.fileName, mimeType: replacement.mimeType, size: replacement.size, storageKey: replacement.storageKey }
+          : {}),
+      };
+      const updated = await Material.findByIdAndUpdate(
+        input.materialId,
+        {
+          $set: { ...fields, ...(input.description ? { description: input.description } : {}) },
+          ...(!input.description ? { $unset: { description: '' } } : {}),
+        },
+        { returnDocument: 'after' }
+      ).lean<MaterialEntity | null>();
+
+      if (!updated) throw new Error('Material disappeared during update');
+      if (replacement) {
+        await storage.remove(target.storageKey);
+        // Compress the replacement the same way a fresh upload is (see upload()), or an edited
+        // file would stay raw forever - full-size against the cap, and never swapped to WebP.
+        const jobId = await conversions.enqueue(
+          FILE_CONVERSION_TARGET.MATERIAL,
+          input.materialId,
+          replacement.fileName,
+          replacement.size,
+          requester.userId
+        );
+        conversions.schedule(jobId);
+      }
+      return singleSuccess(materialFromEntity(updated));
+    } catch (error) {
+      if (replacement) await storage.remove(replacement.storageKey).catch(() => undefined);
+      log.error({ err: error }, 'Updating a material failed');
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
     }
   }
 
@@ -221,6 +289,16 @@ export class MaterialService {
         return singleFailure(createError(VALIDATION.MATERIAL_NOT_FOUND.CODE, VALIDATION.MATERIAL_NOT_FOUND.MESSAGE));
       }
 
+      /*
+        A material belongs to a course, so access follows the course, not merely "is signed in".
+        Reported as not-found rather than forbidden when refused: the route turns any
+        authenticated failure into 404, so a student guessing ids learns nothing about which
+        materials exist for courses that are not theirs.
+      */
+      if (!(await this.mayAccessMaterial(target, requester))) {
+        return singleFailure(createError(VALIDATION.MATERIAL_NOT_FOUND.CODE, VALIDATION.MATERIAL_NOT_FOUND.MESSAGE));
+      }
+
       const file = await storage.read(target.storageKey);
 
       if (!file) {
@@ -234,5 +312,47 @@ export class MaterialService {
 
       return singleFailure(createError(DATABASE.STORAGE_FAILED.CODE, DATABASE.STORAGE_FAILED.MESSAGE));
     }
+  }
+
+  /**
+   * Whether the requester may read this material, keyed on the course it belongs to.
+   *
+   * - An administrator or the super administrator oversees the whole department.
+   * - A teacher may read a material they uploaded, or one on a course assigned to them.
+   * - A student may read a material whose course is active and in the student's own semester
+   *   — the same scope `StudentService.listMaterials` uses for the listing, applied here so
+   *   the boundary is real rather than cosmetic (the listing decided what to show; this
+   *   decides what may be held).
+   *
+   * @param material - The material being requested.
+   * @param requester - The signed-in account asking.
+   *
+   * @returns True when access is allowed.
+   */
+  private async mayAccessMaterial(material: MaterialEntity, requester: SessionUser): Promise<boolean> {
+    if (ADMIN_AREA_ROLES.some(role => role === requester.role)) {
+      return true;
+    }
+
+    if (requester.role === USER_ROLES.TEACHER) {
+      if (toId(material.uploadedBy) === requester.userId) {
+        return true;
+      }
+
+      const course = await Course.findById(material.course).select('assignedTeacher').lean<CourseEntity | null>();
+
+      return Boolean(course?.assignedTeacher && toId(course.assignedTeacher) === requester.userId);
+    }
+
+    if (requester.role === USER_ROLES.STUDENT) {
+      const [course, account] = await Promise.all([
+        Course.findById(material.course).select('semester isActive').lean<CourseEntity | null>(),
+        User.findById(requester.userId).select('semester').lean<UserEntity | null>(),
+      ]);
+
+      return Boolean(course?.isActive && account?.semester != null && course.semester === account.semester);
+    }
+
+    return false;
   }
 }

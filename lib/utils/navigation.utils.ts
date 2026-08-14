@@ -46,7 +46,7 @@ export function resolveNavModel(role: UserRole, labels: NavLabels): NavSection[]
   const scheduleHref = isAdminArea ? ROUTES.ADMIN_SCHEDULE.HREF : isTeacher ? ROUTES.TEACHER_SCHEDULE.HREF : ROUTES.STUDENT_SCHEDULE.HREF;
   const coursesHref = isAdminArea ? ROUTES.ADMIN_COURSES.HREF : ROUTES.TEACHER_COURSES.HREF;
   const materialsHref = isTeacher ? ROUTES.TEACHER_MATERIALS.HREF : ROUTES.STUDENT_MATERIALS.HREF;
-  const noticesHref = isAdminArea ? ROUTES.ADMIN_NOTICES.HREF : ROUTES.TEACHER_NOTICES.HREF;
+  const noticesHref = isAdminArea ? ROUTES.ADMIN_NOTICES.HREF : isTeacher ? ROUTES.TEACHER_NOTICES.HREF : ROUTES.STUDENT_NOTICES.HREF;
   const uploadsHref = isAdminArea ? ROUTES.ADMIN_UPLOADS.HREF : ROUTES.TEACHER_UPLOADS.HREF;
 
   const academic: NavItem[] = [{ href: scheduleHref, icon: CalendarDays, label: labels.schedule }];
@@ -55,7 +55,7 @@ export function resolveNavModel(role: UserRole, labels: NavLabels): NavSection[]
   if (isAdminArea || isTeacher) academic.push({ href: uploadsHref, icon: UploadCloud, label: labels.uploads });
 
   const communication: NavItem[] = [];
-  if (isAdminArea || isTeacher) communication.push({ href: noticesHref, icon: Megaphone, label: labels.notices });
+  communication.push({ href: noticesHref, icon: Megaphone, label: labels.notices });
 
   const directory: NavItem[] = [];
   if (isStudent) directory.push({ href: ROUTES.STUDENT_TEACHERS.HREF, icon: Users, label: labels.teachers });

@@ -17,6 +17,7 @@ export const MATERIALS_DATABASE = {
   CREATE_FAILED: createErrorDefinition(14002, 'Failed to save material'),
   DELETE_FAILED: createErrorDefinition(14003, 'Failed to delete material'),
   STORAGE_FAILED: createErrorDefinition(14004, 'Failed to read or write the file'),
+  UPDATE_FAILED: createErrorDefinition(14005, 'Failed to update material'),
 } as const;
 
 /**

@@ -6,6 +6,15 @@ import { NoticeService } from '@/lib/services';
 
 const noticeService = new NoticeService();
 
+/*
+  Sanitized because it goes into a response header, exactly as the material download route
+  does: a file name carrying a quote or a CRLF would otherwise break out of the header. The
+  name is derived from the uploader's title, so it is attacker-influenced.
+*/
+function toHeaderFileName(fileName: string): string {
+  return fileName.replace(/[\r\n"\\]/g, '_');
+}
+
 /**
  * Stream a notice's image to somebody the notice was addressed to.
  *
@@ -27,22 +36,25 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const image = result.result;
 
   /*
-    Served `inline`, unlike a material — which is deliberately `attachment` so the browser
-    never renders it. An image in a notice has to render, so the safety has to come from
-    what may be uploaded instead: `NOTICE_IMAGE_MIME_TYPES` is three raster formats and no
-    SVG, because an SVG is a document that can carry script and this origin holds the
-    session cookie.
+    A raster image renders `inline`; a PDF - which notices now accept - is served
+    `attachment` so the browser saves it rather than opening a document on this
+    cookie-bearing origin, matching how a material is handed over. That is the reason for
+    the type check: a raster format cannot carry script, but a PDF is a document that can,
+    and `NOTICE_IMAGE_MIME_TYPES` was the three raster formats precisely so inline serving
+    stayed safe. Now that the accepted set is wider, the disposition follows the type.
 
-    `nosniff` is what makes that list binding — without it the browser may second-guess
-    the declared type and render something else. `sandbox` neuters anything that still
+    `nosniff` is what makes the declared type binding — without it the browser may
+    second-guess it and render something else. `sandbox` neuters anything that still
     manages to be treated as a document.
   */
+  const rendersInline = image.mimeType.startsWith('image/');
+
   return new NextResponse(image.stream, {
     status: 200,
     headers: {
       'Content-Type': image.mimeType,
       'Content-Length': String(image.size),
-      'Content-Disposition': 'inline',
+      'Content-Disposition': rendersInline ? 'inline' : `attachment; filename="${toHeaderFileName(image.fileName)}"`,
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': 'sandbox',
       /*

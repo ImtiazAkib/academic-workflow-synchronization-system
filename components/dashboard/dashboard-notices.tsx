@@ -2,6 +2,8 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 
 import { UserRole } from '@/types';
 
+import { USER_ROLES } from '@/constants/roles.const';
+
 import { NoticeService, UserService } from '@/lib/services';
 import { resolveNoticeAudienceLabel } from '@/lib/utils';
 
@@ -102,6 +104,8 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT, viewerSession
       about the notice. The DTO reports `hasImage` and withholds the storage key.
     */
     imageUrl: notice.hasImage ? `/api/notices/${notice.noticeId}/image` : null,
+    attachmentMimeType: notice.attachmentMimeType ?? null,
+    attachmentName: notice.attachmentName ?? null,
     audience: notice.audience,
     audienceLabel: resolveNoticeAudienceLabel(notice.audience, audiences),
     category: notice.category,
@@ -119,12 +123,51 @@ export async function DashboardNotices({ role, limit = FEED_LIMIT, viewerSession
     <NoticeList
       notices={notices.map(toView)}
       preview={limit !== null}
+      canDelete={role !== USER_ROLES.STUDENT && (role !== USER_ROLES.TEACHER || Boolean(publisherId))}
       labels={{
         emptyTitle: l10n('NOTICES_EMPTY_TITLE'),
         emptyDescription: l10n('NOTICES_EMPTY_DESCRIPTION'),
         publishedBy: l10n('NOTICES_PUBLISHED_BY'),
         unknownPublisher: l10n('NOTICES_PUBLISHER_UNKNOWN'),
         sessionsLabel: l10n('NOTICES_SESSIONS_LABEL'),
+        attachment: l10n('NOTICES_ATTACHMENT_OPEN'),
+        viewer: {
+          view: l10n('MEDIA_VIEWER_VIEW'),
+          download: l10n('MEDIA_VIEWER_DOWNLOAD'),
+          preview: l10n('MEDIA_VIEWER_PREVIEW'),
+          zoomHint: l10n('MEDIA_VIEWER_ZOOM_HINT'),
+          zoomOut: l10n('MEDIA_VIEWER_ZOOM_OUT'),
+          zoomIn: l10n('MEDIA_VIEWER_ZOOM_IN'),
+          reset: l10n('MEDIA_VIEWER_RESET'),
+        },
+        edit: {
+          action: l10n('NOTICES_EDIT_ACTION'),
+          title: l10n('NOTICES_EDIT_TITLE'),
+          description: l10n('NOTICES_EDIT_DESCRIPTION'),
+          fieldTitle: l10n('NOTICES_EDIT_FIELD_TITLE'),
+          fieldBody: l10n('NOTICES_EDIT_FIELD_BODY'),
+          replace: l10n('NOTICES_EDIT_REPLACE'),
+          dropActive: l10n('NOTICES_EDIT_DROP_ACTIVE'),
+          dropDefault: l10n('NOTICES_DROPZONE_TITLE'),
+          keep: l10n('NOTICES_EDIT_KEEP'),
+          remove: l10n('NOTICES_EDIT_REMOVE'),
+          clearFile: l10n('NOTICES_ATTACHMENT_REMOVE'),
+          cancel: l10n('NOTICES_DIALOG_CANCEL'),
+          working: l10n('NOTICES_EDIT_WORKING'),
+          submit: l10n('NOTICES_EDIT_TITLE'),
+          error: l10n('NOTICES_EDIT_ERROR'),
+        },
+        delete: {
+          action: l10n('NOTICES_DELETE_ACTION'),
+          ariaLabel: l10n('NOTICES_DELETE_NOTICE'),
+          title: l10n('NOTICES_DELETE_TITLE'),
+          warning: l10n('NOTICES_DELETE_WARNING'),
+          description: l10n('NOTICES_DELETE_DESCRIPTION'),
+          cancel: l10n('NOTICES_DELETE_CANCEL'),
+          confirm: l10n('NOTICES_DELETE_NOTICE'),
+          working: l10n('NOTICES_DELETE_WORKING'),
+          error: l10n('NOTICES_DELETE_ERROR'),
+        },
       }}
     />
   );

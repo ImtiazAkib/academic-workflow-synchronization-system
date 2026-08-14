@@ -14,6 +14,7 @@ import { resolveMaterialErrorMessage, resolveMaterialType } from '@/lib/utils';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 
 import { deleteMaterialAction } from './actions';
+import { MaterialEditForm } from './material-edit.form';
 import { MaterialUploadForm } from './material-upload.form';
 import { MaterialsEmpty } from './materials-empty';
 import { MaterialsList } from './materials-list';
@@ -37,6 +38,8 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
   const [isWorking, startWorking] = useTransition();
 
   const [removing, setRemoving] = useState<MaterialDto | null>(null);
+  const [editing, setEditing] = useState<MaterialDto | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -65,6 +68,23 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
   const handleRemove = (material: MaterialDto): void => {
     setRemoveError(null);
     setRemoving(material);
+  };
+
+  const handleUpdate = (payload: FormData): void => {
+    if (!editing) return;
+    const target = editing;
+    startWorking(async () => {
+      setEditError(null);
+      const response = await fetch(`/api/materials/${target.materialId}`, { method: 'PATCH', body: payload });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setEditError(resolveMaterialErrorMessage(body?.errors?.[0]?.code ?? 0, labels.errors));
+        return;
+      }
+      setEditing(null);
+      toast.success(labels.toastUpdated);
+      router.refresh();
+    });
   };
 
   const handleRemoveConfirm = (): void => {
@@ -121,11 +141,31 @@ export function MaterialsScreen({ materials, courses, labels, storageBlocked, st
       {materials.length === 0 ? (
         <MaterialsEmpty title={labels.emptyTitle} description={labels.emptyDescription} />
       ) : (
-        <MaterialsList materials={visibleMaterials} courses={courses} labels={labels} onRemove={handleRemove} />
+        <MaterialsList materials={visibleMaterials} courses={courses} labels={labels} onRemove={handleRemove} onEdit={setEditing} />
       )}
 
+      <Dialog open={Boolean(editing)} onOpenChange={open => !open && setEditing(null)}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{labels.editTitle}</DialogTitle>
+            <DialogDescription>{labels.editDescription}</DialogDescription>
+          </DialogHeader>
+          {editing && (
+            <MaterialEditForm
+              material={editing}
+              working={isWorking}
+              error={editError}
+              labels={labels}
+              onCancel={() => setEditing(null)}
+              onSave={handleUpdate}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent className="sm:max-w-xl">
+        {/* Cap the height and scroll inside, like the edit dialog: the course, title, description and tall dropzone overrun a short viewport otherwise. */}
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>{labels.uploadTitle}</DialogTitle>
             <DialogDescription>{labels.uploadDescription}</DialogDescription>

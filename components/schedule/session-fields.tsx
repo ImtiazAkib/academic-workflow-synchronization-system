@@ -33,9 +33,27 @@ type SessionFieldsProps = {
    */
   conflicts: { course: string[]; teacher: string[] };
   idPrefix: string;
+  /**
+   * Lock the course, teacher and semester selects - a teacher moving their own class may
+   * change only its day and time. The service pins these regardless; disabling them here
+   * keeps the form from offering a change it will silently ignore.
+   */
+  lockReferences?: boolean;
 };
 
-export function SessionFields({ register, control, errors, courses, teachers, labels, fieldErrors, days, conflicts, idPrefix }: SessionFieldsProps) {
+export function SessionFields({
+  register,
+  control,
+  errors,
+  courses,
+  teachers,
+  labels,
+  fieldErrors,
+  days,
+  conflicts,
+  idPrefix,
+  lockReferences,
+}: SessionFieldsProps) {
   const courseItems: Record<string, string> = {};
 
   courses.forEach(x => {
@@ -68,7 +86,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           control={control}
           name={'courseId' as never}
           render={({ field }) => (
-            <Select items={courseItems} value={String(field.value ?? '')} onValueChange={field.onChange}>
+            <Select items={courseItems} value={String(field.value ?? '')} onValueChange={field.onChange} disabled={lockReferences}>
               <SelectTrigger id={`${idPrefix}-course`} className="w-full" aria-invalid={Boolean(errors.courseId) || conflicts.course.length > 0}>
                 <SelectValue />
               </SelectTrigger>
@@ -92,7 +110,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           control={control}
           name={'teacherId' as never}
           render={({ field }) => (
-            <Select items={teacherItems} value={String(field.value ?? '')} onValueChange={field.onChange}>
+            <Select items={teacherItems} value={String(field.value ?? '')} onValueChange={field.onChange} disabled={lockReferences}>
               <SelectTrigger id={`${idPrefix}-teacher`} className="w-full" aria-invalid={Boolean(errors.teacherId) || conflicts.teacher.length > 0}>
                 <SelectValue />
               </SelectTrigger>
@@ -138,7 +156,7 @@ export function SessionFields({ register, control, errors, courses, teachers, la
           control={control}
           name={'semester' as never}
           render={({ field }) => (
-            <Select items={semesterItems} value={String(field.value ?? '')} onValueChange={field.onChange}>
+            <Select items={semesterItems} value={String(field.value ?? '')} onValueChange={field.onChange} disabled={lockReferences}>
               <SelectTrigger id={`${idPrefix}-semester`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
