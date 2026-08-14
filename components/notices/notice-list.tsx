@@ -27,7 +27,10 @@ export function NoticeList({ notices, labels, preview = false, canDelete = false
   }
 
   return (
-    <div className="flex max-w-full min-w-0 flex-col gap-3">
+    // Small cards, up to 320px each, laid out in as many columns as fit rather than one
+    // full-width column - a short notice no longer stretches across the whole page. In a
+    // narrow container (the dashboard sidebar feed) this collapses to a single column.
+    <div className="grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),20rem))] gap-3">
       {notices.map(x => (
         <NoticeCard key={x.noticeId} notice={x} labels={labels} preview={preview} canDelete={canDelete} />
       ))}

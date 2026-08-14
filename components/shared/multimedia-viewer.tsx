@@ -37,9 +37,11 @@ type MultimediaViewerProps = {
   source: string;
   downloadSource?: string;
   labels?: MultimediaViewerLabels;
+  /** The trigger's size - `xs` for a dense list like a notice card, `sm` (default) elsewhere. */
+  triggerSize?: 'xs' | 'sm';
 };
 
-export function MultimediaViewer({ title, mimeType, source, downloadSource, labels = DEFAULT_LABELS }: MultimediaViewerProps) {
+export function MultimediaViewer({ title, mimeType, source, downloadSource, labels = DEFAULT_LABELS, triggerSize = 'sm' }: MultimediaViewerProps) {
   const downloadable = downloadSource ?? source;
   const isImage = mimeType.startsWith('image/');
   const isVideo = mimeType.startsWith('video/');
@@ -114,7 +116,7 @@ export function MultimediaViewer({ title, mimeType, source, downloadSource, labe
 
   return (
     <Dialog>
-      <DialogTrigger render={<Button type="button" variant="outline" size="sm" />}>
+      <DialogTrigger render={<Button type="button" variant="outline" size={triggerSize} />}>
         <Eye className="size-3.5" /> {labels.view}
       </DialogTrigger>
       <DialogContent className="max-w-[calc(100%-1rem)] overflow-hidden p-0 sm:max-w-6xl" showCloseButton>

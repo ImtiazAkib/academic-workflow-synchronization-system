@@ -1,7 +1,9 @@
+import { FileDown, FileImage, FileText } from 'lucide-react';
+
 import { NOTICE_CATEGORIES } from '@/constants/notice.const';
 
 import { MultimediaViewer } from '@/components/shared';
-import { Badge } from '@/components/ui';
+import { Badge, Button } from '@/components/ui';
 
 import { NoticeBadge } from './notice-badge';
 import { NoticeDeleteButton } from './notice-delete-button';
@@ -34,7 +36,7 @@ type NoticeCardProps = {
 */
 export function NoticeCard({ notice, labels, preview = false, canDelete = false }: NoticeCardProps) {
   return (
-    <article className="border-border bg-card flex max-w-full min-w-0 flex-col gap-3 overflow-hidden rounded-lg border p-3 sm:p-4">
+    <article className="border-border bg-card flex max-w-full min-w-0 flex-col gap-2 overflow-hidden rounded-lg border p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="text-regular-semibold min-w-0 flex-1 wrap-break-word">{notice.title}</h3>
 
@@ -65,27 +67,43 @@ export function NoticeCard({ notice, labels, preview = false, canDelete = false 
       {notice.body && <p className={`text-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${preview ? 'line-clamp-3' : ''}`}>{notice.body}</p>}
 
       {/*
-        The attachment is not rendered inline. A scanned circular shown at up to 384px turned
-        a list of notices into an enormous scroll, so a picture is offered as a compact "View"
-        that opens the viewer, and a PDF as the link below - the same way a material
-        lists its file rather than embedding it. The title carries the alt text in the viewer.
+        The attachment is shown as one compact row - an icon for its kind (a picture or a PDF),
+        its file name, and a single action: a picture opens in the viewer, a PDF downloads. It
+        is not embedded inline; a scanned circular rendered at up to 384px turned a list of
+        notices into an enormous scroll, and a bare full-width "View" button read as an empty
+        card that said nothing about what the attachment even was.
 
         Served from a route that checks the audience, not a public path: the id in the URL is
-        guessable, so the picture is refused rather than merely unlinked.
+        guessable, so the file is refused rather than merely unlinked.
       */}
-      {!preview && notice.imageUrl && notice.attachmentMimeType?.startsWith('image/') && (
-        <MultimediaViewer title={notice.title} mimeType={notice.attachmentMimeType} source={notice.imageUrl} labels={labels.viewer} />
-      )}
+      {!preview && notice.imageUrl && notice.attachmentMimeType && (
+        // Fills the card's content width so its padding matches the rest of the card; a long
+        // file name truncates inside it (the name span is flex-1 + min-w-0). The card itself
+        // is what caps the width now, so no separate max-width is needed here.
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="text-muted-foreground flex min-w-0 flex-1 items-center gap-1.5 text-xs">
+            {notice.attachmentMimeType.startsWith('image/') ? (
+              <FileImage className="size-3.5 shrink-0" aria-hidden />
+            ) : (
+              <FileText className="size-3.5 shrink-0" aria-hidden />
+            )}
+            <span className="min-w-0 truncate">{notice.attachmentName ?? labels.attachment}</span>
+          </span>
 
-      {!preview && notice.imageUrl && notice.attachmentMimeType === 'application/pdf' && (
-        <a
-          href={notice.imageUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary max-w-full text-sm font-medium break-all underline underline-offset-4">
-          {labels.attachment}
-          {notice.attachmentName ? `: ${notice.attachmentName}` : ''}
-        </a>
+          {notice.attachmentMimeType.startsWith('image/') ? (
+            <MultimediaViewer
+              title={notice.title}
+              mimeType={notice.attachmentMimeType}
+              source={notice.imageUrl}
+              labels={labels.viewer}
+              triggerSize="xs"
+            />
+          ) : (
+            <Button variant="outline" size="xs" nativeButton={false} render={<a href={notice.imageUrl} download />}>
+              <FileDown /> {labels.viewer.download}
+            </Button>
+          )}
+        </div>
       )}
 
       <p className="text-muted-foreground text-xs">
