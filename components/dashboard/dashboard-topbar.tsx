@@ -21,6 +21,7 @@ type DashboardTopbarProps = {
   user: { name: string; roleLabel: string; initials: string };
   profileLabel: string;
   signOutLabel: string;
+  signingOutLabel: string;
   languageLabel: string;
   themeLabels: ThemeSelectorLabels;
   locale: string;
@@ -44,6 +45,7 @@ export function DashboardTopbar({
   user,
   profileLabel,
   signOutLabel,
+  signingOutLabel,
   languageLabel,
   themeLabels,
   locale,
@@ -76,6 +78,7 @@ export function DashboardTopbar({
             initials={user.initials}
             profileLabel={profileLabel}
             signOutLabel={signOutLabel}
+            signingOutLabel={signingOutLabel}
             locale={locale}
           />
         </div>
