@@ -14,6 +14,8 @@ const createErrorDefinition = (code: number, message: string) => ({ CODE: code, 
 export const NOTICES_DATABASE = {
   LIST_FAILED: createErrorDefinition(15000, 'Failed to list notices'),
   CREATE_FAILED: createErrorDefinition(15001, 'Failed to create notice'),
+  DELETE_FAILED: createErrorDefinition(15002, 'Failed to delete notice'),
+  UPDATE_FAILED: createErrorDefinition(15003, 'Failed to update notice'),
 } as const;
 
 /**
@@ -32,7 +34,7 @@ export const NOTICES_VALIDATION = {
   */
   BODY_OR_IMAGE_REQUIRED: createErrorDefinition(25005, 'Write an announcement, attach an image, or both.'),
   IMAGE_TOO_LARGE: createErrorDefinition(25006, 'That image is larger than the 5 MB limit.'),
-  IMAGE_TYPE_NOT_ALLOWED: createErrorDefinition(25007, 'Attach a PNG, JPEG or WebP image.'),
+  IMAGE_TYPE_NOT_ALLOWED: createErrorDefinition(25007, 'Attach a PNG, JPEG, WebP image or a PDF.'),
   NOTICE_NOT_FOUND: createErrorDefinition(25008, 'That notice no longer exists.'),
   CATEGORY_INVALID: createErrorDefinition(25009, 'Choose whether this is a general or a session notice.'),
   SESSIONS_REQUIRED: createErrorDefinition(25010, 'Choose at least one session for a session notice.'),
@@ -56,4 +58,10 @@ export const NOTICES_AUTH = {
     request built by hand.
   */
   TEACHER_STUDENTS_ONLY: createErrorDefinition(55001, 'A teacher can only publish notices to students.'),
+  /*
+    A teacher may edit or delete only a notice they published. Distinct from
+    TEACHER_STUDENTS_ONLY, which is an audience restriction on publishing, not an ownership
+    denial on an existing notice - conflating the two under one code mislabels the refusal.
+  */
+  NOT_OWN_NOTICE: createErrorDefinition(55002, 'You can only change a notice you published.'),
 } as const;

@@ -160,6 +160,10 @@ export const ROUTES = {
     LABEL: 'Teachers',
     HREF: '/student/teachers',
   },
+  STUDENT_NOTICES: {
+    LABEL: 'Notices',
+    HREF: '/student/notices',
+  },
 } as const;
 
 /**

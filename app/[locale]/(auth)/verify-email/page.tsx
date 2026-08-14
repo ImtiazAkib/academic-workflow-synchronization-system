@@ -51,7 +51,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
               copy: l10n('VERIFY_EMAIL_COPY'),
               copied: l10n('VERIFY_EMAIL_COPIED'),
               signInCta: l10n('VERIFY_EMAIL_SIGN_IN_CTA'),
-              registerCta: l10n('VERIFY_EMAIL_REGISTER_CTA'),
+              resendCta: l10n('VERIFY_EMAIL_RESEND_CTA'),
               failures: {
                 invalidTitle: l10n('VERIFY_EMAIL_INVALID_TITLE'),
                 invalidDescription: l10n('VERIFY_EMAIL_INVALID_DESCRIPTION'),

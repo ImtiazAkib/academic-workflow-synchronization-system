@@ -1,5 +1,7 @@
 import type { NoticeAudienceLabels, NoticeErrorLabels } from '@/lib/utils';
 
+import type { MultimediaViewerLabels } from '@/components/shared';
+
 import type { NoticeCategory } from '@/types';
 
 /**
@@ -24,6 +26,8 @@ export type NoticeView = {
    * being guessable costs nothing.
    */
   imageUrl: string | null;
+  attachmentMimeType: string | null;
+  attachmentName: string | null;
   audience: string;
   audienceLabel: string;
   /** `general` or `session` - decides whether the card shows the audience or the sessions. */
@@ -81,6 +85,12 @@ export type NoticeCreateFormLabels = {
   imageHint: string;
   imagePreviewAlt: string;
   imageRemove: string;
+  /** Clears the chosen attachment - works for a picture or a PDF, unlike `imageRemove`. */
+  attachmentRemove: string;
+  /** The dropzone's resting title, its active title, and the "or click to browse" hint. */
+  dropTitle: string;
+  dropSelected: string;
+  dropHint: string;
   storageWarning: string;
   storageFull: string;
   submit: string;
@@ -90,6 +100,41 @@ export type NoticeCreateFormLabels = {
   errors: NoticeErrorLabels;
 };
 
+/** Every string the notice edit dialog renders. */
+export type NoticeEditLabels = {
+  action: string;
+  title: string;
+  description: string;
+  fieldTitle: string;
+  fieldBody: string;
+  replace: string;
+  /** Shown while a file is dragged over the dropzone. */
+  dropActive: string;
+  /** Shown at rest when the notice has no attachment name to show. */
+  dropDefault: string;
+  keep: string;
+  remove: string;
+  /** Clears a newly chosen replacement, reverting to the current attachment. */
+  clearFile: string;
+  cancel: string;
+  working: string;
+  submit: string;
+  error: string;
+};
+
+/** Every string the notice delete confirmation renders. */
+export type NoticeDeleteLabels = {
+  action: string;
+  ariaLabel: string;
+  title: string;
+  warning: string;
+  description: string;
+  cancel: string;
+  confirm: string;
+  working: string;
+  error: string;
+};
+
 export type NoticeListLabels = {
   emptyTitle: string;
   emptyDescription: string;
@@ -97,4 +142,10 @@ export type NoticeListLabels = {
   unknownPublisher: string;
   /** Prefix on a session notice's badge, before the intakes - "Sessions:". */
   sessionsLabel: string;
+  attachment: string;
+  /** Chrome for the attachment viewer a card opens. */
+  viewer: MultimediaViewerLabels;
+  /** The edit and delete controls a card shows when the viewer may manage it. */
+  edit: NoticeEditLabels;
+  delete: NoticeDeleteLabels;
 };

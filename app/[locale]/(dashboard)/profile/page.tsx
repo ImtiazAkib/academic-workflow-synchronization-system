@@ -165,6 +165,7 @@ export default async function ProfilePage() {
             errors: {
               emailTaken: l10n('USERS_ERROR_EMAIL_TAKEN'),
               adminLimit: l10n('USERS_ERROR_ADMIN_LIMIT'),
+              departmentRequired: l10n('USERS_FIELD_DEPARTMENT_REQUIRED'),
               ownAccess: l10n('USERS_ERROR_OWN_ACCESS'),
               superAdmin: l10n('USERS_ERROR_SUPER_ADMIN'),
               adminOnlySuperAdmin: l10n('USERS_ERROR_ADMIN_ONLY_SUPER_ADMIN'),

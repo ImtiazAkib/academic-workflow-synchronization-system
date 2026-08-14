@@ -38,9 +38,16 @@ export function ProfileLoginId({ loginId, labels }: ProfileLoginIdProps) {
       return;
     }
 
-    navigator.clipboard.writeText(loginId).then(() => {
-      setIsCopied(true);
-    });
+    navigator.clipboard
+      .writeText(loginId)
+      .then(() => {
+        setIsCopied(true);
+        // Revert to the resting label so a second copy reads as an action, not a stuck state.
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch(() => {
+        // Clipboard unavailable (an insecure context, or permission refused) - nothing to confirm.
+      });
   };
 
   return (

@@ -64,6 +64,8 @@ export async function UploadsPanel({ userId }: UploadsPanelProps) {
     fileName: conversion.fileName,
     status: conversion.status,
     statusLabel: statusLabels[conversion.status],
+    // Every status carries a detail: the before/after size when done, the arriving size while
+    // processing, the reason when failed. Guarding on `failed` left done/processing rows blank.
     detail: resolveConversionDetail(conversion, failureLabels),
     /*
       Formatted here and passed down as a string. `getFormatter()` knows the request's

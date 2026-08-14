@@ -89,7 +89,7 @@ export function UploadProgress({ rows, labels }: UploadProgressProps) {
                 </Badge>
               </TableCell>
 
-              <TableCell className="text-muted-foreground text-sm break-all">{x.detail}</TableCell>
+              <TableCell className="text-muted-foreground text-sm break-all">{x.detail || '—'}</TableCell>
 
               <TableCell className="text-muted-foreground text-sm whitespace-nowrap">{x.when}</TableCell>
             </TableRow>

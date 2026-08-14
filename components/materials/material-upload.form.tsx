@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 
-import { Upload } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useRouter } from '@/l10n/navigation';
@@ -12,7 +12,7 @@ import { MATERIAL_ACCEPT } from '@/constants/material.const';
 import type { ErrorDto } from '@/lib/result';
 import { resolveMaterialErrorMessage } from '@/lib/utils';
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/components/ui';
 
 import type { MaterialCourseOption, MaterialsLabels } from './materials.types';
 
@@ -45,6 +45,7 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
   const [isUploading, setIsUploading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const courseItems: Record<string, string> = {};
 
@@ -60,9 +61,28 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
     setSelectedFile(file);
   };
 
+  const handleClearFile = (): void => {
+    setSelectedFile(null);
+
+    // React does not own a file input's value, so clearing state leaves the picker still
+    // holding the old file - re-picking the same file would then fire no change event.
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
+    setIsDragging(false);
+    // The picker and button are closed when the bucket is full; the drop path has to be too.
+    if (storageBlocked) return;
     selectFile(event.dataTransfer.files.item(0));
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>): void => {
+    // The dropzone wraps an icon and a label, so a bare currentTarget===target check flips
+    // off every time the cursor crosses a child. Only clear once it has left the dropzone.
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragging(false);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -136,31 +156,55 @@ export function MaterialUploadForm({ courses, labels, storageBlocked, storageNea
           </Select>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 sm:col-span-2">
           <Label htmlFor="material-title">{labels.fieldTitle}</Label>
           <Input id="material-title" name="title" required />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 sm:col-span-2">
+          <Label htmlFor="material-description">{labels.fieldDescription}</Label>
+          <Textarea id="material-description" name="description" rows={3} />
+        </div>
+
+        <div className="flex flex-col gap-2 sm:col-span-2">
           <Label htmlFor="material-file">{labels.fieldFile}</Label>
-          <div
-            role="button"
-            tabIndex={storageBlocked ? -1 : 0}
-            onClick={() => fileInputRef.current?.click()}
-            onKeyDown={event => {
-              if (event.key === 'Enter' || event.key === ' ') {
+          {/* Once a file is chosen the dropzone is replaced by the file itself, so the picker is not offered twice; Remove brings it back. */}
+          {selectedFile ? (
+            <div className="border-border flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
+              <span className="min-w-0 truncate">
+                {selectedFile.name} · {Math.ceil(selectedFile.size / 1024)} KB
+              </span>
+              <Button type="button" variant="ghost" size="sm" className="text-muted-foreground shrink-0" onClick={handleClearFile}>
+                <X className="size-3.5" />
+                {labels.removeFile}
+              </Button>
+            </div>
+          ) : (
+            <div
+              role="button"
+              tabIndex={storageBlocked ? -1 : 0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              onDragEnter={event => {
                 event.preventDefault();
-                fileInputRef.current?.click();
-              }
-            }}
-            onDragOver={event => event.preventDefault()}
-            onDrop={handleDrop}
-            className="border-border hover:border-primary/40 hover:bg-primary-muted/40 flex min-h-10 cursor-pointer items-center rounded-md border border-dashed px-3 text-sm transition-colors disabled:pointer-events-none">
-            <span className="text-muted-foreground truncate">
-              {selectedFile ? `${selectedFile.name} · ${Math.ceil(selectedFile.size / 1024)} KB` : labels.dropzone}
-            </span>
-          </div>
-          <Input
+                if (!storageBlocked) setIsDragging(true);
+              }}
+              onDragOver={event => event.preventDefault()}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 text-center text-sm transition-colors disabled:pointer-events-none sm:min-h-56 ${isDragging ? 'border-primary bg-primary-muted text-primary scale-[1.01]' : 'border-border hover:border-primary/40 hover:bg-primary-muted/40'}`}>
+              <Upload className={`size-5 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} aria-hidden />
+              {isDragging && <span className="font-medium">{labels.dropActive}</span>}
+              <span className="text-muted-foreground truncate">{labels.dropzone}</span>
+            </div>
+          )}
+          {/* Plain input, not the styled `Input`: its `w-full` overrides `sr-only`, leaving this hidden picker full-width and overrunning the page on wide screens. */}
+          <input
             ref={fileInputRef}
             id="material-file"
             name="file"

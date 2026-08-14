@@ -25,7 +25,7 @@ type EmailVerificationLabels = {
   copy: string;
   copied: string;
   signInCta: string;
-  registerCta: string;
+  resendCta: string;
   failures: VerificationErrorLabels;
 };
 
@@ -78,9 +78,15 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
       return;
     }
 
-    navigator.clipboard.writeText(loginId).then(() => {
-      setIsCopied(true);
-    });
+    navigator.clipboard
+      .writeText(loginId)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch(() => {
+        // Clipboard unavailable (an insecure context, or refused) - nothing to confirm.
+      });
   };
 
   if (failure) {
@@ -90,8 +96,10 @@ export function EmailVerification({ token, labels }: EmailVerificationProps) {
         <h1 className="text-2xl">{failure.title}</h1>
         <p className="text-muted-foreground text-sm">{failure.description}</p>
 
-        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.REGISTER.HREF} />}>
-          {labels.registerCta}
+        {/* The account already exists (unverified), so re-registering is refused as a
+            duplicate. The real remedy is a fresh confirmation link. */}
+        <Button variant="default" nativeButton={false} render={<Link href={ROUTES.RESEND_CONFIRMATION.HREF} />}>
+          {labels.resendCta}
         </Button>
       </div>
     );

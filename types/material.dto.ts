@@ -14,6 +14,7 @@ export type MaterialDto = {
   courseId: string;
   uploadedById: string;
   title: string;
+  description: string;
   fileName: string;
   mimeType: string;
   size: number;
@@ -34,6 +35,7 @@ export function materialFromEntity(entity: MaterialEntity): MaterialDto {
     courseId: toId(entity.course),
     uploadedById: toId(entity.uploadedBy),
     title: entity.title,
+    description: entity.description ?? '',
     fileName: entity.fileName,
     mimeType: entity.mimeType,
     size: entity.size,

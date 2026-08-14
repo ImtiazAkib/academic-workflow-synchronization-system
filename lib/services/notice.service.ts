@@ -3,13 +3,30 @@ import { User } from '@/models/user.model';
 import { NoticeAudience, NoticeDto, SessionUser, UserRole, noticeFromEntity } from '@/types';
 
 import { CODES } from '@/constants/codes.const';
-import { NOTICE_AUDIENCES, NOTICE_CATEGORIES } from '@/constants/notice.const';
+import {
+  NOTICE_ATTACHMENT_EXTENSIONS,
+  NOTICE_ATTACHMENT_MIME_TYPES,
+  NOTICE_AUDIENCES,
+  NOTICE_CATEGORIES,
+  NOTICE_IMAGE,
+} from '@/constants/notice.const';
 import { USER_ROLES } from '@/constants/roles.const';
 import { FILE_CONVERSION_TARGET } from '@/constants/storage.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
-import { ListResult, SingleResult, createError, listFailure, listSuccess, singleFailure, singleSuccess } from '@/lib/result';
+import {
+  EmptyResult,
+  ListResult,
+  SingleResult,
+  createError,
+  emptyFailureWithError,
+  emptySuccess,
+  listFailure,
+  listSuccess,
+  singleFailure,
+  singleSuccess,
+} from '@/lib/result';
 import type { NoticeCreateOutput } from '@/lib/schemas';
 import { storage } from '@/lib/storage';
 import type { StoredFileStream } from '@/lib/storage';
@@ -139,7 +156,15 @@ export class NoticeService {
           return singleFailure(createError(BUSINESS.STORAGE_FULL.CODE, BUSINESS.STORAGE_FULL.MESSAGE, 'image'));
         }
 
-        const stored = await storage.save(input.image);
+        const extension = input.image.name.includes('.') ? input.image.name.slice(input.image.name.lastIndexOf('.')).toLowerCase() : '';
+        const safeTitle = input.title
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 80);
+        const namedFile = new File([input.image], `${safeTitle || 'notice'}${extension}`, { type: input.image.type });
+        const stored = await storage.save(namedFile);
 
         image = { storageKey: stored.storageKey, fileName: stored.fileName, mimeType: stored.mimeType, size: stored.size };
       }
@@ -227,6 +252,115 @@ export class NoticeService {
     }
   }
 
+  /** Delete a notice and its attachment. Administrators may delete any notice; teachers only their own. */
+  public async delete(noticeId: string, requester: SessionUser): Promise<EmptyResult> {
+    try {
+      await connectToDatabase();
+      const notice = await Notice.findById(noticeId).lean<NoticeEntity | null>();
+
+      if (!notice) return emptyFailureWithError(createError(VALIDATION.NOTICE_NOT_FOUND.CODE, VALIDATION.NOTICE_NOT_FOUND.MESSAGE));
+      if (requester.role === USER_ROLES.TEACHER && toId(notice.publishedBy) !== requester.userId) {
+        return emptyFailureWithError(createError(AUTH.NOT_OWN_NOTICE.CODE, AUTH.NOT_OWN_NOTICE.MESSAGE));
+      }
+
+      await Notice.findByIdAndDelete(noticeId);
+      // The row is already gone, so a storage hiccup here must not report the delete as
+      // failed - warn and leave the blob, exactly as the update() path does on replacement.
+      if (notice.image) {
+        await storage.remove(notice.image.storageKey).catch(error => log.warn({ err: error }, 'Removing deleted notice attachment failed'));
+      }
+      return emptySuccess();
+    } catch (error) {
+      log.error({ err: error }, 'Deleting a notice failed');
+      return emptyFailureWithError(createError(DATABASE.DELETE_FAILED.CODE, DATABASE.DELETE_FAILED.MESSAGE));
+    }
+  }
+
+  /** Update notice text and optionally replace or remove its attachment. */
+  public async update(
+    noticeId: string,
+    input: { title: string; body?: string; file?: File; removeAttachment: boolean },
+    requester: SessionUser
+  ): Promise<SingleResult<NoticeDto>> {
+    let replacement: NoticeImage | undefined;
+
+    try {
+      await connectToDatabase();
+      const target = await Notice.findById(noticeId).lean<NoticeEntity | null>();
+      if (!target) return singleFailure(createError(VALIDATION.NOTICE_NOT_FOUND.CODE, VALIDATION.NOTICE_NOT_FOUND.MESSAGE));
+      if (requester.role === USER_ROLES.TEACHER && toId(target.publishedBy) !== requester.userId) {
+        return singleFailure(createError(AUTH.NOT_OWN_NOTICE.CODE, AUTH.NOT_OWN_NOTICE.MESSAGE));
+      }
+
+      const keepsExisting = Boolean(target.image) && !input.removeAttachment && !input.file;
+      if (!input.body?.trim() && !keepsExisting && !input.file) {
+        return singleFailure(createError(VALIDATION.BODY_OR_IMAGE_REQUIRED.CODE, VALIDATION.BODY_OR_IMAGE_REQUIRED.MESSAGE, 'body'));
+      }
+
+      if (input.file) {
+        const loweredName = input.file.name.toLowerCase();
+        const declaredTypeAllowed = NOTICE_ATTACHMENT_MIME_TYPES.includes(input.file.type as (typeof NOTICE_ATTACHMENT_MIME_TYPES)[number]);
+        const extensionAllowed = NOTICE_ATTACHMENT_EXTENSIONS.some(extension => loweredName.endsWith(extension));
+        if (!declaredTypeAllowed || !extensionAllowed || input.file.size > NOTICE_IMAGE.MAX_SIZE_BYTES) {
+          return singleFailure(createError(VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE, VALIDATION.IMAGE_TYPE_NOT_ALLOWED.MESSAGE, 'file'));
+        }
+        if (!(await fileMatchesDeclaredType(input.file))) {
+          return singleFailure(createError(VALIDATION.IMAGE_TYPE_NOT_ALLOWED.CODE, VALIDATION.IMAGE_TYPE_NOT_ALLOWED.MESSAGE, 'file'));
+        }
+        if (!(await hasStorageRoomFor(input.file.size))) {
+          return singleFailure(createError(BUSINESS.STORAGE_FULL.CODE, BUSINESS.STORAGE_FULL.MESSAGE, 'file'));
+        }
+        const extension = input.file.name.includes('.') ? input.file.name.slice(input.file.name.lastIndexOf('.')).toLowerCase() : '';
+        const safeTitle = input.title
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 80);
+        const stored = await storage.save(new File([input.file], `${safeTitle || 'notice'}${extension}`, { type: input.file.type }));
+        replacement = { storageKey: stored.storageKey, fileName: stored.fileName, mimeType: stored.mimeType, size: stored.size };
+      }
+
+      const update: Record<string, unknown> = { title: input.title };
+      if (input.body?.trim()) update.body = input.body.trim();
+      if (replacement) update.image = replacement;
+      const unset: Record<string, ''> = {};
+      if (!input.body?.trim()) unset.body = '';
+      if (input.removeAttachment && !replacement) unset.image = '';
+      const operation = Object.keys(unset).length > 0 ? { $set: update, $unset: unset } : { $set: update };
+      const updated = await Notice.findByIdAndUpdate(noticeId, operation, { returnDocument: 'after' }).lean<NoticeEntity | null>();
+      if (!updated) throw new Error('Notice disappeared during update');
+
+      if (target.image && (replacement || input.removeAttachment)) {
+        await storage.remove(target.image.storageKey).catch(error => log.warn({ err: error }, 'Removing replaced notice attachment failed'));
+      }
+
+      /*
+        A replacement was stored raw, so book the same after-response compression create()
+        does - otherwise an edited image stays full-size forever while every image created
+        through the normal path is swapped to WebP. `storage.compress` no-ops on a PDF, so a
+        replaced PDF attachment is simply left as it is.
+      */
+      if (replacement) {
+        const jobId = await conversions.enqueue(
+          FILE_CONVERSION_TARGET.NOTICE,
+          toId(updated._id),
+          replacement.fileName,
+          replacement.size,
+          requester.userId
+        );
+
+        conversions.schedule(jobId);
+      }
+
+      return singleSuccess(noticeFromEntity(updated));
+    } catch (error) {
+      if (replacement) await storage.remove(replacement.storageKey).catch(() => undefined);
+      log.error({ err: error }, 'Updating a notice failed');
+      return singleFailure(createError(DATABASE.UPDATE_FAILED.CODE, DATABASE.UPDATE_FAILED.MESSAGE));
+    }
+  }
+
   private noticeNotFound(): SingleResult<StoredFileStream> {
     return singleFailure(createError(VALIDATION.NOTICE_NOT_FOUND.CODE, VALIDATION.NOTICE_NOT_FOUND.MESSAGE));
   }
@@ -309,6 +443,13 @@ export class NoticeService {
    * @returns True when the image may be served.
    */
   private async mayViewNotice(notice: NoticeEntity, viewer: SessionUser): Promise<boolean> {
+    // The author always sees their own notice's attachment. The teacher notices screen exists
+    // for an author to check what they sent, and a teacher's notices are addressed to students,
+    // so without this their own image or PDF fails the audience test below and 404s.
+    if (toId(notice.publishedBy) === viewer.userId) {
+      return true;
+    }
+
     const audiences = this.audiencesFor(viewer.role);
 
     // Admin sees all.
