@@ -101,6 +101,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             user={user}
             profileLabel={l10n('DASHBOARD_NAV_PROFILE')}
             signOutLabel={l10n('DASHBOARD_SIGN_OUT')}
+            signingOutLabel={l10n('DASHBOARD_SIGNING_OUT')}
             languageLabel={l10n('LANGUAGE_SELECTOR_LABEL')}
             themeLabels={{
               group: l10n('THEME_SELECTOR_LABEL'),

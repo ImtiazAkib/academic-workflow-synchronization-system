@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Eye, FileDown, Minus, Plus, RotateCcw } from 'lucide-react';
 
-import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui';
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Spinner } from '@/components/ui';
 
 export type MultimediaViewerLabels = {
   view: string;
@@ -14,6 +14,7 @@ export type MultimediaViewerLabels = {
   zoomOut: string;
   zoomIn: string;
   reset: string;
+  loading: string;
 };
 
 /*
@@ -29,6 +30,7 @@ const DEFAULT_LABELS: MultimediaViewerLabels = {
   zoomOut: 'Zoom out',
   zoomIn: 'Zoom in',
   reset: 'Reset image view',
+  loading: 'Loading…',
 };
 
 type MultimediaViewerProps = {
@@ -49,6 +51,10 @@ export function MultimediaViewer({ title, mimeType, source, downloadSource, labe
   const isPdf = mimeType === 'application/pdf';
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  // Shown while the attachment is being fetched. The media routes are `no-store`, so every open
+  // pulls fresh bytes - each media element clears this on its load event, and reopening the
+  // dialog restarts it (the dialog unmounts its content on close, so the load fires again).
+  const [mediaLoading, setMediaLoading] = useState(true);
   const dragStart = useRef<{ x: number; y: number; originX: number; originY: number } | null>(null);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -115,7 +121,12 @@ export function MultimediaViewer({ title, mimeType, source, downloadSource, labe
   };
 
   return (
-    <Dialog>
+    <Dialog
+      onOpenChange={open => {
+        // Restart the spinner on every open: the content unmounts on close, so the next open
+        // re-fetches and the media's load event will clear this again.
+        if (open) setMediaLoading(true);
+      }}>
       <DialogTrigger render={<Button type="button" variant="outline" size={triggerSize} />}>
         <Eye className="size-3.5" /> {labels.view}
       </DialogTrigger>
@@ -143,7 +154,7 @@ export function MultimediaViewer({ title, mimeType, source, downloadSource, labe
         )}
         <div
           ref={isImage ? setImageFrame : undefined}
-          className={`bg-muted/40 flex min-h-72 items-center justify-center overflow-hidden p-4 ${isImage ? 'h-[calc(100dvh-15rem)] max-h-[42rem] touch-none' : ''}`}
+          className={`bg-muted/40 relative flex min-h-72 items-center justify-center overflow-hidden p-4 ${isImage ? 'h-[calc(100dvh-15rem)] max-h-[42rem] touch-none' : ''}`}
           onPointerDown={
             isImage
               ? event => {
@@ -191,14 +202,44 @@ export function MultimediaViewer({ title, mimeType, source, downloadSource, labe
               ref={imageRef}
               alt={title}
               draggable={false}
+              onLoad={() => setMediaLoading(false)}
+              onError={() => setMediaLoading(false)}
               onDoubleClick={() => (zoom === 1 ? setZoom(2) : resetImage())}
               className={`max-h-full max-w-full rounded-md object-contain shadow-lg ${zoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
               style={{ transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${zoom})` }}
             />
           )}
-          {isVideo && <video src={source} controls className="max-h-[70vh] max-w-full rounded-md" />}
-          {isAudio && <audio src={source} controls className="w-full max-w-xl" />}
-          {isPdf && <iframe title={title} src={source} className="h-[70vh] w-full rounded-md border bg-white" />}
+          {isVideo && (
+            <video
+              src={source}
+              controls
+              onLoadedData={() => setMediaLoading(false)}
+              onError={() => setMediaLoading(false)}
+              className="max-h-[70vh] max-w-full rounded-md"
+            />
+          )}
+          {isAudio && (
+            <audio
+              src={source}
+              controls
+              onLoadedData={() => setMediaLoading(false)}
+              onError={() => setMediaLoading(false)}
+              className="w-full max-w-xl"
+            />
+          )}
+          {/* An iframe fires `load` even for an error response body, so the spinner always clears. */}
+          {isPdf && (
+            <iframe title={title} src={source} onLoad={() => setMediaLoading(false)} className="h-[70vh] w-full rounded-md border bg-white" />
+          )}
+
+          {mediaLoading && (
+            // Sits over the frame - decorative, so it never intercepts the drag-to-pan pointer. The
+            // Spinner is aria-hidden by design, so the wrapper carries the announced status instead.
+            <div className="bg-muted/40 pointer-events-none absolute inset-0 flex items-center justify-center" role="status" aria-live="polite">
+              <Spinner className="text-muted-foreground size-8" />
+              <span className="sr-only">{labels.loading}</span>
+            </div>
+          )}
         </div>
         <div className="border-border flex justify-end border-t px-3 py-3 sm:px-6">
           {/* `download` makes this save the file rather than navigate the tab to it - a notice

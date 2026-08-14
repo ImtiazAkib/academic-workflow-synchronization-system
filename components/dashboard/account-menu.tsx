@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useTransition } from 'react';
 
 import { ChevronDown, LogOut, UserRound } from 'lucide-react';
 
@@ -21,6 +21,7 @@ import {
   DropdownMenuLinkItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Spinner,
 } from '@/components/ui';
 
 type AccountMenuProps = {
@@ -29,59 +30,64 @@ type AccountMenuProps = {
   initials: string;
   profileLabel: string;
   signOutLabel: string;
+  signingOutLabel: string;
   locale: string;
 };
 
 /*
   The account cluster in the topbar's right corner - avatar + name opening a menu with the
-  profile link and sign out, replacing the old naked always-visible sign-out button. Sign out
-  stays the app's server-action form (so it clears the cookie and redirects the same way); the
-  menu item just submits that hidden form, so the whole thing is one click inside the menu
-  rather than a button competing for space in the bar.
+  profile link and sign out. Signing out clears the cookie and redirects to sign-in exactly as
+  before; it just calls the `signOutAction` server action directly inside a transition rather
+  than submitting a hidden form, so the click now carries a pending state through the redirect.
+
+  The busy indicator lives on the trigger, not on the menu item: clicking a menu item closes the
+  popup at once, so a spinner on it would disappear before the redirect landed. The trigger is
+  the one control still on screen during the round-trip - it swaps its name for "Signing out…"
+  and its chevron for a spinner, and disables itself so the menu can't be reopened mid-flight.
 */
-export function AccountMenu({ name, roleLabel, initials, profileLabel, signOutLabel, locale }: AccountMenuProps) {
-  const signOutFormRef = useRef<HTMLFormElement>(null);
+export function AccountMenu({ name, roleLabel, initials, profileLabel, signOutLabel, signingOutLabel, locale }: AccountMenuProps) {
+  const [isSigningOut, startSignOut] = useTransition();
 
   const handleSignOutClick = (): void => {
-    signOutFormRef.current?.requestSubmit();
+    /*
+      `next/root-params` is unavailable inside a server action, so the locale it redirects back
+      into is handed over explicitly - the same field the old hidden sign-out form carried.
+    */
+    const data = new FormData();
+    data.set(SESSION.LOCALE_FIELD, locale);
+    startSignOut(() => signOutAction(data));
   };
 
   return (
-    <>
-      <form ref={signOutFormRef} action={signOutAction} className="hidden">
-        <input type="hidden" name={SESSION.LOCALE_FIELD} value={locale} />
-      </form>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="gap-2 px-2" aria-busy={isSigningOut} disabled={isSigningOut} />}>
+        <Avatar className="size-6">
+          <AvatarFallback className="text-[0.625rem]">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="hidden max-w-32 truncate sm:inline">{isSigningOut ? signingOutLabel : name}</span>
+        {isSigningOut ? <Spinner className="size-4" /> : <ChevronDown className="text-muted-foreground size-4" />}
+      </DropdownMenuTrigger>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="gap-2 px-2" />}>
-          <Avatar className="size-6">
-            <AvatarFallback className="text-[0.625rem]">{initials}</AvatarFallback>
-          </Avatar>
-          <span className="hidden max-w-32 truncate sm:inline">{name}</span>
-          <ChevronDown className="text-muted-foreground size-4" />
-        </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-56">
+        <DropdownMenuLabel className="flex flex-col gap-0.5">
+          <span className="text-foreground truncate text-sm font-medium">{name}</span>
+          <span className="text-muted-foreground text-xs font-normal">{roleLabel}</span>
+        </DropdownMenuLabel>
 
-        <DropdownMenuContent align="end" className="min-w-56">
-          <DropdownMenuLabel className="flex flex-col gap-0.5">
-            <span className="text-foreground truncate text-sm font-medium">{name}</span>
-            <span className="text-muted-foreground text-xs font-normal">{roleLabel}</span>
-          </DropdownMenuLabel>
+        <DropdownMenuSeparator />
 
-          <DropdownMenuSeparator />
+        <DropdownMenuLinkItem render={<Link href={ROUTES.PROFILE.HREF} />}>
+          <UserRound />
+          {profileLabel}
+        </DropdownMenuLinkItem>
 
-          <DropdownMenuLinkItem render={<Link href={ROUTES.PROFILE.HREF} />}>
-            <UserRound />
-            {profileLabel}
-          </DropdownMenuLinkItem>
+        <DropdownMenuSeparator />
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem variant="destructive" onClick={handleSignOutClick}>
-            <LogOut />
-            {signOutLabel}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+        <DropdownMenuItem variant="destructive" onClick={handleSignOutClick}>
+          <LogOut />
+          {signOutLabel}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
