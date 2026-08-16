@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { CODES } from '@/constants/codes.const';
+import { NOTICE_IMAGE } from '@/constants/notice.const';
 import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { withForbidden, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
+import { contentLengthExceeds, withForbidden, withOk, withPayloadTooLarge, withTooManyRequests, withUnauthorized } from '@/lib/api';
 import { getSessionUser } from '@/lib/auth';
 import { isSuccess } from '@/lib/result';
 import { NoticeCreateSchema } from '@/lib/schemas';
@@ -49,6 +51,13 @@ export async function POST(request: NextRequest) {
   // Before `formData()`, so a refusal costs nothing - see the materials upload.
   if (!(await consumeRateLimit('upload', sessionUser.userId, RATE_LIMIT.UPLOAD))) {
     return withTooManyRequests();
+  }
+
+  // Also before formData(): the schema's size cap only runs once the body is buffered.
+  const { IMAGE_TOO_LARGE } = CODES.VALIDATION.NOTICES;
+
+  if (contentLengthExceeds(request, NOTICE_IMAGE.MAX_SIZE_BYTES)) {
+    return withPayloadTooLarge(IMAGE_TOO_LARGE.CODE, IMAGE_TOO_LARGE.MESSAGE);
   }
 
   const form = await request.formData();

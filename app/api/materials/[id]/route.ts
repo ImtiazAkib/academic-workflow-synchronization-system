@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { CODES } from '@/constants/codes.const';
+import { MATERIAL } from '@/constants/material.const';
 import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { withForbidden, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
+import { contentLengthExceeds, withForbidden, withOk, withPayloadTooLarge, withTooManyRequests, withUnauthorized } from '@/lib/api';
 import { getSessionUser } from '@/lib/auth';
 import { isSuccess } from '@/lib/result';
 import { MaterialUpdateSchema } from '@/lib/schemas';
@@ -26,6 +28,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   */
   if (!(await consumeRateLimit('upload', sessionUser.userId, RATE_LIMIT.UPLOAD))) {
     return withTooManyRequests();
+  }
+
+  const { FILE_TOO_LARGE } = CODES.VALIDATION.MATERIALS;
+
+  if (contentLengthExceeds(request, MATERIAL.MAX_SIZE_BYTES)) {
+    return withPayloadTooLarge(FILE_TOO_LARGE.CODE, FILE_TOO_LARGE.MESSAGE);
   }
 
   const { id } = await params;
