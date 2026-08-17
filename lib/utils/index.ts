@@ -14,6 +14,7 @@ export * from './auth.utils';
 export * from './caller.utils';
 export * from './error.utils';
 export * from './file-signature.utils';
+export * from './json-ld.utils';
 export * from './material.utils';
 export * from './llms.utils';
 export * from './notice-labels.utils';
