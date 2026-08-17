@@ -23,12 +23,20 @@ const FORWARDED_FOR = 'x-forwarded-for';
  * The first entry is taken because a forwarding chain appends: the leftmost is the
  * original client and everything after it is a hop.
  *
+ * The header is read **only when `trustForwardedFor` is true** — the deployment's assertion
+ * (`TRUSTED_PROXY`) that a proxy overwrites it. Untrusted, the header is whatever the client
+ * typed, so counting each spoofed value as its own caller is no limit at all; everyone
+ * shares one bucket instead, which degrades the limit to a single shared budget rather than
+ * to none. This keeps the helper client-bundle-safe: the trust flag is passed in rather than
+ * read from server env here.
+ *
  * @param headers - The request's headers.
+ * @param trustForwardedFor - Whether `x-forwarded-for` may be believed on this deployment.
  *
  * @returns Something stable to count against, or a shared fallback when there is nothing.
  */
-export function resolveCallerKey(headers: Headers): string {
-  const forwarded = headers.get(FORWARDED_FOR);
+export function resolveCallerKey(headers: Headers, trustForwardedFor: boolean): string {
+  const forwarded = trustForwardedFor ? headers.get(FORWARDED_FOR) : null;
 
   if (!forwarded) {
     /*

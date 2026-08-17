@@ -87,7 +87,7 @@ async function sendVerification(registration: Registration): Promise<EmptyResult
 async function refuseFloodedCaller(scope: string, budget: RateLimitBudget): Promise<EmptyResult | null> {
   const requestHeaders = await headers();
 
-  if (await consumeRateLimit(scope, resolveCallerKey(requestHeaders), budget)) {
+  if (await consumeRateLimit(scope, resolveCallerKey(requestHeaders, env.TRUSTED_PROXY), budget)) {
     return null;
   }
 
