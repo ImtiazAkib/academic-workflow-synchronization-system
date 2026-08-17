@@ -49,6 +49,17 @@ export const STORAGE = {
   IMAGE_MAX_DIMENSION: 2000,
 
   /**
+   * The largest input image `sharp` will decode, in pixels.
+   *
+   * A guard against a decompression bomb - a small, highly compressible file that declares
+   * an enormous canvas and blows up to gigabytes once decoded. `sharp`'s built-in default
+   * is ~268 MP; 50 MP is far tighter while still clearing any real camera or scan, since
+   * nothing here is displayed above `IMAGE_MAX_DIMENSION` anyway. An input past this is
+   * refused by the background conversion rather than decoded.
+   */
+  IMAGE_MAX_INPUT_PIXELS: 50 * 1000 * 1000,
+
+  /**
    * The WebP quality every uploaded image is re-encoded at.
    *
    * 80 is the usual sweet spot: indistinguishable from the original at a glance, a
