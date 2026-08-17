@@ -51,6 +51,42 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     qualities: [25, 50, 75, 100],
   },
+
+  /*
+    Security headers on every page response. `/api` is excluded on purpose: the
+    file-serving routes there set their own stricter `Content-Security-Policy: sandbox` plus
+    `nosniff` and a download disposition, which must stay authoritative — and a JSON or file
+    response is not a clickjacking target the way a page is.
+
+    The CSP carries only the directives that do not need a per-request nonce. Next injects
+    inline hydration scripts, so a restrictive `script-src` would break the app unless a
+    nonce were plumbed through the middleware — a larger change left for a follow-up. What
+    is here still shuts the clickjacking door (`frame-ancestors`) and the base-tag, plugin
+    and off-site-form vectors, and the standalone headers cover framing, MIME sniffing,
+    referrer leakage and feature access.
+  */
+  async headers() {
+    const securityHeaders = [
+      {
+        key: 'Content-Security-Policy',
+        value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
+      },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ];
+
+    if (production) {
+      /*
+        HTTPS-only, and only in production: a browser ignores HSTS sent over plain http
+        anyway, and pinning a dev origin served over https to HTTPS would be a foot-gun.
+      */
+      securityHeaders.push({ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' });
+    }
+
+    return [{ source: '/((?!api/).*)', headers: securityHeaders }];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin({
