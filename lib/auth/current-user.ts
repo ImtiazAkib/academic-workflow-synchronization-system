@@ -4,6 +4,7 @@ import { User } from '@/models/user.model';
 import { SessionUser } from '@/types';
 
 import { SESSION } from '@/constants/auth.const';
+import { USER_ROLES } from '@/constants/roles.const';
 
 import { createLoggerWithContext } from '@/lib/logger';
 import { connectToDatabase } from '@/lib/mongodb';
@@ -26,8 +27,10 @@ const log = createLoggerWithContext('current-user');
  *
  * This runs only in the Node runtime (it reads `next/headers` and touches Mongoose); the
  * edge middleware verifies the signature alone. If the database cannot be reached the check
- * fails open to the verified token rather than closed, so a momentary blip cannot sign the
- * whole department out — the one-hour token lifetime still bounds the exposure.
+ * fails open to the verified token for ordinary roles — so a momentary blip cannot sign the
+ * whole department out — but fails closed for admin and super-admin, so a DB outage cannot
+ * be used to keep a revoked administrator's powers. The one-hour token lifetime bounds the
+ * ordinary-role exposure.
  *
  * @returns The signed-in user, or null when there is no valid session.
  */
@@ -58,9 +61,22 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
     return { userId: session.userId, email: account.email, name: account.name, role: account.role, isApproved: account.isApproved };
   } catch (error) {
-    // Fail open on a DB error so an outage cannot lock everyone out; the one-hour token
-    // lifetime still caps the window, and revocation resumes once the DB is reachable.
-    log.warn({ err: error }, 'Re-validating a session against the database failed; trusting the token');
+    /*
+      A privileged session fails CLOSED here. If the database cannot be reached, an admin or
+      super-admin token is not trusted — trusting it would let a revoked or demoted
+      administrator keep those powers through a DB outage, which is exactly when an attacker
+      would want it. They are sent back to sign-in, which also needs the database, so no
+      usable access is lost by refusing.
+
+      Ordinary sessions still fail OPEN: signing every student and teacher out over a blip is
+      the worse failure, and the one-hour token lifetime still caps that window. Revocation
+      resumes for everyone once the database is reachable again.
+    */
+    log.warn({ err: error, role: session.role }, 'Re-validating a session against the database failed');
+
+    if (session.role === USER_ROLES.ADMIN || session.role === USER_ROLES.SUPER_ADMIN) {
+      return null;
+    }
 
     return session;
   }
