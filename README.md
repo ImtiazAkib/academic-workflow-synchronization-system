@@ -5,14 +5,16 @@ platform, with role-based dashboards for **administrators**, **teachers** and **
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · MongoDB
 
-> **Current state: steps 0–14 of 17 complete.** Toolchain, design system, validated environment, result/error
+> **Current state: steps 0–16 of 17 complete.** Toolchain, design system, validated environment, result/error
 > layer, English/Bangla localization, the SEO surface, the data model, credential sign-in, the role-scoped
 > dashboard shell, user and course management, the conflict-checked timetable, the course-materials
 > repository, the read-only student dashboard, the super administrator, self-registration with email
 > verification, the profile somebody edits themselves, audience-targeted notices with images, the rate limits
 > and action audit of step 15a, and the polish pass of 15b — loading skeletons, a theme toggle, the contrast
-> and landmark fixes — are in place. Testing and deployment are next; see
-> [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+> and landmark fixes, and the testing and hardening of step 16 — a security audit, a Vitest unit suite, CI, a
+> demo-department seed and the deployment checklist below — are in place. See
+> [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) and
+> [docs/SECURITY-AUDIT-REPORT.md](docs/SECURITY-AUDIT-REPORT.md).
 
 ---
 
@@ -99,13 +101,14 @@ Open [http://localhost:3000](http://localhost:3000).
 cp .env.example .env.local
 ```
 
-| Variable         | Required                  | Notes                                                                 |
-| ---------------- | ------------------------- | --------------------------------------------------------------------- |
-| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`               |
-| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it   |
-| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index   |
-| `MONGODB_URI`    | **Yes**                   | Local or Atlas. The database name is set in code, not read from this  |
-| `AUTH_SECRET`    | **Yes**                   | At least 32 random characters — see [Authentication](#authentication) |
+| Variable         | Required                  | Notes                                                                    |
+| ---------------- | ------------------------- | ------------------------------------------------------------------------ |
+| `LOG_LEVEL`      | No, defaults `info`       | `fatal` · `error` · `warn` · `info` · `debug` · `trace`                  |
+| `APP_BASE_URL`   | No, defaults to localhost | Absolute origin — canonical, `hreflang`, sitemap and OG URLs use it      |
+| `ROBOTS_ENABLED` | No, defaults `false`      | Set `true` on production only; anything else stays out of the index      |
+| `TRUSTED_PROXY`  | No, defaults `false`      | `true` only behind a proxy that overwrites `x-forwarded-for` — see below |
+| `MONGODB_URI`    | **Yes**                   | Local or Atlas. The database name is set in code, not read from this     |
+| `AUTH_SECRET`    | **Yes**                   | At least 32 random characters — see [Authentication](#authentication)    |
 
 Every variable is declared in [env/server.ts](env/server.ts) and validated with zod. That module is imported
 by [next.config.ts](next.config.ts), so an invalid value **fails the build** rather than surfacing on some
@@ -134,8 +137,11 @@ import { env } from '@/env/server';
 | `npm run lint:fix`          | ESLint with `--fix`                                                               |
 | `npm run format`            | Prettier check                                                                    |
 | `npm run format:write`      | Prettier write                                                                    |
+| `npm run test`              | Run the Vitest unit suite once (no database needed)                               |
+| `npm run smoke`             | Run the verify:\* critical-path suite in sequence (needs a database)              |
 | `npm run i18n:generate`     | Regenerate the locale dictionaries from `l10n/l10n.csv`                           |
 | `npm run seed:super-admin`  | Create the super administrator (see below)                                        |
+| `npm run seed:demo`         | Seed a demo department — 1 admin, 2 teachers, 5 students, 4 courses, a class week |
 | `npm run migrate:accounts`  | Backfill accounts created before step 12 with the identity fields                 |
 | `npm run verify:users`      | Exercise UserService against the database, then clean up                          |
 | `npm run verify:schedule`   | Exercise conflict detection the same way                                          |
@@ -649,12 +655,34 @@ On Vercel the option is skipped. The platform traces and packages the output its
 `standalone` on makes the build fail on a missing `.next/next-server.js.nft.json` — the file the standalone
 copy step reads. Nothing else differs between the two targets.
 
+### Production checklist
+
+Before a real deploy:
+
+- [ ] `MONGODB_URI` points at the production database; `AUTH_SECRET` is a fresh 32+ character secret, not the
+      development one.
+- [ ] `APP_BASE_URL` is the real origin, so every canonical, `hreflang`, OG and sitemap URL resolves.
+- [ ] `ROBOTS_ENABLED=true` — production is the only place indexing is turned on.
+- [ ] `TRUSTED_PROXY=true` **only** once the proxy in front overwrites `x-forwarded-for` (see below). Left
+      `false`, the unauthenticated rate limits fall back to one shared bucket rather than a spoofable per-request
+      value.
+- [ ] `SMTP_*` set — otherwise every verification and reset link goes to the log instead of an inbox (and in
+      production the fallback driver logs no token, so the flow simply does not deliver).
+- [ ] `STORAGE_CAP_BYTES` matches the deployment's real capacity.
+- [ ] Served over HTTPS — the app emits HSTS and marks the session cookie `secure` in production.
+- [ ] `npm run test` and `npm run build` are green; `npm run smoke` passes against a database.
+- [ ] Skim [docs/SECURITY-AUDIT-REPORT.md](docs/SECURITY-AUDIT-REPORT.md) — the security headers, request-size
+      ceilings and log hygiene it documents ship in the build; the two deferred items (the admin-ceiling race
+      and list pagination) are known and logged.
+
 ### One thing the reverse proxy has to do
 
-The rate limits on registration and the confirmation resend are keyed on the caller, read from
-`x-forwarded-for`. **On Vercel the platform sets that header itself and a client cannot override it. Behind
-PM2 it is whatever nginx was configured to send — and if nothing is configured, it is whatever the client
-typed**, which makes those two limits a formality that rotating a header defeats.
+The rate limits on registration, the confirmation resend and the password reset are keyed on the caller, read
+from `x-forwarded-for` — but only when `TRUSTED_PROXY=true`. **On Vercel the platform sets that header itself
+and a client cannot override it; behind PM2 it is whatever nginx was configured to send, and an unconfigured
+proxy passes whatever the client typed.** So `TRUSTED_PROXY` defaults to `false`: until you assert the header
+is trustworthy, those callers share one bucket rather than being told apart by a value an attacker rotates.
+Set it `true` once nginx overwrites the header:
 
 ```nginx
 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -662,8 +690,9 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
 The endpoints behind it are not left bare either way: registration is still bounded by email uniqueness and
 the resend by a per-account cooldown, so a bypassed caller limit falls back to the protection that was already
-there rather than to none. The sign-in and upload limits do not depend on this at all — they are keyed on the
-identifier and the session.
+there rather than to none. The per-identifier sign-in limit and the upload limit do not depend on this — they
+are keyed on the identifier and the session; the additional caller-scoped sign-in ceiling is applied only when
+`TRUSTED_PROXY` makes the caller trustworthy.
 
 ```bash
 npm run build:linux

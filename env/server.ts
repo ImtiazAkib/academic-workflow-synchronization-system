@@ -48,6 +48,21 @@ export const env = createEnv({
       .transform(value => value === 'true'),
 
     /*
+      Whether the reverse proxy in front of this app can be trusted to set
+      `x-forwarded-for` itself, overwriting anything a client sent. Defaults to `false`, the
+      safe reading: an untrusted or absent proxy means the header is whatever the client
+      typed, so the unauthenticated rate limits count against one shared bucket rather than a
+      per-request value an attacker rotates at will. Set `true` only behind a proxy that
+      sanitizes the header — Vercel does this itself; nginx needs
+      `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for` — which restores the
+      per-caller limits (and enables the caller-scoped sign-in ceiling).
+    */
+    TRUSTED_PROXY: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform(value => value === 'true'),
+
+    /*
       Required from step 4 onward. The database name is NOT read from this string —
       `lib/mongodb.ts` passes it explicitly, so an Atlas URI copied without its path
       segment cannot silently write to a database called `test`.

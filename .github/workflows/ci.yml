@@ -1,0 +1,41 @@
+name: CI
+
+# The server-side gate the local Husky hooks cannot be: they run on a developer's machine
+# and are skippable with --no-verify, so nothing enforces lint, format, tests and the build
+# on a pull request or a push to a shared branch until here.
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values so the env schema validates at build time. Nothing here reaches a real
+      # database or signs a real session — the build only checks these are present and
+      # well-formed, and the unit tests carry their own dummy secret in vitest.config.mts.
+      MONGODB_URI: mongodb://127.0.0.1:27017/ci
+      AUTH_SECRET: ci-placeholder-secret-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Production build
+        run: npm run build

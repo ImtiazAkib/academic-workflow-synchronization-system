@@ -44,6 +44,18 @@ export const RATE_LIMIT = {
   SIGN_IN: { LIMIT: 5, WINDOW_MINUTES: 15 },
 
   /**
+   * Sign-in attempts per caller, on top of the per-identifier budget above.
+   *
+   * The per-identifier limit stops one account being brute-forced; this bounds the total
+   * bcrypt work one source can spend spreading attempts across many enumerable login IDs -
+   * the spray the per-identifier key cannot see. Only consulted when the caller can actually
+   * be told apart (`TRUSTED_PROXY`): without a trustworthy address every caller shares one
+   * bucket, and a global sign-in cap would lock the department out each morning. Generous
+   * enough for a floor of a building behind one NAT, far below what a spray needs.
+   */
+  SIGN_IN_CALLER: { LIMIT: 30, WINDOW_MINUTES: 15 },
+
+  /**
    * Registrations per caller.
    *
    * Each one costs a bcrypt hash, a row and an outbound message from the department's own

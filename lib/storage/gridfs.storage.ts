@@ -180,7 +180,7 @@ export const gridFsStorage: StorageDriver = {
         longest edge without enlarging a small image, and WebP at a middling quality is a
         fraction of the JPEG or PNG that arrived.
       */
-      const output = await sharp(input)
+      const output = await sharp(input, { limitInputPixels: STORAGE.IMAGE_MAX_INPUT_PIXELS, animated: false })
         .rotate()
         .resize({ width: STORAGE.IMAGE_MAX_DIMENSION, height: STORAGE.IMAGE_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: STORAGE.IMAGE_WEBP_QUALITY })

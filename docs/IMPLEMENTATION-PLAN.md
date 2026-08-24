@@ -39,7 +39,7 @@ in a working state.
 | [14](#step-14)   | Notices & announcements        | Phase 5        | ✅ Done        |
 | [15a](#step-15a) | Hardening                      | Phase 6        | ✅ Done        |
 | [15b](#step-15b) | Polish                         | Phase 6        | ✅ Done        |
-| [16](#step-16)   | Testing & deployment           | Phase 6        | ⬜ Not started |
+| [16](#step-16)   | Testing & deployment           | Phase 6        | ✅ Done        |
 | [17](#step-17)   | Result notices                 | —              | ⬜ Not started |
 | [18](#step-18)   | Class reps & shared notes      | —              | ⬜ Not started |
 
@@ -1825,7 +1825,7 @@ Responsive   notice card bounded three ways · break-all on two dialogs · five 
 
 <a id="step-16"></a>
 
-### Step 16 — Testing & deployment
+### Step 16 — Testing & deployment ✅ Done
 
 **Goal.** Ship it, repeatably.
 
@@ -1841,6 +1841,56 @@ Responsive   notice card bounded three ways · break-all on two dialogs · five 
 
 **Acceptance.** A clean clone reaches a running production build with only `.env.local` supplied; every smoke
 test passes against it.
+
+**Delivered.**
+
+```
+Security audit         docs/SECURITY-AUDIT-REPORT.md — 15 findings + 1 dependency advisory across 8
+                       dimensions (auth, RBAC/IDOR, injection, upload, DoS, headers, secrets, tests),
+                       each cross-verified; 13 fixed on the branch, 3 deferred with rationale
+Automated tests        vitest + vitest.config.mts; 26 unit tests over the security-relevant pure
+                       controls — magic-byte sniffer, session-payload schema, schedule overlap/conflict,
+                       locale/URL split; `npm run test`
+CI                     .github/workflows/ci.yml — lint, format, test, build on push and every PR; the
+                       server-side gate the skippable Husky hooks cannot be. pre-push now runs the tests too
+Smoke suite            `npm run smoke` chains the five verify:* integration harnesses that cover the
+                       named critical paths — sign in, create user, conflicting session, upload/download,
+                       publish notice — against a live database
+Demo department        scripts/seed-demo.ts + `npm run seed:demo` — one admin, two teachers, five students,
+                       four courses and a week of classes, all marked so a re-run reseeds cleanly
+Hardening              request-size ceilings, HTTP security headers, token/PII log hygiene, a trusted-proxy
+                       gate, a caller-scoped sign-in ceiling, fail-closed admin re-validation, sharp
+                       pixel-bomb limit — see the audit report and the branch commits
+```
+
+**Acceptance.** ⚠️ Verified except the live deploy. `npm run build` reaches a green production build from a
+clean `.env.local`; `npm run lint`, `npm run test` (26/26) and `npm run format` are green; the security headers
+were confirmed live in the browser with no CSP console errors. The audit's runtime probes exercised the API
+perimeter, the auth redirect and the download hardening against the running app.
+
+**Not verified by me — the live deploy and the DB-coupled suites.** The database is a live Atlas cluster with
+real data, so I did not run `npm run seed:demo` or `npm run smoke` (both write to it, and the demo would appear
+in a real department's directories), and I did not stand the app up on the PM2 box. Those are commands for you
+to run against a development or throwaway database:
+
+```bash
+npm run seed:demo
+npm run smoke
+```
+
+**Deviations from the plan, and why.**
+
+- **Testing came in two layers rather than one.** The plan named smoke tests only; the audit found the deeper
+  gap was the absence of _any_ fast, deterministic test and of a server-side gate. So this step adds vitest
+  unit tests and a GitHub Actions CI on top of a `smoke` entry point that wraps the existing verify:\* suite —
+  the unit tests gate CI without a database, the smoke suite covers the end-to-end paths against one.
+- **A security and quality audit was folded in.** "Testing" was read as more than smoke coverage: eight
+  adversarial passes over the codebase produced [SECURITY-AUDIT-REPORT.md](SECURITY-AUDIT-REPORT.md), and the
+  fixable findings were fixed here. Two low-severity items (the admin-ceiling race, list pagination) are logged
+  in the [Backlog](#backlog) rather than stretched into this step.
+- **The demo seed clears-then-writes under a marker.** Unlike `seed-super-admin`, which refuses to touch an
+  existing account, the demo seed removes any prior `@demo.academic.local` / `DMO`-prefixed data first, so a
+  re-run always produces a fresh demo. It is scoped to those markers and touches nothing else.
 
 ---
 
