@@ -59,8 +59,13 @@ export const smtpMail: MailDriver = {
         must not be undone because a mail server was briefly unreachable — the caller
         turns a false into "we could not send that, try again", which is a far better
         outcome than an account that half exists.
+
+        The error alone is logged — not the recipient or the subject. The subject of a
+        login-ID mail carries the issued identifier, and the recipient is an address; over a
+        run of transient failures those accumulate into a log of who registered and what
+        they were issued. The `err` is enough to diagnose an SMTP problem.
       */
-      log.error({ err: error, to: message.to, subject: message.subject }, 'Sending mail failed');
+      log.error({ err: error }, 'Sending mail failed');
 
       return false;
     }

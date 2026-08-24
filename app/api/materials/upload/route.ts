@@ -1,9 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { CODES } from '@/constants/codes.const';
+import { MATERIAL } from '@/constants/material.const';
 import { RATE_LIMIT } from '@/constants/rate-limit.const';
 import { USER_ROLES } from '@/constants/roles.const';
 
-import { withForbidden, withInsufficientStorage, withOk, withTooManyRequests, withUnauthorized } from '@/lib/api';
+import {
+  contentLengthExceeds,
+  withForbidden,
+  withInsufficientStorage,
+  withOk,
+  withPayloadTooLarge,
+  withTooManyRequests,
+  withUnauthorized,
+} from '@/lib/api';
 import { getSessionUser } from '@/lib/auth';
 import { isSuccess } from '@/lib/result';
 import { MaterialUploadSchema } from '@/lib/schemas';
@@ -54,6 +64,16 @@ export async function POST(request: NextRequest) {
   */
   if ((await getStorageStatus()).full) {
     return withInsufficientStorage();
+  }
+
+  /*
+    Also before formData(): the schema's size cap only runs after the whole body is
+    buffered, so a declared-oversized request is turned away here before a byte is read.
+  */
+  const { FILE_TOO_LARGE } = CODES.VALIDATION.MATERIALS;
+
+  if (contentLengthExceeds(request, MATERIAL.MAX_SIZE_BYTES)) {
+    return withPayloadTooLarge(FILE_TOO_LARGE.CODE, FILE_TOO_LARGE.MESSAGE);
   }
 
   const form = await request.formData();

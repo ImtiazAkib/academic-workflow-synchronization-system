@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
+import bcrypt from 'bcryptjs';
+
 import { User } from '@/models/user.model';
 import { UserDto, userFromEntity } from '@/types';
 
@@ -28,6 +30,34 @@ const BUSINESS_COMMON = CODES.BUSINESS.COMMON;
 const VALIDATION = CODES.VALIDATION.USERS;
 const BUSINESS = CODES.BUSINESS.USERS;
 const DATABASE = CODES.DATABASE.USERS;
+
+/*
+  Matches `PASSWORD_SALT_ROUNDS` in `user.model.ts` so the dummy comparison below costs the
+  same as a real one. Kept local rather than imported to keep this service off the model's
+  hashing internals; the two are pinned together by the sign-in timing test.
+*/
+const SIGN_IN_HASH_ROUNDS = 12;
+
+let dummyPasswordHash: string | null = null;
+
+/**
+ * A throwaway bcrypt hash, built once and reused.
+ *
+ * Compared against on the account-not-found branch so a wrong identifier costs the same
+ * ~250ms as a wrong password — without it, a missing account returns in a few milliseconds
+ * and an existing one in a quarter second, a timing oracle that discloses which enumerable
+ * login IDs are live. Built lazily, so a process that never sees a failed sign-in never
+ * pays to build it; the input is arbitrary and matches no real password.
+ *
+ * @returns A stable bcrypt hash whose comparison takes a real password's time.
+ */
+function dummyHashForTiming(): string {
+  if (!dummyPasswordHash) {
+    dummyPasswordHash = bcrypt.hashSync('sign-in-timing-equalizer', SIGN_IN_HASH_ROUNDS);
+  }
+
+  return dummyPasswordHash;
+}
 
 /**
  * A freshly registered account, plus the one-time token the caller has to mail out.
@@ -117,6 +147,13 @@ export class AuthService {
       const user = await this.resolveByIdentifier(identifier);
 
       if (!user) {
+        /*
+          Spend the same bcrypt time as a real comparison, so a missing account and a wrong
+          password are indistinguishable by response time and not only by message — the
+          shared `invalidCredentials()` text is undone by a millisecond-fast not-found path.
+        */
+        await bcrypt.compare(password, dummyHashForTiming());
+
         return this.invalidCredentials();
       }
 
